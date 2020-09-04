@@ -2,19 +2,19 @@ import os
 
 import discord
 from discord.ext import commands
-import dotenv
 
-dotenv.load_dotenv()
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-
-breqbot = commands.Bot(";")
-
-@breqbot.event
-async def on_ready():
-    print("Logged in as ")
+activity = discord.Game(";help")
+breqbot = commands.Bot(";", description="Hi, I'm Breqbot! Beep boop :robot:", activity=activity)
 
 @breqbot.command()
-async def ping(ctx):
-    await ctx.send(f"pong! {breqbot.latency}s")
+async def foo(ctx):
+    "super secret debugging stuff :shushing_face:"
+    await ctx.channel.send("bar!")
 
-breqbot.run(DISCORD_TOKEN)
+import help_command
+breqbot.help_command = help_command.HelpCommand()
+
+import reddit
+breqbot.add_cog(reddit.Reddit(breqbot))
+
+breqbot.run(os.getenv("DISCORD_TOKEN"))
