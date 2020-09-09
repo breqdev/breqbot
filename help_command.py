@@ -8,7 +8,11 @@ class HelpCommand(commands.HelpCommand):
         })
 
     def get_command_signature(self, command):
-        sig = f"•    {self.clean_prefix}{command.qualified_name} {command.signature}"
+        sig = f"• `{self.clean_prefix}{command.qualified_name}"
+        if command.signature:
+            sig += f" {command.signature}` "
+        else:
+            sig += "`"
         if command.brief:
             sig += f" | {command.brief}"
         elif command.help:
@@ -24,11 +28,10 @@ class HelpCommand(commands.HelpCommand):
             commands_filtered = await self.filter_commands(commands_unfiltered)
             if len(commands_filtered) == 0:
                 continue
-            result.append("---")
             if cog:
-                result.append(f"{cog.qualified_name}")
+                result.append(f"**{cog.qualified_name}:**")
             else:
-                result.append("General:")
+                result.append("**General:**")
             for command in commands_filtered:
                 result.append(self.get_command_signature(command))
         embed.description = "\n".join(result)

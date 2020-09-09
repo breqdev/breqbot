@@ -66,3 +66,6 @@ class Reddit(commands.Cog):
         async with ctx.channel.typing():
             image = await get_posts("okbuddyhetero")
         await ctx.channel.send(image)
+
+def setup(bot):
+    bot.add_cog(Reddit(bot))
