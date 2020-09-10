@@ -43,7 +43,7 @@ class Currency(commands.Cog):
             await ctx.send(f"{ctx.author.name}, you must wait **{ftime}** to claim more coins!")
             return
 
-        ftime = time.strftime("%H:%M:%S", time.gmtime(Currency.GET_COINS_AMOUNT))
+        ftime = time.strftime("%H:%M:%S", time.gmtime(Currency.GET_COINS_INTERVAL))
 
         self.redis.set(f"currency:get_coins:latest:{ctx.guild}:{ctx.author.id}", current_time)
         self.redis.incr(f"currency:balance:{ctx.guild}:{ctx.author.id}", Currency.GET_COINS_AMOUNT)
