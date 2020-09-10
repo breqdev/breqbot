@@ -13,7 +13,7 @@ class Currency(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.redis = redis.Redis(os.getenv("REDIS_URL"), decode_responses=True)
+        self.redis = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
     @commands.command()
     async def balance(self, ctx, user: typing.Optional[discord.User]):
