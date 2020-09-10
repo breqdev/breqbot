@@ -7,7 +7,7 @@ activity = discord.Game(";help")
 breqbot = commands.Bot(";", description="Hi, I'm Breqbot! Beep boop :robot:", activity=activity)
 
 breqbot.load_extension("reddit")
-breqbot.load_extension("voice")
+breqbot.load_extension("currency")
 breqbot.load_extension("debug")
 
 import help_command
