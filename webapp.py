@@ -1,14 +1,12 @@
 import os
-import asyncio
+import queue
 
-import threading
-
-import discord
 from flask import Flask, render_template
 
-app = Flask(__name__)
+import redis
 
-client = discord.Client()
+app = Flask(__name__)
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
 @app.route("/")
 def index():
@@ -16,21 +14,30 @@ def index():
 
 @app.route("/<int:id>")
 def server(id):
-    server = client.get_guild(id)
-    print(server)
-    return render_template("server.html", server=server)
+    guild_name = redis_client.get(f"guild:name:{id}")
+    guild_members = redis_client.smembers(f"guild:member:{id}")
 
-def start_discord():
-    loop = asyncio.new_event_loop()
-    try:
-        loop.run_until_complete(client.start(os.getenv("DISCORD_TOKEN")))
-    except KeyboardInterrupt:
-        loop.run_until_complete(client.logout())
-        # cancel all tasks lingering
-    finally:
-        loop.close()
+    balances = []
 
-threading.Thread(target=start_discord).start()
+    for member in guild_members:
+        balance = redis_client.get(f"currency:balance:{id}:{member}")
+        member_name = redis_client.get(f"user:name:{member}")
+        balances.append((balance, member_name))
+
+    richest_members = sorted(balances, key=lambda a: a[0], reverse=True)
+
+    shop_item_names = redis_client.smembers(f"currency:shop:items:{id}")
+
+    shop_items = []
+
+    for name in shop_item_names:
+        price = redis_client.get(f"currency:shop:prices:{id}:{name}")
+        shop_items.append((price, name))
+
+    return render_template("server.html", server=guild_name,
+                           richest_members=richest_members,
+                           shop_items=shop_items)
+
 
 if __name__ == "__main__":
     app.run()

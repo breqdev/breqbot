@@ -5,15 +5,13 @@ import typing
 import discord
 from discord.ext import commands
 
-import redis
-
 class Currency(commands.Cog):
     GET_COINS_INTERVAL = 3600
     GET_COINS_AMOUNT = 10
 
     def __init__(self, bot):
         self.bot = bot
-        self.redis = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+        self.redis = bot.redis
 
     @commands.command()
     async def balance(self, ctx, user: typing.Optional[discord.User]):
