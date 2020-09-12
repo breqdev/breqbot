@@ -20,7 +20,7 @@ def server(id):
     balances = []
 
     for member in guild_members:
-        balance = redis_client.get(f"currency:balance:{id}:{member}") or 0
+        balance = int(redis_client.get(f"currency:balance:{id}:{member}") or 0)
         member_name = redis_client.get(f"user:name:{member}")
         balances.append((balance, member_name))
 
@@ -31,7 +31,7 @@ def server(id):
     shop_items = []
 
     for name in shop_item_names:
-        price = redis_client.get(f"currency:shop:prices:{id}:{name}")
+        price = int(redis_client.get(f"currency:shop:prices:{id}:{name}"))
         shop_items.append((price, name))
 
     return render_template("server.html", server=guild_name,
