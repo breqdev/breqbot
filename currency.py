@@ -33,7 +33,7 @@ class Currency(commands.Cog):
         if ctx.guild is None:
             return
 
-        last_daily = float(self.redis.get(f"currency:get_coins:latest:{ctx.guild}:{ctx.author.id}") or 0)
+        last_daily = float(self.redis.get(f"currency:get_coins:latest:{ctx.guild.id}:{ctx.author.id}") or 0)
         current_time = time.time()
         time_until = (last_daily + Currency.GET_COINS_INTERVAL) - current_time
         if time_until > 0:
