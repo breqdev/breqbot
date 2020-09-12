@@ -1,36 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Breqbot is on {{ server }}!</title>
-</head>
-<body>
-    <h1>Breqbot is on {{ server }}!</h1>
+{% extends 'base.html' %}
 
-    <h3>Richest Server Members:</h3>
-    <table>
+{% block content %}
+<h1>Breqbot is on {{ server }}!</h1>
+<br>
+<h3>Richest Server Members:</h3>
+<table>
+    <thead>
         <tr>
             <th>Member</th>
             <th>Breqcoins</th>
         </tr>
+    </thead>
+    <tbody>
         {% for member in richest_members %}
         <tr>
             <td>{{ member[1] }}</td>
             <td>{{ member[0] }}</td>
         </tr>
         {% endfor %}
-    </table>
-
-    <h3>Items For Sale:</h3>
-    <table>
-        <tr>
-            <th>Item</th>
-            <th>Breqcoins</th>
-        </tr>
-        {% for item in shop_items %}
-        <tr>
-            <td>{{ item[1] }}</td>
-            <td>{{ item[0] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
+    </tbody>
+</table>
+<br>
+<h3>Items For Sale:</h3>
+<table>
+    <tr>
+        <th>Item</th>
+        <th>Breqcoins</th>
+    </tr>
+    {% for item in shop_items %}
+    <tr>
+        <td>{{ item[1] }}</td>
+        <td>{{ item[0] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
