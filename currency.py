@@ -15,7 +15,7 @@ class Currency(commands.Cog):
 
     @commands.command()
     async def balance(self, ctx, user: typing.Optional[discord.User]):
-        "Check your current coin balance!"
+        "Check your current coin balance"
         if ctx.guild is None:
             return
 
@@ -29,7 +29,7 @@ class Currency(commands.Cog):
 
     @commands.command()
     async def get_coins(self, ctx):
-        "Get more money"
+        "Get more coins! 10 coins per hour."
         if ctx.guild is None:
             return
 
@@ -60,11 +60,11 @@ class Currency(commands.Cog):
         self.redis.decr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
         self.redis.incr(f"currency:balance:{ctx.guild.id}:{user.id}", amount)
 
-        await ctx.send("Transaction successful!")
+        await ctx.message.add_reaction("✅")
 
     @commands.command()
     async def inventory(self, ctx, user: typing.Optional[discord.User]):
-        "List items in your current inventory!"
+        "List items in your current inventory"
         if ctx.guild is None:
             return
         if user is None:
@@ -97,33 +97,33 @@ class Currency(commands.Cog):
 
         if prices:
             await ctx.send(f"Items for sale on {ctx.guild.name}:\n"
-                           + "\n".join(f"{k}: {v}\n" for k, v in prices.items()))
+                           + "\n".join(f"{k}: {v} coins\n" for k, v in prices.items()))
         else:
             await ctx.send(f"The shop on {ctx.guild.name} is empty!")
 
     @commands.command()
-    async def buy(self, ctx, item: str):
-        "Buy an item!"
+    async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
+        "Buy an item from the shop"
 
         exists = self.redis.sismember(f"currency:shop:items:{ctx.guild.id}", item)
         if not exists:
             await ctx.send("Invalid item!")
             return
 
-        price = self.redis.get(f"currency:shop:prices:{ctx.guild.id}:{item}")
-        balance = self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0
+        price = int(self.redis.get(f"currency:shop:prices:{ctx.guild.id}:{item}")) * amount
+        balance = int(self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
-        if int(balance) < int(price):
+        if balance < price:
             await ctx.send("Not enough coins!")
             return
 
         self.redis.decr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
-        self.redis.incr(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}")
+        self.redis.incr(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}", amount)
 
-        await ctx.send("Transaction successful!")
+        await ctx.message.add_reaction("✅")
 
     @commands.command()
-    async def give_item(self, ctx, user: discord.User, item: str):
+    async def give_item(self, ctx, user: discord.User, item: str, amount: typing.Optional[int] = 1):
         "Give an item to another user"
 
         exists = self.redis.sismember(f"currency:shop:items:{ctx.guild.id}", item)
@@ -131,15 +131,15 @@ class Currency(commands.Cog):
             await ctx.send("Invalid item!")
             return
 
-        amount = int(self.redis.get(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}") or 0)
-        if amount < 1:
+        current_total = int(self.redis.get(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}") or 0)
+        if current_total < amount:
             await ctx.send("You don't have that item!")
             return
 
-        self.redis.decr(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}")
-        self.redis.incr(f"currency:shop:inventory:{ctx.guild.id}:{user.id}:{item}")
+        self.redis.decr(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}", amount)
+        self.redis.incr(f"currency:shop:inventory:{ctx.guild.id}:{user.id}:{item}", amount)
 
-        await ctx.send("Transaction successful!")
+        await ctx.message.add_reaction("✅")
 
     # @commands.command()
     # async def list(self, ctx, item: str, price: int):
