@@ -39,4 +39,9 @@ async def on_member_join(member):
 async def on_member_leave(member):
     breqbot.redis.srem(f"guild:member:{member.guild.id}", member.id)
 
+@breqbot.command()
+async def website(ctx):
+    "Link to the bot's website!"
+    await ctx.send(os.getenv("WEBSITE")+str(ctx.guild.id))
+
 breqbot.run(os.getenv("DISCORD_TOKEN"))
