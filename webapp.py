@@ -20,7 +20,7 @@ def server(id):
     balances = []
 
     for member in guild_members:
-        balance = redis_client.get(f"currency:balance:{id}:{member}")
+        balance = redis_client.get(f"currency:balance:{id}:{member}") or 0
         member_name = redis_client.get(f"user:name:{member}")
         balances.append((balance, member_name))
 
