@@ -1,4 +1,5 @@
 import os
+import typing
 
 import redis
 import discord
@@ -14,10 +15,9 @@ breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=Tr
 breqbot.load_extension("reddit")
 breqbot.load_extension("currency")
 breqbot.load_extension("debug")
-breqbot.load_extension("items")
+breqbot.load_extension("inventory")
+breqbot.load_extension("help_command")
 
-import help_command
-breqbot.help_command = help_command.HelpCommand()
 
 @breqbot.event
 async def on_ready():
@@ -57,9 +57,12 @@ async def on_guild_leave(guild):
     breqbot.redis.delete(f"guild:member:{guild.id}")
 
 @breqbot.command()
-async def website(ctx):
+async def website(ctx, user: typing.Optional[discord.User]):
     "Link to the bot's website!"
-    await ctx.send(os.getenv("WEBSITE")+"server/"+str(ctx.guild.id))
+    if user:
+        await ctx.send(f"{os.getenv('WEBSITE')}user/{ctx.guild.id}/{user.id}")
+    else:
+        await ctx.send(f"{os.getenv('WEBSITE')}server/{ctx.guild.id}")
 
 @breqbot.command()
 async def testing(ctx):

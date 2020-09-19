@@ -5,6 +5,8 @@ from flask import Flask, render_template
 
 import redis
 
+from items import Item
+
 app = Flask(__name__)
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
@@ -39,6 +41,18 @@ def server(id):
                            richest_members=richest_members,
                            shop_items=shop_items)
 
+@app.route("/user/<int:guild_id>/<int:user_id>")
+def user(guild_id, user_id):
+    guild_name = redis_client.get(f"guild:name:{guild_id}")
+    user_name = redis_client.get(f"user:name:{user_id}")
+    balance = int(redis_client.get(f"currency:balance:{guild_id}:{user_id}") or 0)
+
+    inventory = redis_client.hgetall(f"inventory:{guild_id}:{user_id}")
+
+    amounts = {Item.from_redis(redis_client, item): int(amount)
+               for item, amount in inventory.items() if int(amount) > 0}
+
+    return render_template("user.html", server=guild_name, user=user_name, balance=balance, inventory=amounts.items())
 
 if __name__ == "__main__":
     app.run()

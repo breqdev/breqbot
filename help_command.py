@@ -57,3 +57,6 @@ class HelpCommand(commands.HelpCommand):
         result.append(command.help or "")
         embed.description = "\n".join(result)
         await self.context.channel.send(embed=embed)
+
+def setup(bot):
+    bot.help_command = HelpCommand()
