@@ -5,7 +5,12 @@ from flask import Flask, render_template
 
 import redis
 
+import api
+
 app = Flask(__name__)
+app.register_blueprint(api.app)
+
+
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
 @app.route("/")

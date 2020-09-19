@@ -5,13 +5,15 @@ import typing
 import discord
 from discord.ext import commands
 
-class Currency(commands.Cog):
-    GET_COINS_INTERVAL = 3600
-    GET_COINS_AMOUNT = 10
+from items import Item
 
+class Currency(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
+
+        self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL")) or 3600
+        self.GET_COINS_AMOUNT = 10
 
     @commands.command()
     async def balance(self, ctx, user: typing.Optional[discord.User]):
@@ -35,18 +37,18 @@ class Currency(commands.Cog):
 
         last_daily = float(self.redis.get(f"currency:get_coins:latest:{ctx.guild.id}:{ctx.author.id}") or 0)
         current_time = time.time()
-        time_until = (last_daily + Currency.GET_COINS_INTERVAL) - current_time
+        time_until = (last_daily + self.GET_COINS_INTERVAL) - current_time
         if time_until > 0:
             ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
             await ctx.send(f"{ctx.author.name}, you must wait **{ftime}** to claim more coins!")
             return
 
-        ftime = time.strftime("%H:%M:%S", time.gmtime(Currency.GET_COINS_INTERVAL))
+        ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
 
         self.redis.set(f"currency:get_coins:latest:{ctx.guild.id}:{ctx.author.id}", current_time)
-        self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", Currency.GET_COINS_AMOUNT)
+        self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", self.GET_COINS_AMOUNT)
 
-        await ctx.send(f"{ctx.author.name}, you have claimed **{Currency.GET_COINS_AMOUNT}** coins! Wait {ftime} to claim more.")
+        await ctx.send(f"{ctx.author.name}, you have claimed **{self.GET_COINS_AMOUNT}** coins! Wait {ftime} to claim more.")
 
     @commands.command()
     async def give_coins(self, ctx, user: discord.User, amount: int):
@@ -63,41 +65,20 @@ class Currency(commands.Cog):
         await ctx.message.add_reaction("✅")
 
     @commands.command()
-    async def inventory(self, ctx, user: typing.Optional[discord.User]):
-        "List items in your current inventory"
-        if ctx.guild is None:
-            return
-        if user is None:
-            user = ctx.author
-
-        items = self.redis.smembers(f"currency:shop:items:{ctx.guild.id}")
-
-        amounts = {}
-
-        for item in items:
-            quantity = int(self.redis.get(f"currency:shop:inventory:{ctx.guild.id}:{user.id}:{item}") or 0)
-            if quantity > 0:
-                amounts[item] = quantity
-
-        if amounts:
-            await ctx.send(f"{user.name}'s Inventory:\n"
-                           + "\n".join(f"{k}: {v}" for k, v in amounts.items()))
-        else:
-            await ctx.send(f"{user.name}'s inventory is empty.")
-
-    @commands.command()
     async def shop(self, ctx):
         "List items in the shop!"
 
-        items = self.redis.smembers(f"currency:shop:items:{ctx.guild.id}")
+        item_uuids = self.redis.smembers(f"shop:items:{ctx.guild.id}")
+        shop_items = {uuid: Item.from_redis(self.redis, uuid) for uuid in item_uuids}
         prices = {}
 
-        for item in items:
-            prices[item] = self.redis.get(f"currency:shop:prices:{ctx.guild.id}:{item}")
+        for item_uuid in item_uuids:
+            prices[item_uuid] = self.redis.get(f"shop:prices:{ctx.guild.id}:{item_uuid}")
 
         if prices:
             await ctx.send(f"Items for sale on {ctx.guild.name}:\n"
-                           + "\n".join(f"{k}: {v} coins\n" for k, v in prices.items()))
+                           + "\n".join(f"{shop_items[uuid].name}: {prices[uuid]} coins\n"
+                                       for uuid in shop_items.keys()))
         else:
             await ctx.send(f"The shop on {ctx.guild.name} is empty!")
 
@@ -105,12 +86,18 @@ class Currency(commands.Cog):
     async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
         "Buy an item from the shop"
 
-        exists = self.redis.sismember(f"currency:shop:items:{ctx.guild.id}", item)
-        if not exists:
-            await ctx.send("Invalid item!")
+        try:
+            item = Item.from_name(self.redis, item)
+        except ValueError:
+            await ctx.send("Item does not exist!")
             return
 
-        price = int(self.redis.get(f"currency:shop:prices:{ctx.guild.id}:{item}")) * amount
+        price_ea = self.redis.get(f"shop:prices:{ctx.guild.id}:{item.uuid}")
+        if price_ea is None:
+            await ctx.send("Item is not for sale!")
+            return
+
+        price = int(price_ea) * amount
         balance = int(self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
@@ -118,44 +105,10 @@ class Currency(commands.Cog):
             return
 
         self.redis.decr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
-        self.redis.incr(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}", amount)
+        self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
-    async def give_item(self, ctx, user: discord.User, item: str, amount: typing.Optional[int] = 1):
-        "Give an item to another user"
-
-        exists = self.redis.sismember(f"currency:shop:items:{ctx.guild.id}", item)
-        if not exists:
-            await ctx.send("Invalid item!")
-            return
-
-        current_total = int(self.redis.get(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}") or 0)
-        if current_total < amount:
-            await ctx.send("You don't have that item!")
-            return
-
-        self.redis.decr(f"currency:shop:inventory:{ctx.guild.id}:{ctx.author.id}:{item}", amount)
-        self.redis.incr(f"currency:shop:inventory:{ctx.guild.id}:{user.id}:{item}", amount)
-
-        await ctx.message.add_reaction("✅")
-
-    # @commands.command()
-    # async def list(self, ctx, item: str, price: int):
-    #     "List an item in the store!"
-    #
-    #     self.redis.sadd(f"currency:shop:items:{ctx.guild.id}", item)
-    #     self.redis.set(f"currency:shop:prices:{ctx.guild.id}:{item}", price)
-    #     await ctx.send("Item listed!")
-    #
-    # @commands.command()
-    # async def delist(self, ctx, item: str):
-    #     "Remove an item from the store"
-    #
-    #     self.redis.srem(f"currency:shop:items:{ctx.guild.id}", item)
-    #     self.redis.delete(f"currency:shop:prices:{ctx.guild.id}:{item}")
-    #     await ctx.send("Item delisted!")
 
 
 def setup(bot):

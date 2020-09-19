@@ -3,3 +3,4 @@ praw
 gunicorn
 flask
 redis
+flask_httpauth
