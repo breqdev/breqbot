@@ -28,12 +28,11 @@ class Inventory(commands.Cog):
         amounts = {Item.from_redis(self.redis, item): int(amount)
                    for item, amount in inventory.items() if int(amount) > 0}
 
-        if amounts:
-            await ctx.send(f"{user.name}'s Inventory:\n"
-                           + "\n".join(f"{item.name}: {amount}"
-                                       for item, amount in amounts.items()))
-        else:
-            await ctx.send(f"{user.name}'s inventory is empty.")
+        balance = self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or 0
+
+        await ctx.send(f"{user.name}'s Inventory:\n*Breqcoins: {balance}*\n"
+                       + "\n".join(f"{item.name}: **{amount}**"
+                                   for item, amount in amounts.items()))
 
     async def ensure_item(self, ctx, user, item, qty=1):
         has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}", item.uuid))

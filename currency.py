@@ -12,9 +12,6 @@ class Currency(commands.Cog):
         self.bot = bot
         self.redis = bot.redis
 
-        self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL"))
-        self.GET_COINS_AMOUNT = int(os.getenv("GET_COINS_AMOUNT"))
-
     async def shopkeeper_only(ctx):
         if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
             return True
@@ -36,27 +33,6 @@ class Currency(commands.Cog):
             self.redis.set(f"currency:balance:{ctx.guild.id}:{user.id}", 0)
             coins = 0
         await ctx.send(f"{user.name} has **{coins}** Breqcoins.")
-
-    @commands.command()
-    async def free(self, ctx):
-        "Get more coins! 10 coins per hour."
-        if ctx.guild is None:
-            return
-
-        last_daily = float(self.redis.get(f"currency:get_coins:latest:{ctx.guild.id}:{ctx.author.id}") or 0)
-        current_time = time.time()
-        time_until = (last_daily + self.GET_COINS_INTERVAL) - current_time
-        if time_until > 0:
-            ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
-            await ctx.send(f"{ctx.author.name}, you must wait **{ftime}** to claim more coins!")
-            return
-
-        ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
-
-        self.redis.set(f"currency:get_coins:latest:{ctx.guild.id}:{ctx.author.id}", current_time)
-        self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", self.GET_COINS_AMOUNT)
-
-        await ctx.send(f"{ctx.author.name}, you have claimed **{self.GET_COINS_AMOUNT}** coins! Wait {ftime} to claim more.")
 
     @commands.command()
     async def givecoins(self, ctx, user: discord.User, amount: int):
