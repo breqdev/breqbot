@@ -134,7 +134,7 @@ class Items(commands.Cog):
 
         await self.ensure_item(ctx, ctx.author, item)
 
-        self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
+        # self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
 
         await ctx.message.add_reaction("✅")
         await ctx.send(f"You used {item.name}. It did nothing!")

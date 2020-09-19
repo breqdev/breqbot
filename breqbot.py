@@ -61,4 +61,10 @@ async def website(ctx):
     "Link to the bot's website!"
     await ctx.send(os.getenv("WEBSITE")+"server/"+str(ctx.guild.id))
 
+@breqbot.command()
+async def testing(ctx):
+    "Come join the bot testing server to suggest features and discuss Breqbot!"
+    await ctx.send("Join us and discuss features for Breqbot!")
+    await ctx.send(os.getenv("TESTING_DISCORD"))
+
 breqbot.run(os.getenv("DISCORD_TOKEN"))

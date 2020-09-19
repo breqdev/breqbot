@@ -38,7 +38,7 @@ class Currency(commands.Cog):
         await ctx.send(f"{user.name} has **{coins}** Breqcoins.")
 
     @commands.command()
-    async def get_coins(self, ctx):
+    async def free(self, ctx):
         "Get more coins! 10 coins per hour."
         if ctx.guild is None:
             return
@@ -59,7 +59,7 @@ class Currency(commands.Cog):
         await ctx.send(f"{ctx.author.name}, you have claimed **{self.GET_COINS_AMOUNT}** coins! Wait {ftime} to claim more.")
 
     @commands.command()
-    async def give_coins(self, ctx, user: discord.User, amount: int):
+    async def givecoins(self, ctx, user: discord.User, amount: int):
         "Give coins to another user"
         balance = self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
 
@@ -85,7 +85,7 @@ class Currency(commands.Cog):
 
         if prices:
             await ctx.send(f"Items for sale on {ctx.guild.name}:\n"
-                           + "\n".join(f"{shop_items[uuid].name}: {prices[uuid]} coins\n"
+                           + "\n".join(f"{shop_items[uuid].name}: {prices[uuid]} coins"
                                        for uuid in shop_items.keys()))
         else:
             await ctx.send(f"The shop on {ctx.guild.name} is empty!")
