@@ -1,4 +1,4 @@
-import uuid
+from uuid import uuid4
 import typing
 import os
 
@@ -6,8 +6,8 @@ import discord
 from discord.ext import commands
 
 class Item():
-    def __init__(self, name=None, desc=None, uuid=str(uuid.uuid4())):
-        self.uuid = uuid
+    def __init__(self, name=None, desc=None, uuid=None):
+        self.uuid = uuid or str(uuid4())
         self.name = name
         self.desc = desc
 

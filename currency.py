@@ -12,8 +12,8 @@ class Currency(commands.Cog):
         self.bot = bot
         self.redis = bot.redis
 
-        self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL")) or 3600
-        self.GET_COINS_AMOUNT = 10
+        self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL"))
+        self.GET_COINS_AMOUNT = int(os.getenv("GET_COINS_AMOUNT"))
 
     async def shopkeeper_only(ctx):
         if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
