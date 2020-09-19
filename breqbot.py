@@ -12,14 +12,14 @@ breqbot = commands.Bot(prefix, description="Hi, I'm Breqbot! Beep boop :robot:",
 
 breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
-breqbot.load_extension("reddit")
-breqbot.load_extension("currency")
-breqbot.load_extension("info")
-breqbot.load_extension("inventory")
-breqbot.load_extension("quests")
-breqbot.load_extension("wear")
-breqbot.load_extension("minecraft")
-breqbot.load_extension("help_command")
+breqbot.load_extension("cogs.reddit")
+breqbot.load_extension("cogs.currency")
+breqbot.load_extension("cogs.info")
+breqbot.load_extension("cogs.inventory")
+breqbot.load_extension("cogs.quests")
+breqbot.load_extension("cogs.wear")
+breqbot.load_extension("cogs.minecraft")
+breqbot.load_extension("cogs.help_command")
 
 
 @breqbot.event

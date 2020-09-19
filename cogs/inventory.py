@@ -4,7 +4,7 @@ import os
 import discord
 from discord.ext import commands
 
-from items import Item
+from .items import Item
 
 class Inventory(commands.Cog):
     def __init__(self, bot):

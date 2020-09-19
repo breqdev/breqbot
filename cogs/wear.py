@@ -3,7 +3,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from items import Item
+from .items import Item
 
 class Wear(commands.Cog):
     def __init__(self, bot):
