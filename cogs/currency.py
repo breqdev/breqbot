@@ -8,6 +8,7 @@ from discord.ext import commands
 from .items import Item
 
 class Currency(commands.Cog):
+    "Earn and spend Breqcoins!"
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
@@ -59,12 +60,15 @@ class Currency(commands.Cog):
         for item_uuid in item_uuids:
             prices[item_uuid] = self.redis.get(f"shop:prices:{ctx.guild.id}:{item_uuid}")
 
+        embed = discord.Embed(title=f"Items for sale on {ctx.guild.name}")
+
         if prices:
-            await ctx.send(f"Items for sale on {ctx.guild.name}:\n"
-                           + "\n".join(f"{shop_items[uuid].name}: {prices[uuid]} coins"
-                                       for uuid in shop_items.keys()))
+            embed.description = "\n".join(f"{shop_items[uuid].name}: {prices[uuid]} coins"
+                                          for uuid in shop_items.keys())
         else:
-            await ctx.send(f"The shop on {ctx.guild.name} is empty!")
+            embed.description = "The shop is empty for now."
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):

@@ -8,6 +8,7 @@ from discord.ext import commands
 from .items import Item
 
 class Quests(commands.Cog):
+    "Look for items!"
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis

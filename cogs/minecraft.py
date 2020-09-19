@@ -4,6 +4,7 @@ from discord.ext import commands
 from mcstatus import MinecraftServer
 
 class Minecraft(commands.Cog):
+    "Tools for Minecraft servers"
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis

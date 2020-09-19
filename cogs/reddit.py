@@ -53,6 +53,7 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
 
 
 class Reddit(commands.Cog):
+    "Get memes and other posts from Reddit"
     @commands.command()
     async def doki(self, ctx):
         "picture of doki from ddlc! also try `doki fun` or ||`doki nsfw` :smirk:||"

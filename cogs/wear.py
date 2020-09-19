@@ -6,6 +6,7 @@ from discord.ext import commands
 from .items import Item
 
 class Wear(commands.Cog):
+    "Wear the items in your inventory"
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
@@ -67,13 +68,16 @@ class Wear(commands.Cog):
         if user is None:
             user = ctx.author
 
+        embed = discord.Embed(title=f"{user.name} is wearing...")
+
         items = [Item.from_redis(self.redis, uuid) for uuid in self.redis.smembers(f"wear:{ctx.guild.id}:{user.id}")]
 
         if items:
-            await ctx.send(f"{user.name} is wearing...\n"
-                           + "\n".join(f"• {item.name} ({item.desc})" for item in items))
+            embed.description = "\n".join(f"• {item.name} ({item.desc})" for item in items)
         else:
-            await ctx.send(f"{user.name} does not have an outfit.")
+            embed.description = f"{user.name} does not have any swag. `{self.bot.command_prefix}give` them some?"
+
+        await ctx.send(embed=embed)
 
 
 

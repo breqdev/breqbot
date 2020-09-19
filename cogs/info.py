@@ -8,16 +8,23 @@ from discord.ext import commands
 startup_timestamp = time.time()
 
 class Info(commands.Cog):
+    "Information and debugging tools"
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
     async def website(self, ctx, user: typing.Optional[discord.User]):
         "Link to the bot's website!"
+        embed = discord.Embed()
         if user:
-            await ctx.send(f"{os.getenv('WEBSITE')}user/{ctx.guild.id}/{user.id}")
+            embed.title = user.name
+            embed.description = f"{os.getenv('WEBSITE')}user/{ctx.guild.id}/{user.id}"
         else:
-            await ctx.send(f"{os.getenv('WEBSITE')}server/{ctx.guild.id}")
+            embed.title = ctx.guild.name
+            embed.description = f"{os.getenv('WEBSITE')}server/{ctx.guild.id}"
+            embed.add_field(name=ctx.author.name,
+                            value=f"{os.getenv('WEBSITE')}user/{ctx.guild.id}/{ctx.author.id}")
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def testing(self, ctx):
@@ -36,19 +43,23 @@ class Info(commands.Cog):
     async def debug(self, ctx):
         "Display debug info about the bot"
 
+        embed = discord.Embed(title="Debug")
+
         name = self.bot.user.name + "#" + self.bot.user.discriminator
-        await ctx.send(f"Connected as **{name}**")
+        embed.add_field(name="Connected as", value=name)
 
         domain = os.getenv("DOMAIN")
-        await ctx.send(f"Running on **{domain}**")
+        embed.add_field(name="Running on", value=domain)
 
         latency = round(self.bot.latency*1000, 1)
-        await ctx.send(f"Latency: **{latency}ms**")
+        embed.add_field(name="Latency", value=f"{latency} ms")
 
         uptime = time.time() - startup_timestamp
         days_online = int(uptime / (60*60*24))
         time_str = f"{days_online} days, "+time.strftime("%T", time.gmtime(uptime))
-        await ctx.send(f"Online for **{time_str}**")
+        embed.add_field(name="Uptime", value=time_str)
+
+        await ctx.send(embed=embed)
 
 
 

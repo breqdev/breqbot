@@ -7,6 +7,7 @@ from discord.ext import commands
 from .items import Item
 
 class Inventory(commands.Cog):
+    "Store items from the shop"
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
@@ -23,16 +24,19 @@ class Inventory(commands.Cog):
         if user is None:
             user = ctx.author
 
-        inventory = self.redis.hgetall(f"inventory:{ctx.guild.id}:{user.id}")
+        embed = discord.Embed(title=f"{user.name}'s Inventory")
 
+        inventory = self.redis.hgetall(f"inventory:{ctx.guild.id}:{user.id}")
         amounts = {Item.from_redis(self.redis, item): int(amount)
                    for item, amount in inventory.items() if int(amount) > 0}
 
         balance = self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or 0
 
-        await ctx.send(f"{user.name}'s Inventory:\n*Breqcoins: {balance}*\n"
-                       + "\n".join(f"{item.name}: **{amount}**"
-                                   for item, amount in amounts.items()))
+        embed.description = (f"*Breqcoins: {balance}*\n"
+                             + "\n".join(f"{item.name}: **{amount}**"
+                                         for item, amount in amounts.items()))
+
+        await ctx.send(embed=embed)
 
     async def ensure_item(self, ctx, user, item, qty=1):
         has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}", item.uuid))
