@@ -21,7 +21,7 @@ def run_in_executor(f):
 @run_in_executor
 def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
     sub = reddit.subreddit(sub_name)
-    frontpage = sub.top(limit=1000)
+    frontpage = sub.top("month", limit=1000)
     images = []
     for submission in frontpage:
         if len(images) > 25:
@@ -45,8 +45,11 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
         images.append(submission.url)
     else:
         print("Ran out of posts!")
-    image = random.choice(images)
-    return image
+    if images:
+        image = random.choice(images)
+        return image
+    else:
+        return "No images found!"
 
 
 class Reddit(commands.Cog):
@@ -65,6 +68,21 @@ class Reddit(commands.Cog):
         "ok buddy hetero"
         async with ctx.channel.typing():
             image = await get_posts("okbuddyhetero")
+        await ctx.channel.send(image)
+
+    @commands.command()
+    async def wholesome(self, ctx):
+        "wholesome meme"
+        async with ctx.channel.typing():
+            image = await get_posts("wholesomememes")
+        await ctx.channel.send(image)
+
+    @commands.command()
+    async def reddit(self, ctx, subreddit: str):
+        "post from a subreddit of your choice!"
+        async with ctx.channel.typing():
+            image = await get_posts(subreddit,
+                                    nsfw=(None if ctx.channel.is_nsfw() else False))
         await ctx.channel.send(image)
 
 def setup(bot):
