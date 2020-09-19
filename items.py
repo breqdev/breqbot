@@ -1,5 +1,6 @@
 import uuid
 import typing
+import os
 
 import discord
 from discord.ext import commands
@@ -9,6 +10,9 @@ class Item():
         self.uuid = uuid
         self.name = name
         self.desc = desc
+
+    def __str__(self):
+        return f"{self.name}: {self.desc} ({self.uuid})"
 
     @property
     def redis_key(self):
@@ -34,6 +38,12 @@ class Item():
             raise ValueError("Item does not exist")
         return Item.from_redis(redis, uuid)
 
+    @staticmethod
+    def check_name(redis, name):
+        "Ensure the name is not in use."
+        uuid = redis.get(f"items:from_name:{name.lower()}")
+        return (uuid is None)
+
     def to_redis(self, redis):
         redis.sadd("items:list", self.uuid)
 
@@ -42,7 +52,14 @@ class Item():
 
         redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
 
-    def del_redis(self, redis):
+    def rename(self, redis, newname):
+        redis.delete(f"items:from_name:{self.name.lower()}")
+        self.name = newname
+        redis.hset(self.redis_key, "name", self.name)
+        redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
+
+
+    def delete(self, redis):
         redis.srem("items:list", self.uuid)
         redis.delete(f"items:from_name:{self.name.lower()}")
         redis.delete(self.redis_key)
@@ -57,6 +74,10 @@ class Items(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
+
+    async def config_only(ctx):
+        return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
+                and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
 
     @commands.command()
     async def inventory(self, ctx, user: typing.Optional[discord.User]):
@@ -128,6 +149,45 @@ class Items(commands.Cog):
             return
 
         await ctx.send(f"{item.name}: {item.desc}")
+
+    @commands.command()
+    @commands.check(config_only)
+    async def list_items(self, ctx):
+        await ctx.send("Items:\n"+"\n".join(str(Item.from_redis(self.redis, uuid))
+                                 for uuid in self.redis.smembers("items:list")))
+
+    @commands.command()
+    @commands.check(config_only)
+    async def delete_item(self, ctx, item: str):
+        item = Item.from_name(self.redis, item)
+        item.delete(self.redis)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(config_only)
+    async def rename_item(self, ctx, oldname: str, newname: str):
+        item = Item.from_name(self.redis, oldname)
+        item.rename(self.redis, newname)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(config_only)
+    async def modify_item(self, ctx, item: str, desc: str):
+        item = Item.from_name(self.redis, item)
+        item.desc = desc
+        item.to_redis(self.redis)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(config_only)
+    async def create_item(self, ctx, item: str, desc: str):
+        if not Item.check_name(self.redis, item):
+            await ctx.send("Name in use!")
+            return
+
+        item = Item(item, desc)
+        item.to_redis(self.redis)
+        await ctx.message.add_reaction("✅")
 
 def setup(bot):
     bot.add_cog(Items(bot))

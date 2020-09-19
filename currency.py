@@ -15,6 +15,14 @@ class Currency(commands.Cog):
         self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL")) or 3600
         self.GET_COINS_AMOUNT = 10
 
+    async def shopkeeper_only(ctx):
+        if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
+            return True
+        for role in ctx.author.roles:
+            if role.name == "Shopkeeper":
+                return True
+        return False
+
     @commands.command()
     async def balance(self, ctx, user: typing.Optional[discord.User]):
         "Check your current coin balance"
@@ -109,7 +117,35 @@ class Currency(commands.Cog):
 
         await ctx.message.add_reaction("✅")
 
+    @commands.command()
+    @commands.check(shopkeeper_only)
+    async def list(self, ctx, item: str, price: int):
+        "List an item in the shop"
 
+        try:
+            item = Item.from_name(self.redis, item)
+        except ValueError:
+            await ctx.send("Item does not exist!")
+            return
+
+        self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
+        self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(shopkeeper_only)
+    async def delist(self, ctx, item: str):
+        "Remove an item from the shop"
+
+        try:
+            item = Item.from_name(self.redis, item)
+        except ValueError:
+            await ctx.send("Item does not exist!")
+            return
+
+        self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
+        self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
+        await ctx.message.add_reaction("✅")
 
 def setup(bot):
     bot.add_cog(Currency(bot))

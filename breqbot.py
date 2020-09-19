@@ -59,6 +59,6 @@ async def on_guild_leave(guild):
 @breqbot.command()
 async def website(ctx):
     "Link to the bot's website!"
-    await ctx.send(os.getenv("WEBSITE")+str(ctx.guild.id))
+    await ctx.send(os.getenv("WEBSITE")+"server/"+str(ctx.guild.id))
 
 breqbot.run(os.getenv("DISCORD_TOKEN"))

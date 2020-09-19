@@ -5,19 +5,14 @@ from flask import Flask, render_template
 
 import redis
 
-import api
-
 app = Flask(__name__)
-app.register_blueprint(api.app)
-
-
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/<int:id>")
+@app.route("/server/<int:id>")
 def server(id):
     guild_name = redis_client.get(f"guild:name:{id}")
     guild_members = redis_client.smembers(f"guild:member:{id}")
@@ -31,12 +26,13 @@ def server(id):
 
     richest_members = sorted(balances, key=lambda a: a[0], reverse=True)
 
-    shop_item_names = redis_client.smembers(f"currency:shop:items:{id}")
+    shop_item_ids = redis_client.smembers(f"shop:items:{id}")
 
     shop_items = []
 
-    for name in shop_item_names:
-        price = int(redis_client.get(f"currency:shop:prices:{id}:{name}"))
+    for item_id in shop_item_ids:
+        price = int(redis_client.get(f"shop:prices:{id}:{item_id}"))
+        name = redis_client.hget(f"items:{item_id}", "name")
         shop_items.append((price, name))
 
     return render_template("server.html", server=guild_name,
