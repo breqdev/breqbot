@@ -5,22 +5,20 @@ import discord
 from discord.ext import commands
 
 from .items import Item
+from .breqcog import Breqcog, passfail, Fail
 
-class Inventory(commands.Cog):
+class Inventory(Breqcog):
     "Store items from the shop"
-    def __init__(self, bot):
-        self.bot = bot
-        self.redis = bot.redis
 
     async def config_only(ctx):
         return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
                 and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
 
     @commands.command()
+    @commands.guild_only()
+    @passfail
     async def inventory(self, ctx, user: typing.Optional[discord.User]):
         "List items in your current inventory"
-        if ctx.guild is None:
-            return
         if user is None:
             user = ctx.author
 
@@ -36,81 +34,63 @@ class Inventory(commands.Cog):
                              + "\n".join(f"{item.name}: **{amount}**"
                                          for item, amount in amounts.items()))
 
-        await ctx.send(embed=embed)
-
-    async def ensure_item(self, ctx, user, item, qty=1):
-        has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}", item.uuid))
-        if has < qty:
-            await ctx.send(f"You need at least {qty} of {item.name}, you only have {has}")
-            raise ValueError("User does not have enough of item!")
+        return embed
 
     @commands.command()
+    @commands.guild_only()
+    @passfail
     async def give(self, ctx, user: discord.User, item: str, amount: typing.Optional[int] = 1):
         "Give an item to another user"
-
-        try:
-            item = Item.from_name(self.redis, item)
-        except ValueError:
-            await ctx.message.send("Item does not exist!")
-            return
-
-        await self.ensure_item(ctx, ctx.author, item, amount)
+        item = self.get_item(item)
+        self.ensure_item(ctx, ctx.author, item, amount)
 
         self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -amount)
         self.redis.hincrby(f"inventory:{ctx.guild.id}:{user.id}", item.uuid, amount)
 
-        await ctx.message.add_reaction("✅")
-
     @commands.command()
+    @commands.guild_only()
+    @passfail
     async def use(self, ctx, item: str):
         "Use an item [TESTING]"
-
-        try:
-            item = Item.from_name(self.redis, item)
-        except ValueError:
-            await ctx.send("Item does not exist!")
-            return
-
-        await self.ensure_item(ctx, ctx.author, item)
+        item = self.get_item(item)
+        self.ensure_item(ctx, ctx.author, item)
 
         # self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
 
-        await ctx.message.add_reaction("✅")
-        await ctx.send(f"You used {item.name}. It did nothing!")
+        return f"You used {item.name}. It did nothing!"
 
     @commands.command()
+    @passfail
     async def item(self, ctx, item: str):
         "Get information about an item"
-        try:
-            item = Item.from_name(self.redis, item)
-        except ValueError:
-            await ctx.send("Item does not exist!")
-            return
+        item = self.get_item(item)
 
-        await ctx.send(f"{item.name}: {item.desc} {'(wearable)' if item.wearable else ''}")
+        return f"{item.name}: {item.desc} {'(wearable)' if item.wearable else ''}"
 
     @commands.command()
     @commands.check(config_only)
+    @passfail
     async def list_items(self, ctx):
-        await ctx.send("Items:\n"+"\n".join(str(Item.from_redis(self.redis, uuid))
-                                 for uuid in self.redis.smembers("items:list")))
+        return "Items:\n"+"\n".join(str(Item.from_redis(self.redis, uuid))
+                                    for uuid in self.redis.smembers("items:list"))
 
     @commands.command()
     @commands.check(config_only)
+    @passfail
     async def delete_item(self, ctx, item: str):
-        item = Item.from_name(self.redis, item)
+        item = self.get_item(item)
         item.delete(self.redis)
-        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.check(config_only)
+    @passfail
     async def rename_item(self, ctx, oldname: str, newname: str):
-        item = Item.from_name(self.redis, oldname)
+        item = self.get_item(oldname)
         item.rename(self.redis, newname)
-        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.check(config_only)
+    @passfail
     async def modify_item(self, ctx, item: str, field: str, value: str):
         item = Item.from_name(self.redis, item)
         if field == "desc":
@@ -118,30 +98,26 @@ class Inventory(commands.Cog):
         elif field == "wearable":
             item.wearable = value
         else:
-            await ctx.send("Invalid field!")
-            return
+            Fail("Invalid field!")
         item.to_redis(self.redis)
-        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.check(config_only)
+    @passfail
     async def create_item(self, ctx, item: str, desc: str, wearable: int = 0):
         if not Item.check_name(self.redis, item):
-            await ctx.send("Name in use!")
-            return
+            Fail("Name in use!")
 
         item = Item(item, desc, wearable)
         item.to_redis(self.redis)
-        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.check(config_only)
+    @passfail
     async def divine_gift(self, ctx, item: str, guild_id: int, user_id: int):
         "Give a user an item on that server."
         item = Item.from_name(self.redis, item)
-
         self.redis.hincrby(f"inventory:{guild_id}:{user_id}", item.uuid)
-        await ctx.message.add_reaction("✅")
 
 def setup(bot):
     bot.add_cog(Inventory(bot))

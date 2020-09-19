@@ -4,66 +4,48 @@ import discord
 from discord.ext import commands
 
 from .items import Item
+from .breqcog import Breqcog, passfail, Fail
 
-class Wear(commands.Cog):
+class Wear(Breqcog):
     "Wear the items in your inventory"
-    def __init__(self, bot):
-        self.bot = bot
-        self.redis = bot.redis
-
-    async def ensure_item(self, ctx, user, item, qty=1):
-        has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}", item.uuid))
-        if has < qty:
-            await ctx.send(f"You need at least {qty} of {item.name}, you only have {has}")
-            raise ValueError("User does not have enough of item!")
 
     @commands.command()
+    @commands.guild_only()
+    @passfail
     async def wear(self, ctx, item: str):
         "Wear an item"
-        try:
-            item = Item.from_name(self.redis, item)
-        except ValueError:
-            await ctx.send("Item does not exist!")
-            return
+        self.get_item(item)
 
         if not int(item.wearable):
-            await ctx.send("Item is not wearable!")
-            return
-
-        await self.ensure_item(ctx, ctx.author, item)
+            raise Fail("Item is not wearable!")
+        self.ensure_item(ctx, ctx.author, item)
 
         wearing = self.redis.sismember(f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if wearing:
-            await ctx.send(f"You are already wearing a {item.name}!")
-            return
+            raise Fail(f"You are already wearing a {item.name}!")
 
         self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
         self.redis.sadd(f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
-        await ctx.message.add_reaction("✅")
-
     @commands.command()
+    @commands.guild_only()
+    @passfail
     async def takeoff(self, ctx, item: str):
         "Take off an item"
-        try:
-            item = Item.from_name(self.redis, item)
-        except ValueError:
-            await ctx.send("Item does not exist!")
-            return
+        item = self.get_item(item)
 
         wearing = self.redis.sismember(f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if not wearing:
-            await ctx.send(f"You are not wearing a {item.name}!")
-            return
+            raise Fail(f"You are not wearing a {item.name}!")
 
         self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, 1)
         self.redis.srem(f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
-        await ctx.message.add_reaction("✅")
-
     @commands.command()
+    @commands.guild_only()
+    @passfail
     async def outfit(self, ctx, user: typing.Optional[discord.User]):
         if user is None:
             user = ctx.author
@@ -77,7 +59,7 @@ class Wear(commands.Cog):
         else:
             embed.description = f"{user.name} does not have any swag. `{self.bot.command_prefix}give` them some?"
 
-        await ctx.send(embed=embed)
+        return embed
 
 
 

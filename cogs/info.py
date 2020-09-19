@@ -5,14 +5,15 @@ import typing
 import discord
 from discord.ext import commands
 
+from .breqcog import Breqcog, passfail, Fail
+
 startup_timestamp = time.time()
 
-class Info(commands.Cog):
+class Info(Breqcog):
     "Information and debugging tools"
-    def __init__(self, bot):
-        self.bot = bot
 
     @commands.command()
+    @passfail
     async def website(self, ctx, user: typing.Optional[discord.User]):
         "Link to the bot's website!"
         embed = discord.Embed()
@@ -24,22 +25,24 @@ class Info(commands.Cog):
             embed.description = f"{os.getenv('WEBSITE')}server/{ctx.guild.id}"
             embed.add_field(name=ctx.author.name,
                             value=f"{os.getenv('WEBSITE')}user/{ctx.guild.id}/{ctx.author.id}")
-        await ctx.send(embed=embed)
+        return embed
 
     @commands.command()
+    @passfail
     async def testing(self, ctx):
         "Come join the bot testing server to suggest features and discuss Breqbot!"
-        await ctx.send("Join us and discuss features for Breqbot!")
-        await ctx.send(os.getenv("TESTING_DISCORD"))
+        return f"Join us and discuss features for Breqbot! {os.getenv('TESTING_DISCORD')}"
 
     @commands.command()
+    @passfail
     async def ping(self, ctx):
         "Pong! :ping_pong: Test system latency."
         await ctx.send(":ping_pong:")
         latency = round(self.bot.latency*1000, 1)
-        await ctx.send(f"`{latency}ms`")
+        return f"`{latency}ms`"
 
     @commands.command()
+    @passfail
     async def debug(self, ctx):
         "Display debug info about the bot"
 
@@ -59,7 +62,7 @@ class Info(commands.Cog):
         time_str = f"{days_online} days, "+time.strftime("%T", time.gmtime(uptime))
         embed.add_field(name="Uptime", value=time_str)
 
-        await ctx.send(embed=embed)
+        return embed
 
 
 

@@ -3,21 +3,20 @@ from discord.ext import commands
 
 from mcstatus import MinecraftServer
 
-class Minecraft(commands.Cog):
+from .breqcog import Breqcog, passfail, Fail
+
+class Minecraft(Breqcog):
     "Tools for Minecraft servers"
-    def __init__(self, bot):
-        self.bot = bot
-        self.redis = bot.redis
 
     @commands.command()
+    @passfail
     async def mc(self, ctx, ip: str):
         "Look up information about a Minecraft server"
         try:
             server = MinecraftServer.lookup(ip)
             status = server.status().raw
         except OSError:
-            await ctx.send("Could not connect to server")
-            return
+            raise Fail("Could not connect to Minecraft server")
 
         embed = discord.Embed(title=ip)
 
@@ -48,7 +47,7 @@ class Minecraft(commands.Cog):
             online = "None"
 
         embed.add_field(name=playerstr, value=online)
-        await ctx.send(embed=embed)
+        return embed
 
 def setup(bot):
     bot.add_cog(Minecraft(bot))
