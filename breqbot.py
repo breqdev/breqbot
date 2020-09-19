@@ -18,6 +18,7 @@ breqbot.load_extension("debug")
 breqbot.load_extension("inventory")
 breqbot.load_extension("quests")
 breqbot.load_extension("wear")
+breqbot.load_extension("minecraft")
 breqbot.load_extension("help_command")
 
 
