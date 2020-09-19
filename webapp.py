@@ -52,7 +52,10 @@ def user(guild_id, user_id):
     amounts = {Item.from_redis(redis_client, item): int(amount)
                for item, amount in inventory.items() if int(amount) > 0}
 
-    return render_template("user.html", server=guild_name, user=user_name, balance=balance, inventory=amounts.items())
+    wearing = [Item.from_redis(redis_client, uuid) for uuid in redis_client.smembers(f"wear:{guild_id}:{user_id}")]
+
+    return render_template("user.html", server=guild_name, user=user_name,
+                           balance=balance, inventory=amounts.items(), wearing=wearing)
 
 if __name__ == "__main__":
     app.run()

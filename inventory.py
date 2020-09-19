@@ -83,7 +83,7 @@ class Inventory(commands.Cog):
             await ctx.send("Item does not exist!")
             return
 
-        await ctx.send(f"{item.name}: {item.desc}")
+        await ctx.send(f"{item.name}: {item.desc} {'(wearable)' if item.wearable else ''}")
 
     @commands.command()
     @commands.check(config_only)
@@ -107,21 +107,36 @@ class Inventory(commands.Cog):
 
     @commands.command()
     @commands.check(config_only)
-    async def modify_item(self, ctx, item: str, desc: str):
+    async def modify_item(self, ctx, item: str, field: str, value: str):
         item = Item.from_name(self.redis, item)
-        item.desc = desc
+        if field == "desc":
+            item.desc = value
+        elif field == "wearable":
+            item.wearable = value
+        else:
+            await ctx.send("Invalid field!")
+            return
         item.to_redis(self.redis)
         await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.check(config_only)
-    async def create_item(self, ctx, item: str, desc: str):
+    async def create_item(self, ctx, item: str, desc: str, wearable: int = 0):
         if not Item.check_name(self.redis, item):
             await ctx.send("Name in use!")
             return
 
-        item = Item(item, desc)
+        item = Item(item, desc, wearable)
         item.to_redis(self.redis)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(config_only)
+    async def divine_gift(self, ctx, item: str, guild_id: int, user_id: int):
+        "Give a user an item on that server."
+        item = Item.from_name(self.redis, item)
+
+        self.redis.hincrby(f"inventory:{guild_id}:{user_id}", item.uuid)
         await ctx.message.add_reaction("✅")
 
 def setup(bot):

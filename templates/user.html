@@ -18,4 +18,18 @@
     </tr>
     {% endfor %}
 </table>
+<br>
+<h3>Wearing:</h3>
+<table>
+    <tr>
+        <th>Item</th>
+        <th>Description</th>
+    </tr>
+    {% for item in wearing %}
+    <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.desc }}</td>
+    </tr>
+    {% endfor %}
+</table>
 {% endblock %}

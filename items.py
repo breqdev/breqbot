@@ -1,13 +1,14 @@
 from uuid import uuid4
 
 class Item():
-    def __init__(self, name=None, desc=None, uuid=None):
+    def __init__(self, name=None, desc=None, wearable=0, *, uuid=None):
         self.uuid = uuid or str(uuid4())
         self.name = name
         self.desc = desc
+        self.wearable = wearable
 
     def __str__(self):
-        return f"{self.name}: {self.desc} ({self.uuid})"
+        return f"{self.name}: {self.desc} {'(wearable)' if int(self.wearable or 0) else ''} ({self.uuid})"
 
     @property
     def redis_key(self):
@@ -24,6 +25,7 @@ class Item():
 
         item.name = redis.hget(item.redis_key, "name")
         item.desc = redis.hget(item.redis_key, "desc")
+        item.wearable = redis.hget(item.redis_key, "wearable")
         return item
 
     @staticmethod
@@ -44,6 +46,7 @@ class Item():
 
         redis.hset(self.redis_key, "name", self.name)
         redis.hset(self.redis_key, "desc", self.desc)
+        redis.hset(self.redis_key, "wearable", self.wearable)
 
         redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
 
@@ -52,7 +55,6 @@ class Item():
         self.name = newname
         redis.hset(self.redis_key, "name", self.name)
         redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
-
 
     def delete(self, redis):
         redis.srem("items:list", self.uuid)
@@ -63,4 +65,5 @@ class Item():
     def dict(self):
         return {"uuid": self.uuid,
                 "name": self.name,
-                "desc": self.desc}
+                "desc": self.desc,
+                "wearable": self.wearable}
