@@ -20,6 +20,7 @@ breqbot.load_extension("cogs.quests")
 breqbot.load_extension("cogs.wear")
 breqbot.load_extension("cogs.minecraft")
 breqbot.load_extension("cogs.soundboard")
+breqbot.load_extension("cogs.things")
 breqbot.load_extension("cogs.help_command")
 
 
