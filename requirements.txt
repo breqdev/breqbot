@@ -5,3 +5,4 @@ flask
 redis
 mcstatus
 youtube_dl
+emoji

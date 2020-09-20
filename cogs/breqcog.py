@@ -10,6 +10,9 @@ class Fail(Exception):
         self.message = message
         self.debug = debug
 
+class NoReact:
+    pass
+
 def passfail(func):
     "Add error handling to function"
 
@@ -33,7 +36,7 @@ def passfail(func):
                 await ctx.send(embed=result)
             elif isinstance(result, str):
                 await ctx.send(result)
-            else:
+            elif not isinstance(result, NoReact):
                 await ctx.message.add_reaction("✅")
 
     return wrapper
