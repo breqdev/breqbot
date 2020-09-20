@@ -5,7 +5,7 @@ from flask import Flask, render_template
 
 import redis
 
-from items import Item
+from cogs.items import Item
 
 app = Flask(__name__)
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
