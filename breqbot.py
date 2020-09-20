@@ -80,11 +80,10 @@ async def on_command_error(ctx, exception):
         return # command might belong to a different bot
         #error_message = await ctx.send("Command not found!")
     else:
-        print(exception)
         error_message = await ctx.send(f"Error: {exception}")
         await ctx.message.add_reaction("⚠️")
         # await error_message.delete(delay=5)
-        return
+        raise exception
 
     await ctx.message.add_reaction("🚫")
     # await error_message.delete(delay=10)
