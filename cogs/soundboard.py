@@ -191,7 +191,7 @@ class Soundboard(Breqcog):
             raise Fail("Not connected to voice.")
 
         while self.clients[guild_id].is_playing():
-            asyncio.sleep(0.5)
+            await asyncio.sleep(0.5)
         player = await YTDLSource.from_url(id, loop=self.bot.loop, stream=True)
         self.clients[guild_id].play(player, after=lambda e: print(f"Player error: {e}") if e else None)
 
