@@ -200,9 +200,9 @@ class Soundboard(Breqcog):
     @passfail
     async def play(self, ctx, name: str):
         "Play a sound"
-        if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", emoji):
+        if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
             raise Fail("Sound not found")
-        sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{emoji}")
+        sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{name}")
 
         await self.play_sound(ctx.guild.id, sound["youtube-id"])
 
