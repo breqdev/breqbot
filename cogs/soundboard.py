@@ -140,30 +140,30 @@ class Soundboard(Breqcog):
     @commands.command()
     @commands.guild_only()
     @passfail
-    async def newsound(self, ctx, emoji: str, url: str):
+    async def newsound(self, ctx, name: str, url: str):
         "Add a new sound from YouTube url"
 
         id = self.extract_id(url)
         title = self.get_yt_title(id)
 
-        self.redis.hset(f"soundboard:sounds:{ctx.guild.id}:{emoji}",
+        self.redis.hset(f"soundboard:sounds:{ctx.guild.id}:{name}",
                         mapping={
-                            "emoji": emoji,
+                            "name": name,
                             "youtube-id": id,
                             "title": title
                         })
-        self.redis.sadd(f"soundboard:sounds:{ctx.guild.id}", emoji)
+        self.redis.sadd(f"soundboard:sounds:{ctx.guild.id}", name)
 
     @commands.command()
     @commands.guild_only()
     @passfail
-    async def delsound(self, ctx, emoji: str):
+    async def delsound(self, ctx, name: str):
         "Remove a sound"
-        if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", emoji):
+        if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
             raise Fail("Sound not found")
 
-        self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", emoji)
-        self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{emoji}")
+        self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", name)
+        self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{name}")
 
     @commands.command()
     @commands.guild_only()
@@ -172,16 +172,16 @@ class Soundboard(Breqcog):
         "List enabled sounds"
         embed = discord.Embed(title=f"Soundboard on {ctx.guild.name}")
 
-        emojis = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
+        sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
 
-        sounds = {emoji: self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{emoji}")
-                  for emoji in emojis}
+        sounds = {name: self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{name}")
+                  for name in sound_names}
 
         if sounds:
-            embed.description = "\n".join(f"{emoji}: {sound['title']} "
+            embed.description = "\n".join(f"{name}: {sound['title']} "
                                           + f"[({sound['youtube-id']})]"
                                           + f"(https://youtu.be/{sound['youtube-id']})"
-                                          for emoji, sound in sounds.items())
+                                          for name, sound in sounds.items())
         else:
             embed.description = f"The soundboard is currently empty. Try a `{self.bot.command_prefix}newsound` ?"
         return embed
