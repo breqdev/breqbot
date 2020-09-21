@@ -5,7 +5,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from .breqcog import Breqcog, passfail, Fail
+from .breqcog import *
 
 startup_timestamp = time.time()
 

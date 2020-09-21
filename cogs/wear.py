@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import Breqcog, passfail, Fail
+from .breqcog import *
 
 class Wear(Breqcog):
     "Wear the items in your inventory"

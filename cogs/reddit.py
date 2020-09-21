@@ -7,7 +7,7 @@ import praw
 
 from discord.ext import commands
 
-from .breqcog import Breqcog, passfail, Fail
+from .breqcog import *
 
 reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
                       client_secret=os.getenv("REDDIT_CLIENT_SECRET"),

@@ -5,14 +5,10 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import Breqcog, passfail, Fail
+from .breqcog import *
 
 class Inventory(Breqcog):
     "Store items from the shop"
-
-    async def config_only(ctx):
-        return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
-                and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
 
     @commands.command()
     @commands.guild_only()

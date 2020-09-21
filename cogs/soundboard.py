@@ -9,7 +9,7 @@ from discord.ext import commands
 import emoji
 import youtube_dl
 
-from .breqcog import Breqcog, passfail, Fail, NoReact
+from .breqcog import *
 
 ytdl_format_options = {
     'format': 'bestaudio/best',

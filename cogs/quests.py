@@ -6,21 +6,16 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import Breqcog, passfail, Fail
+from .breqcog import *
 
-class Quests(commands.Cog):
+class Quests(Breqcog):
     "Look for items!"
     def __init__(self, bot):
-        self.bot = bot
-        self.redis = bot.redis
+        super().__init__(bot)
 
         self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL"))
         self.GET_COINS_AMOUNT = int(os.getenv("GET_COINS_AMOUNT"))
         self.GET_ITEM_FREQUENCY = float(os.getenv("GET_ITEM_FREQUENCY"))
-
-    async def config_only(ctx):
-        return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
-                and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
 
     @commands.command()
     @commands.guild_only()

@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from mcstatus import MinecraftServer
 
-from .breqcog import Breqcog, passfail, Fail
+from .breqcog import *
 
 class Minecraft(Breqcog):
     "Tools for Minecraft servers"

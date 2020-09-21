@@ -7,7 +7,7 @@ class HelpCommand(commands.HelpCommand):
             'help': 'Shows help about the bot, a command, or a category'
         })
 
-    def get_command_signature(self, command):
+    def get_command_description(self, command):
         sig = f"• `{self.clean_prefix}{command.qualified_name}"
         if command.signature:
             sig += f" {command.signature}` "
@@ -19,6 +19,12 @@ class HelpCommand(commands.HelpCommand):
             brief = command.help.split('\n')[0]
             sig += f" | {brief}"
 
+        return sig
+
+    def get_command_signature(self, command):
+        sig = f"{self.clean_prefix}{command.qualified_name}"
+        if command.signature:
+            sig += f" {command.signature}"
         return sig
 
     async def send_bot_help(self, mapping):
@@ -34,7 +40,8 @@ class HelpCommand(commands.HelpCommand):
             else:
                 name = "**General:**"
 
-            value = "\n".join(self.get_command_signature(command) for command in commands_filtered)
+            value = " ".join(f"`{self.get_command_signature(command)}`"
+                             for command in commands_filtered)
             embed.add_field(name=name, value=value, inline=False)
 
         await self.context.channel.send(embed=embed)
@@ -46,7 +53,7 @@ class HelpCommand(commands.HelpCommand):
         commands_unfiltered = cog.get_commands()
         commands_filtered = await self.filter_commands(commands_unfiltered)
         for command in commands_filtered:
-            commands.append(self.get_command_signature(command))
+            commands.append(self.get_command_description(command))
 
         commands = "\n".join(commands)
         embed.add_field(name="Commands", value=commands, inline=False)
@@ -54,7 +61,7 @@ class HelpCommand(commands.HelpCommand):
         await self.context.channel.send(embed=embed)
 
     async def send_command_help(self, command):
-        signature = f"{self.clean_prefix}{command.qualified_name} {command.signature or ''}"
+        signature = self.get_command_signature(command)
         help = command.help or ""
 
         embed = discord.Embed(title=signature)

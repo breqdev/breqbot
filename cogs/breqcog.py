@@ -1,9 +1,12 @@
+import os
 import functools
 
 import discord
 from discord.ext import commands
 
 from .items import Item
+
+__all__ = ["Breqcog", "Fail", "NoReact", "passfail", "config_only"]
 
 class Fail(Exception):
     def __init__(self, message, debug=None):
@@ -40,6 +43,10 @@ def passfail(func):
                 await ctx.message.add_reaction("✅")
 
     return wrapper
+
+async def config_only(ctx):
+    return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
+            and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
 
 class Breqcog(commands.Cog):
     def __init__(self, bot):
