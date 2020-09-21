@@ -1,6 +1,7 @@
 import time
 import os
 import random
+import asyncio
 
 import discord
 from discord.ext import commands
@@ -17,12 +18,7 @@ class Quests(Breqcog):
         self.GET_COINS_AMOUNT = int(os.getenv("GET_COINS_AMOUNT"))
         self.GET_ITEM_FREQUENCY = float(os.getenv("GET_ITEM_FREQUENCY"))
 
-    @commands.command()
-    @commands.guild_only()
-    @passfail
-    async def free(self, ctx):
-        "Get free items and coins! Rate limited."
-
+    async def free_limit(self, ctx):
         # Calculate time to wait before collecting
         last_daily = float(self.redis.get(f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}") or 0)
         current_time = time.time()
@@ -34,6 +30,14 @@ class Quests(Breqcog):
 
         # Update latest collection
         self.redis.set(f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}", current_time)
+
+    @commands.command()
+    @commands.guild_only()
+    @passfail
+    async def free(self, ctx):
+        "Get free items and coins! Rate limited."
+
+        await self.free_limit(ctx)
 
         # Give free coins and items
         self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", self.GET_COINS_AMOUNT)
@@ -77,12 +81,72 @@ class Quests(Breqcog):
         item = self.get_item(item)
         self.redis.srem("quests:free:items", item.uuid)
 
+    QUEST_MESSAGES = [
+        {
+            "name": "Dig for treasure",
+            "prompt": "You have a shovel and some treasure maps. Choose a site to dig",
+            "choices": ["under the tree", "in the desert", "on the beach", "by the railroad"],
+            "large": "You found a treasure chest {choice}! Collect **{coins} coins.**",
+            "medium": "You found some gold {choice}! Collect **{coins} coins.**",
+            "small": "All you found was a shiny rock. Collect **{coins} coins.**"
+        },
+        {
+            "name": "Invest in cryptocurrency",
+            "prompt": "You won free cryptocurrency! Choose a coin",
+            "choices": ["DokiCoin", "CuffCoin", "DubstepCoin", "MemeCoin"],
+            "large": "{choice} went to the moon! Collect **{coins} coins.**",
+            "medium": "{choice} held steady. Collect **{coins} coins.**",
+            "small": "{choice} crashed. Collect **{coins} coins.**"
+        },
+    ]
+
     @commands.command()
     @commands.guild_only()
     @passfail
     async def quest(self, ctx):
         "Complete a quest!"
-        return "Sorry, this feature is not available yet."
+
+        await self.free_limit(ctx)
+
+        emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+        scenario = random.choice(self.QUEST_MESSAGES)
+
+        embed = discord.Embed(title=f"Quest: {scenario['name']}:")
+        embed.add_field(name=scenario["prompt"],
+                        value="\n".join(f"{emojis[idx]}: {choice}"
+                                        for idx, choice in enumerate(scenario["choices"])))
+        message = await ctx.send(embed=embed)
+        for emoji in emojis:
+            await message.add_reaction(emoji)
+
+        def check(reaction, user):
+            return reaction.message.id == message.id and user.id == ctx.author.id
+
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                return NoReact() # don't do anything
+            if reaction.emoji in emojis:
+                break
+            else:
+                await reaction.remove(user)
+
+        choice = scenario["choices"][emojis.index(reaction.emoji)]
+
+        result = random.choice(("large", "medium", "small"))
+
+        coin_multipliers = {"large": 2, "medium": 1, "small": 0.2}
+
+        coins = int(coin_multipliers[result] * self.GET_COINS_AMOUNT)
+        message = scenario[result].format(coins=coins, choice=choice)
+
+        self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", coins)
+
+        ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
+        message += f"\nWait {ftime} to play again!"
+        return message
+
 
 def setup(bot):
     bot.add_cog(Quests(bot))

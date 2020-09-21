@@ -234,7 +234,7 @@ class Soundboard(Breqcog):
                 await message.add_reaction(name)
 
         def check(reaction, user):
-            return user.id != self.bot.user.id
+            return reaction.message.id == message.id and user.id != self.bot.user.id
 
         while True:
             try:
