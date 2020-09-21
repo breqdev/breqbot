@@ -63,29 +63,25 @@ async def on_guild_leave(guild):
 
 @breqbot.event
 async def on_command_error(ctx, exception):
-    if isinstance(exception, commands.MissingRequiredArgument):
-        error_message = await ctx.send(f"Missing required argument: {exception.param}")
+    if isinstance(exception, commands.CheckFailure):
+        await ctx.message.add_reaction("🚫")
 
-    elif isinstance(exception, commands.ArgumentParsingError):
-        error_message = await ctx.send("Argument parsing error")
-
-    elif isinstance(exception, commands.BadArgument) or isinstance(exception, commands.BadUnionArgument):
-        error_message = await ctx.send("Bad argument")
-
-    elif isinstance(exception, commands.CheckFailure):
-        error_message = await ctx.send(exception)
+    elif isinstance(exception, commands.UserInputError):
+        embed = discord.Embed()
+        embed.title = "Usage:"
+        if ctx.command.signature:
+            embed.description = f"`{breqbot.command_prefix}{ctx.command.name} {ctx.command.signature}`"
+        else:
+            embed.description = f"`{breqbot.command_prefix}{ctx.command.name}`"
+        embed.set_footer(text=ctx.command.brief or ctx.command.help.split("\n")[0])
+        await ctx.send(embed=embed)
 
     elif isinstance(exception, commands.CommandNotFound):
         await ctx.message.add_reaction("🤔")
-        return # command might belong to a different bot
-        #error_message = await ctx.send("Command not found!")
     else:
         error_message = await ctx.send(f"Error: {exception}")
         await ctx.message.add_reaction("⚠️")
         # await error_message.delete(delay=5)
         raise exception
-
-    await ctx.message.add_reaction("🚫")
-    # await error_message.delete(delay=10)
 
 breqbot.run(os.getenv("DISCORD_TOKEN"))
