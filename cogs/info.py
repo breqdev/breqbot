@@ -74,6 +74,25 @@ class Info(Breqcog):
         time_str = f"{days_online} days, "+time.strftime("%T", time.gmtime(uptime))
         embed.add_field(name="Uptime", value=time_str)
 
+        guilds = self.redis.scard("guild:list")
+        embed.add_field(name="Servers", value=f"{guilds}")
+
+        return embed
+
+    @commands.command()
+    @commands.check(config_only)
+    @passfail
+    async def guilds_list(self, ctx):
+        "List guilds that the bot is in"
+
+        embed = discord.Embed(title="Breqbot is in...")
+
+        guilds = []
+        for guild_id in self.redis.smembers("guild:list"):
+            guilds.append((self.redis.hget(f"guild:{guild_id}", "name"),
+                          self.redis.scard(f"guild:member:{guild_id}")))
+
+        embed.description = "\n".join(f"{name}: {size}" for name, size in guilds)
         return embed
 
 
