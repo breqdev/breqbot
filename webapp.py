@@ -1,7 +1,7 @@
 import os
 import queue
 
-from flask import Flask, render_template
+from flask import Flask, render_template, abort
 
 import redis
 
@@ -14,9 +14,17 @@ redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=Tru
 def index():
     return render_template("index.html")
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
+
 @app.route("/server/<int:id>")
 def server(id):
-    guild_name = redis_client.get(f"guild:name:{id}")
+    website_enabled = int(redis_client.hget(f"guild:{id}", "website"))
+    if not website_enabled:
+        return abort(404)
+
+    guild_name = redis_client.hget(f"guild:{id}", "name")
     guild_members = redis_client.smembers(f"guild:member:{id}")
 
     balances = []
@@ -43,8 +51,16 @@ def server(id):
 
 @app.route("/user/<int:guild_id>/<int:user_id>")
 def user(guild_id, user_id):
-    guild_name = redis_client.get(f"guild:name:{guild_id}")
+    website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
+    if not website_enabled:
+        return abort(404)
+
+    guild_name = redis_client.hget(f"guild:{guild_id}", "name")
     user_name = redis_client.get(f"user:name:{user_id}")
+
+    if not user_name:
+        return abort(404)
+
     balance = int(redis_client.get(f"currency:balance:{guild_id}:{user_id}") or 0)
 
     inventory = redis_client.hgetall(f"inventory:{guild_id}:{user_id}")
@@ -58,4 +74,4 @@ def user(guild_id, user_id):
                            balance=balance, inventory=amounts.items(), wearing=wearing)
 
 if __name__ == "__main__":
-    app.run()
+    app.run("0.0.0.0")

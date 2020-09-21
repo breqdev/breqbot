@@ -11,14 +11,6 @@ from .breqcog import *
 class Currency(Breqcog):
     "Earn and spend Breqcoins!"
 
-    async def shopkeeper_only(ctx):
-        if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
-            return True
-        for role in ctx.author.roles:
-            if role.name == "Shopkeeper":
-                return True
-        return False
-
     @commands.command()
     @commands.guild_only()
     @passfail

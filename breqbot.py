@@ -31,7 +31,7 @@ async def on_ready():
 
     # Cache of guild ID -> name, guild member list, user ID -> name, etc
     for guild in breqbot.guilds:
-        breqbot.redis.set(f"guild:name:{guild.id}", guild.name)
+        breqbot.redis.hset(f"guild:{guild.id}", "name", guild.name)
 
         breqbot.redis.delete(f"guild:member:{guild.id}")
         breqbot.redis.sadd(f"guild:member:{guild.id}", *(member.id for member in guild.members))
@@ -50,7 +50,7 @@ async def on_member_leave(member):
 @breqbot.event
 async def on_guild_join(guild):
     breqbot.redis.sadd("guild:list", guild.id)
-    breqbot.redis.set(f"guild:name:{guild.id}", guild.name)
+    breqbot.redis.hset(f"guild:{guild.id}", "name", guild.name)
 
     breqbot.redis.delete(f"guild:member:{guild.id}")
     breqbot.redis.sadd(f"guild:member:{guild.id}", *(member.id for member in guild.members))
@@ -58,7 +58,7 @@ async def on_guild_join(guild):
 @breqbot.event
 async def on_guild_leave(guild):
     breqbot.redis.srem("guild:list", guild.id)
-    breqbot.redis.delete(f"guild:name:{guild.id}")
+    breqbot.redis.delete(f"guild:{guild.id}")
     breqbot.redis.delete(f"guild:member:{guild.id}")
 
 @breqbot.event

@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from .items import Item
 
-__all__ = ["Breqcog", "Fail", "NoReact", "passfail", "config_only"]
+__all__ = ["Breqcog", "Fail", "NoReact", "passfail", "config_only", "shopkeeper_only"]
 
 class Fail(Exception):
     def __init__(self, message, debug=None):
@@ -47,6 +47,14 @@ def passfail(func):
 async def config_only(ctx):
     return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
             and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
+
+async def shopkeeper_only(ctx):
+    if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
+        return True
+    for role in ctx.author.roles:
+        if role.name == "Shopkeeper":
+            return True
+    return False
 
 class Breqcog(commands.Cog):
     def __init__(self, bot):
