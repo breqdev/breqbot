@@ -14,7 +14,7 @@ class Wear(Breqcog):
     @passfail
     async def wear(self, ctx, item: str):
         "Wear an item"
-        self.get_item(item)
+        item = self.get_item(item)
 
         if not int(item.wearable):
             raise Fail("Item is not wearable!")

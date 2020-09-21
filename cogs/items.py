@@ -25,7 +25,7 @@ class Item():
 
         item.name = redis.hget(item.redis_key, "name")
         item.desc = redis.hget(item.redis_key, "desc")
-        item.wearable = redis.hget(item.redis_key, "wearable")
+        item.wearable = redis.hget(item.redis_key, "wearable") or "0"
         return item
 
     @staticmethod
