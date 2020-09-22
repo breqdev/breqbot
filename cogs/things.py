@@ -26,10 +26,10 @@ class Things(Breqcog):
         self.redis.publish(f"things:{thing}:{job_id}", message)
 
         message = None
-        while message is None or message["type"] != "response":
+        while message is None or json.loads(message["data"])["type"] != "response":
             message = pubsub.get_message(ignore_subscribe_messages=True, timeout=0)
             await asyncio.sleep(0.5)
-        return message
+        return json.loads(message["data"])["data"]
 
 
 

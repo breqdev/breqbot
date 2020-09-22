@@ -95,24 +95,13 @@ class ThingBackend():
             del self.clients[channel]
 
     def send(self, client, thing, data, job):
-        message = {"job": job, "data": data}
+        message = {"job": job,
+                   "thing": thing,
+                   "data": data}
         try:
             client.send(json.dumps(message))
         except Exception:
-            print("Send failed")
             return
-
-        response = json.loads(client.receive())
-        if response["job"] != job:
-            # TODO: prevent race condition
-            print("Warning: job UUID mismatch")
-
-        message = json.dumps({"type": "response",
-                              "data": response["data"]})
-
-        print(f"Publishing {message} to things:{thing}:{job}")
-        redis_client.publish(f"things:{thing}:{job}", message)
-
 
     def iter_data(self):
         for message in self.pubsub.listen():
@@ -127,9 +116,7 @@ class ThingBackend():
 
     def run(self):
         for thing, data, job in self.iter_data():
-            print(thing, data, job)
             if thing not in self.clients:
-                print("skipping")
                 continue
             for client in self.clients[thing]:
                 gevent.spawn(self.send, client, thing, data, job)
@@ -140,8 +127,8 @@ class ThingBackend():
 thing_backend = ThingBackend()
 thing_backend.start()
 
-@sockets.route("/things")
-def things(ws):
+@sockets.route("/things/requests")
+def things_requests(ws):
     channel = ws.receive()
     thing_backend.register(channel, ws)
 
@@ -149,6 +136,20 @@ def things(ws):
         gevent.sleep(0.1)
 
     thing_backend.unregister(channel, ws)
+
+@sockets.route("/things/responses")
+def things_responses(ws):
+    while not ws.closed:
+        gevent.sleep(0.1)
+        message = ws.receive()
+        if message:
+            response = json.loads(message)
+            job = response["job"]
+            thing = response["thing"]
+
+            message = json.dumps({"type": "response",
+                                  "data": response["data"]})
+            redis_client.publish(f"things:{thing}:{job}", message)
 
 if __name__ == "__main__":
     app.run("0.0.0.0")
