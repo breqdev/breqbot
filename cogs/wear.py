@@ -47,6 +47,7 @@ class Wear(Breqcog):
     @commands.guild_only()
     @passfail
     async def outfit(self, ctx, user: typing.Optional[discord.User]):
+        "List the items that a user is wearing"
         if user is None:
             user = ctx.author
 

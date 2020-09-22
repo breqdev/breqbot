@@ -16,6 +16,8 @@ breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=Tr
 breqbot.load_extension("cogs.info")
 breqbot.load_extension("cogs.reddit")
 breqbot.load_extension("cogs.minecraft")
+breqbot.load_extension("cogs.vex")
+breqbot.load_extension("cogs.comics")
 breqbot.load_extension("cogs.soundboard")
 breqbot.load_extension("cogs.things")
 
