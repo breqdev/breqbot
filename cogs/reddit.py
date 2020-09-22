@@ -4,7 +4,9 @@ import functools
 import asyncio
 
 import praw
+import prawcore
 
+import discord
 from discord.ext import commands
 
 from .breqcog import *
@@ -23,6 +25,11 @@ def run_in_executor(f):
 @run_in_executor
 def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
     sub = reddit.subreddit(sub_name)
+
+    try:
+        sub.id
+    except prawcore.Redirect:
+        raise Fail("Subreddit not found.")
 
     if nsfw is False and sub.over18:
         raise Fail("NSFW content is limited to NSFW channels only.")
@@ -50,7 +57,8 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
                 continue
         images.append(submission.url)
     else:
-        print("Ran out of posts!")
+        pass
+        # print("Ran out of posts!")
     if images:
         image = random.choice(images)
         return image
