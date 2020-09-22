@@ -24,7 +24,7 @@ def run_in_executor(f):
 def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
     sub = reddit.subreddit(sub_name)
 
-    if not nsfw and sub.over18:
+    if nsfw is False and sub.over18:
         raise Fail("NSFW content is limited to NSFW channels only.")
 
     frontpage = sub.top("month", limit=1000)
