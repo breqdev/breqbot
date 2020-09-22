@@ -11,7 +11,7 @@ from .breqcog import *
 class Portal(Breqcog):
     "Interface with real-world things"
 
-    @commands.command()
+    @commands.command(enabled=False)
     @passfail
     async def portal(self, ctx, portal: str, *, command: str = ""):
         "Send a command to a connected portal"
@@ -42,7 +42,7 @@ class Portal(Breqcog):
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
         return embed
 
-    @commands.command()
+    @commands.command(enabled=False)
     @passfail
     async def portals(self, ctx):
         "List connected portals"
