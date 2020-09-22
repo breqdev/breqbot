@@ -11,26 +11,27 @@ from .breqcog import *
 class Portal(Breqcog):
     "Interface with real-world things"
 
-    @commands.command(enabled=False)
+    @commands.command()
     @passfail
     async def portal(self, ctx, portal: str, *, command: str = ""):
         "Send a command to a connected portal"
-        job_id = uuid.uuid4()
+        job_id = str(uuid.uuid4())
 
         pubsub = self.redis.pubsub()
         pubsub.subscribe(f"portal:{portal}:{job_id}")
 
-        message = json.dumps({"type": "query",
+        message = json.dumps({"portal": portal,
+                              "job": job_id,
                               "data": command})
 
-        self.redis.publish(f"portal:{portal}:{job_id}", message)
+        self.redis.publish("portal:query", message)
 
         message = None
         while message is None or json.loads(message["data"])["type"] != "response":
             message = pubsub.get_message(ignore_subscribe_messages=True, timeout=0)
             await asyncio.sleep(0.5)
 
-        data = json.loads(message["data"])["data"]
+        data = json.loads(message["data"])
 
         embed = discord.Embed()
         if "title" in data:
@@ -42,7 +43,7 @@ class Portal(Breqcog):
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
         return embed
 
-    @commands.command(enabled=False)
+    @commands.command()
     @passfail
     async def portals(self, ctx):
         "List connected portals"
