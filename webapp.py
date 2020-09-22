@@ -1,13 +1,16 @@
 import os
+import json
 import queue
 
 from flask import Flask, render_template, abort
-
+from flask_sockets import Sockets
+import gevent
 import redis
 
 from cogs.items import Item
 
 app = Flask(__name__)
+sockets = Sockets(app)
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
 
 @app.route("/")
@@ -72,6 +75,80 @@ def user(guild_id, user_id):
 
     return render_template("user.html", server=guild_name, user=user_name,
                            balance=balance, inventory=amounts.items(), wearing=wearing)
+
+
+class ThingBackend():
+    def __init__(self):
+        self.clients = {}
+        self.pubsub = redis_client.pubsub()
+        self.pubsub.psubscribe("things:*")
+
+    def register(self, channel, client):
+        if channel not in self.clients:
+            self.clients[channel] = set()
+        self.clients[channel].add(client)
+
+    def unregister(self, channel, client):
+        self.clients[channel].remove(client)
+
+        if not self.clients[channel]:
+            del self.clients[channel]
+
+    def send(self, client, thing, data, job):
+        message = {"job": job, "data": data}
+        try:
+            client.send(json.dumps(message))
+        except Exception:
+            print("Send failed")
+            return
+
+        response = json.loads(client.receive())
+        if response["job"] != job:
+            # TODO: prevent race condition
+            print("Warning: job UUID mismatch")
+
+        message = json.dumps({"type": "response",
+                              "data": response["data"]})
+
+        print(f"Publishing {message} to things:{thing}:{job}")
+        redis_client.publish(f"things:{thing}:{job}", message)
+
+
+    def iter_data(self):
+        for message in self.pubsub.listen():
+            if message["type"] in ("pmessage", "message"):
+                channel = message.get("channel")
+                _, thing, job = channel.split(":")
+
+                data = message.get("data")
+                data = json.loads(data)
+                if data["type"] == "query":
+                    yield thing, data["data"], job
+
+    def run(self):
+        for thing, data, job in self.iter_data():
+            print(thing, data, job)
+            if thing not in self.clients:
+                print("skipping")
+                continue
+            for client in self.clients[thing]:
+                gevent.spawn(self.send, client, thing, data, job)
+
+    def start(self):
+        gevent.spawn(self.run)
+
+thing_backend = ThingBackend()
+thing_backend.start()
+
+@sockets.route("/things")
+def things(ws):
+    channel = ws.receive()
+    thing_backend.register(channel, ws)
+
+    while not ws.closed:
+        gevent.sleep(0.1)
+
+    thing_backend.unregister(channel, ws)
 
 if __name__ == "__main__":
     app.run("0.0.0.0")
