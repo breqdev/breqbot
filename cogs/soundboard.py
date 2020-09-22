@@ -239,6 +239,7 @@ class Soundboard(Breqcog):
         while True:
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=120, check=check)
+                await reaction.remove(user)
             except asyncio.TimeoutError:
                 return NoReact()
             else:
