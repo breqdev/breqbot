@@ -77,26 +77,34 @@ def user(guild_id, user_id):
                            balance=balance, inventory=amounts.items(), wearing=wearing)
 
 
-class ThingBackend():
+class PortalBackend():
     def __init__(self):
         self.clients = {}
         self.pubsub = redis_client.pubsub()
-        self.pubsub.psubscribe("things:*")
+        self.pubsub.psubscribe("portal:*")
 
-    def register(self, channel, client):
+    def register(self, portal, client):
+        channel = portal["id"]
         if channel not in self.clients:
             self.clients[channel] = set()
         self.clients[channel].add(client)
 
-    def unregister(self, channel, client):
+        redis_client.hset(f"portal:{channel}", mapping=portal)
+        redis_client.sadd("portal:list", channel)
+
+    def unregister(self, portal, client):
+        channel = portal["id"]
         self.clients[channel].remove(client)
 
         if not self.clients[channel]:
             del self.clients[channel]
 
-    def send(self, client, thing, data, job):
+        redis_client.srem("portal:list", channel)
+        redis_client.delete(f"portal:{channel}")
+
+    def send(self, client, portal, data, job):
         message = {"job": job,
-                   "thing": thing,
+                   "portal": portal,
                    "data": data}
         try:
             client.send(json.dumps(message))
@@ -107,49 +115,49 @@ class ThingBackend():
         for message in self.pubsub.listen():
             if message["type"] in ("pmessage", "message"):
                 channel = message.get("channel")
-                _, thing, job = channel.split(":")
+                _, portal, job = channel.split(":")
 
                 data = message.get("data")
                 data = json.loads(data)
                 if data["type"] == "query":
-                    yield thing, data["data"], job
+                    yield portal, data["data"], job
 
     def run(self):
-        for thing, data, job in self.iter_data():
-            if thing not in self.clients:
+        for portal, data, job in self.iter_data():
+            if portal not in self.clients:
                 continue
-            for client in self.clients[thing]:
-                gevent.spawn(self.send, client, thing, data, job)
+            for client in self.clients[portal]:
+                gevent.spawn(self.send, client, portal, data, job)
 
     def start(self):
         gevent.spawn(self.run)
 
-thing_backend = ThingBackend()
-thing_backend.start()
+portal_backend = PortalBackend()
+portal_backend.start()
 
-@sockets.route("/things/requests")
-def things_requests(ws):
-    channel = ws.receive()
-    thing_backend.register(channel, ws)
+@sockets.route("/portal/requests")
+def portal_requests(ws):
+    portal = json.loads(ws.receive())
+    portal_backend.register(portal, ws)
 
     while not ws.closed:
         gevent.sleep(0.1)
 
-    thing_backend.unregister(channel, ws)
+    portal_backend.unregister(portal, ws)
 
-@sockets.route("/things/responses")
-def things_responses(ws):
+@sockets.route("/portal/responses")
+def portal_responses(ws):
     while not ws.closed:
         gevent.sleep(0.1)
         message = ws.receive()
         if message:
             response = json.loads(message)
             job = response["job"]
-            thing = response["thing"]
+            portal = response["portal"]
 
             message = json.dumps({"type": "response",
                                   "data": response["data"]})
-            redis_client.publish(f"things:{thing}:{job}", message)
+            redis_client.publish(f"portal:{portal}:{job}", message)
 
 if __name__ == "__main__":
     app.run("0.0.0.0")

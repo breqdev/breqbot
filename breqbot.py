@@ -19,7 +19,7 @@ breqbot.load_extension("cogs.minecraft")
 breqbot.load_extension("cogs.vex")
 breqbot.load_extension("cogs.comics")
 breqbot.load_extension("cogs.soundboard")
-breqbot.load_extension("cogs.things")
+breqbot.load_extension("cogs.portal")
 
 # Economy/shop/outfits
 breqbot.load_extension("cogs.currency")
