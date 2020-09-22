@@ -32,7 +32,7 @@ class Comics(Breqcog):
                         episode_no = title.split(" ")[0]
 
                     if number == episode_no or number == "latest":
-                        return episode_no
+                        return episode_id
 
             raise Fail(f"Episode {number} not found")
 
