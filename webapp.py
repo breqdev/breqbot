@@ -4,7 +4,9 @@ import queue
 
 from flask import Flask, render_template, abort
 from flask_sockets import Sockets
+
 import gevent
+import geventwebsocket
 import redis
 
 from cogs.items import Item
@@ -76,7 +78,6 @@ def user(guild_id, user_id):
     return render_template("user.html", server=guild_name, user=user_name,
                            balance=balance, inventory=amounts.items(), wearing=wearing)
 
-
 class PortalBackend():
     def __init__(self):
         self.clients = {}
@@ -103,9 +104,12 @@ class PortalBackend():
         redis_client.delete(f"portal:{channel}")
 
     def send(self, client, portal, data, job):
-        message = {"job": job,
-                   "portal": portal,
-                   "data": data}
+        message = {
+            "type": "query",
+            "job": job,
+            "portal": portal,
+            "data": data
+        }
         try:
             client.send(json.dumps(message))
         except Exception:
@@ -141,7 +145,11 @@ def portal_requests(ws):
     portal_backend.register(portal, ws)
 
     while not ws.closed:
-        gevent.sleep(0.1)
+        gevent.sleep(0.5)
+        try:
+            ws.send(json.dumps({"type": "ping"}))
+        except geventwebsocket.exceptions.WebSocketError:
+            break
 
     portal_backend.unregister(portal, ws)
 

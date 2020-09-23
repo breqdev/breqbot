@@ -1,5 +1,6 @@
 import os
 import json
+import time
 
 import websocket
 
@@ -34,6 +35,12 @@ class Portal:
 
     def handle_request(self, message):
         message = json.loads(message)
+
+        if message["type"] == "ping":
+            return
+        elif message["type"] != "query":
+            return
+
         result = self.request_callback(message["data"])
 
         response = json.dumps({"job": message["job"],
@@ -55,6 +62,7 @@ portal = Portal("ws://localhost:8000", "echo", "Echo", "Demo portal by Breq")
 @portal.on_request()
 def on_request(data):
     print(data)
+    time.sleep(10)
     return {"title": data,
             "description": "Echo portal, made with <3 by breq!"}
 

@@ -1,5 +1,6 @@
 import uuid
 import json
+import time
 import asyncio
 
 import discord
@@ -11,7 +12,7 @@ from .breqcog import *
 class Portal(Breqcog):
     "Interface with real-world things"
 
-    @commands.command(enabled=False)
+    @commands.command()
     @passfail
     async def portal(self, ctx, portal: str, *, command: str = ""):
         "Send a command to a connected portal"
@@ -26,9 +27,12 @@ class Portal(Breqcog):
         self.redis.publish(f"portal:{portal}:{job_id}", message)
 
         message = None
+        ts = time.time()
         while message is None or json.loads(message["data"])["type"] != "response":
             message = pubsub.get_message(ignore_subscribe_messages=True, timeout=0)
-            await asyncio.sleep(0.5)
+            if time.time() - ts > 10:
+                raise Fail("Connection to Portal timed out")
+            await asyncio.sleep(0.2)
 
         data = json.loads(message["data"])["data"]
 
@@ -42,7 +46,7 @@ class Portal(Breqcog):
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
         return embed
 
-    @commands.command(enabled=False)
+    @commands.command()
     @passfail
     async def portals(self, ctx):
         "List connected portals"
