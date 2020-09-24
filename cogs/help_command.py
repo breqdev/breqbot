@@ -89,7 +89,8 @@ def setup(bot):
             await ctx.send(embed=embed)
 
         elif isinstance(exception, commands.CommandNotFound):
-            await ctx.message.add_reaction("🤔")
+            # await ctx.message.add_reaction("🤔")
+            pass
         else:
             error_message = await ctx.send(f"Error: {exception}")
             await ctx.message.add_reaction("⚠️")
