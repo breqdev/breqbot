@@ -15,7 +15,7 @@ class Inventory(BaseCog):
     @commands.guild_only()
     @passfail
     async def inventory(self, ctx, user: typing.Optional[discord.User]):
-        "List items in your current inventory"
+        "List items in your current inventory :dividers:"
         if user is None:
             user = ctx.author
 
@@ -39,7 +39,7 @@ class Inventory(BaseCog):
     @passfail
     async def give(self, ctx, user: discord.User, item: str,
                    amount: typing.Optional[int] = 1):
-        "Give an item to another user"
+        "Give an item to another user :incoming_envelope:"
         item = self.get_item(item)
         self.ensure_item(ctx, ctx.author, item, amount)
 
@@ -64,7 +64,7 @@ class Inventory(BaseCog):
     @commands.command()
     @passfail
     async def item(self, ctx, item: str):
-        "Get information about an item"
+        "Get information about an item :information_source:"
         item = self.get_item(item)
 
         return (f"{item.name}: {item.desc} "

@@ -14,7 +14,7 @@ class Wear(BaseCog):
     @commands.guild_only()
     @passfail
     async def wear(self, ctx, item: str):
-        "Wear an item"
+        "Wear an item :lab_coat:"
         item = self.get_item(item)
 
         if not int(item.wearable):
@@ -35,7 +35,7 @@ class Wear(BaseCog):
     @commands.guild_only()
     @passfail
     async def takeoff(self, ctx, item: str):
-        "Take off an item"
+        "Take off an item :x:"
         item = self.get_item(item)
 
         wearing = self.redis.sismember(
@@ -52,7 +52,7 @@ class Wear(BaseCog):
     @commands.guild_only()
     @passfail
     async def outfit(self, ctx, user: typing.Optional[discord.User]):
-        "List the items that a user is wearing"
+        "List the items that a user is wearing :lab_coat:"
         if user is None:
             user = ctx.author
 

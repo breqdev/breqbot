@@ -66,7 +66,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def join(self, ctx):
-        "Enter a voice channel"
+        "Enter a voice channel :loud_sound:"
         user = ctx.author
         voice_state = user.voice
 
@@ -85,7 +85,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def leave(self, ctx):
-        "Leave a voice channel"
+        "Leave a voice channel :mute:"
         if self.clients.get(ctx.guild.id) is None:
             raise Fail("Not connected to a channel!")
 
@@ -146,7 +146,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def newsound(self, ctx, name: str, url: str):
-        "Add a new sound from YouTube url"
+        "Add a new sound from YouTube url :new:"
 
         id = self.extract_id(url)
         title = self.get_yt_title(id)
@@ -163,7 +163,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def delsound(self, ctx, name: str):
-        "Remove a sound"
+        "Remove a sound :wastebasket:"
         if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
             raise Fail("Sound not found")
 
@@ -174,7 +174,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def listsounds(self, ctx):
-        "List enabled sounds"
+        "List enabled sounds :dividers:"
         embed = discord.Embed(title=f"Soundboard on {ctx.guild.name}")
 
         sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
@@ -208,7 +208,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def play(self, ctx, name: str):
-        "Play a sound"
+        "Play a sound :arrow_forward:"
         if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
             raise Fail("Sound not found")
         sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{name}")
@@ -219,7 +219,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     @passfail
     async def soundboard(self, ctx):
-        "React to the soundboard to play sounds"
+        "React to the soundboard to play sounds :control_knobs:"
 
         client = self.clients.get(ctx.guild.id)
         if client is None:

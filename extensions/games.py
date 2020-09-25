@@ -307,13 +307,13 @@ class Games(BaseCog):
     @commands.command()
     @passfail
     async def space(self, ctx):
-        "Game where you can walk around"
+        "Game where you can walk around :space_invader:"
         await self.play(ctx, SpaceGame)
 
     @commands.command(name="2048")
     @passfail
     async def game2048(self, ctx):
-        "Play a version of the classic 2048 game"
+        "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
         await self.play(ctx, The2048Game)
 
 def setup(bot):

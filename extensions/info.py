@@ -18,8 +18,7 @@ class Info(BaseCog):
     @commands.command()
     @passfail
     async def info(self, ctx):
-        """Come join the bot testing server to suggest features and discuss
-        Breqbot!"""
+        ":information_source: Show info about Breqbot and invite links! :incoming_envelope:"
 
         embed = discord.Embed(title="Hi, I'm Breqbot! Beep boop :robot:")
 
@@ -46,7 +45,7 @@ class Info(BaseCog):
     @commands.command()
     @passfail
     async def stats(self, ctx):
-        "Stats for nerds"
+        "Stats for nerds :robot: about the running Breqbot instance"
 
         embed = discord.Embed(title="`Stats for nerds`")
 
@@ -97,6 +96,7 @@ class Info(BaseCog):
     @commands.command()
     @passfail
     async def awsnap(self, ctx):
+        "Intentionally crash the bot :skull: in order to test its error handling"
         raise ValueError("Test Exception")
 
 

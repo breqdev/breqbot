@@ -48,7 +48,7 @@ class Quests(BaseCog):
     @commands.guild_only()
     @passfail
     async def free(self, ctx):
-        "Get free items and coins! Rate limited."
+        "Get free items and coins! Rate limited. :coin:"
 
         await self.free_limit(ctx)
 
@@ -80,7 +80,7 @@ class Quests(BaseCog):
     @commands.check(config_only)
     @passfail
     async def list_free(self, ctx):
-        "List available free items"
+        "List available free items :dividers:"
         items = [Item.from_redis(self.redis, uuid)
                  for uuid in self.redis.smembers("quests:free:items")]
         return "Items:\n"+"\n".join(item.name for item in items)
@@ -89,7 +89,7 @@ class Quests(BaseCog):
     @commands.check(config_only)
     @passfail
     async def add_free(self, ctx, item: str):
-        "Add a new free item"
+        "Add a new free item :new:"
         item = self.get_item(item)
         self.redis.sadd("quests:free:items", item.uuid)
 
@@ -97,7 +97,7 @@ class Quests(BaseCog):
     @commands.check(config_only)
     @passfail
     async def remove_free(self, ctx, item: str):
-        "Remove a free item"
+        "Remove a free item :no_entry_sign:"
         item = self.get_item(item)
         self.redis.srem("quests:free:items", item.uuid)
 
@@ -105,7 +105,7 @@ class Quests(BaseCog):
     @commands.guild_only()
     @passfail
     async def quest(self, ctx):
-        "Complete a quest!"
+        "Complete a quest :medal:"
 
         await self.free_limit(ctx)
 

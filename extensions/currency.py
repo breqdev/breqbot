@@ -14,7 +14,7 @@ class Currency(BaseCog):
     @commands.guild_only()
     @passfail
     async def balance(self, ctx, user: typing.Optional[discord.User]):
-        "Check your current coin balance"
+        "Check your current coin balance :moneybag:"
         if user is None:
             user = ctx.author
         coins = self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}")
@@ -27,7 +27,7 @@ class Currency(BaseCog):
     @commands.guild_only()
     @passfail
     async def givecoins(self, ctx, user: discord.User, amount: int):
-        "Give coins to another user"
+        "Give coins to another user :incoming_envelope:"
         balance = self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
 
@@ -43,7 +43,7 @@ class Currency(BaseCog):
     @commands.guild_only()
     @passfail
     async def shop(self, ctx):
-        "List items in the shop!"
+        "List items in the shop :shopping_bags:"
 
         item_uuids = self.redis.smembers(f"shop:items:{ctx.guild.id}")
         shop_items = {uuid: Item.from_redis(self.redis, uuid)
@@ -69,7 +69,7 @@ class Currency(BaseCog):
     @commands.guild_only()
     @passfail
     async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
-        "Buy an item from the shop"
+        "Buy an item from the shop :coin:"
 
         item = self.get_item(item)
 
@@ -93,7 +93,7 @@ class Currency(BaseCog):
     @commands.check(shopkeeper_only)
     @passfail
     async def list(self, ctx, item: str, price: int):
-        "List an item in the shop"
+        "List an item in the shop :new:"
         item = self.get_item(item)
         self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
@@ -102,7 +102,7 @@ class Currency(BaseCog):
     @commands.check(shopkeeper_only)
     @passfail
     async def delist(self, ctx, item: str):
-        "Remove an item from the shop"
+        "Remove an item from the shop :no_entry:"
         item = self.get_item(item)
         self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")

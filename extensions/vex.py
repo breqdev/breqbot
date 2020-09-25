@@ -13,8 +13,8 @@ class Vex(BaseCog):
 
     @commands.command()
     @passfail
-    async def teaminfo(self, ctx, team: str):
-        "Get info about a Vex team"
+    async def vex(self, ctx, team: str):
+        ":mag: :robot: Get info about a Vex team :video_game:"
 
         async with ctx.channel.typing():
             team = requests.get("https://api.vexdb.io/v1/get_teams",

@@ -13,7 +13,7 @@ class Website(BaseCog):
     @commands.command()
     @passfail
     async def website(self, ctx, user: typing.Optional[discord.User]):
-        "Link to the bot's website!"
+        "Link to the bot's website :computer:"
         embed = discord.Embed()
 
         if self.redis.hget(f"guild:{ctx.guild.id}", "website"):
@@ -38,7 +38,7 @@ class Website(BaseCog):
     @commands.check(shopkeeper_only)
     @passfail
     async def enwebsite(self, ctx, state: int):
-        "Enable or disable the bot's website for this guild and its members."
+        "Enable or disable the bot's website for this guild and its members :mobile_phone_off:"
         self.redis.hset(f"guild:{ctx.guild.id}", "website", state)
 
 

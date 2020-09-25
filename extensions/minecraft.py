@@ -12,7 +12,7 @@ class Minecraft(BaseCog):
     @commands.command()
     @passfail
     async def mc(self, ctx, ip: str):
-        "Look up information about a Minecraft server"
+        ":mag: :desktop: Look up information about a Minecraft server :video_game:"
         try:
             server = MinecraftServer.lookup(ip)
             status = server.status().raw

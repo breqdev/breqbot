@@ -87,7 +87,7 @@ class Comics(BaseCog):
     @commands.command()
     @passfail
     async def animegirl(self, ctx, number: str = "latest"):
-        "View a post from 'I Want To Be A Cute Anime Girl'!"
+        "View a post from 'I Want To Be A Cute Anime Girl' :transgender_flag:"
 
         async with ctx.channel.typing():
             caption, files = await fetch_animegirl(number)
@@ -97,7 +97,7 @@ class Comics(BaseCog):
     @commands.command()
     @passfail
     async def xkcd(self, ctx, number: str = "latest"):
-        "View a comic from XKCD!"
+        "View a comic from XKCD :nerd:"
 
         comic = await fetch_xkcd(number)
 
