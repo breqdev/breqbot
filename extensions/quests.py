@@ -7,9 +7,9 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import *
+from .utils import *
 
-class Quests(Breqcog):
+class Quests(BaseCog):
     "Look for items!"
     def __init__(self, bot):
         super().__init__(bot)
@@ -126,7 +126,7 @@ class Quests(Breqcog):
             try:
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                return NoReact() # don't do anything
+                return NoReact # don't do anything
             if reaction.emoji in emojis:
                 break
             else:

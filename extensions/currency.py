@@ -6,9 +6,9 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import *
+from .utils import *
 
-class Currency(Breqcog):
+class Currency(BaseCog):
     "Earn and spend Breqcoins!"
 
     @commands.command()

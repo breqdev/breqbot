@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from .items import Item
 
-__all__ = ["Breqcog", "Fail", "NoReact", "passfail", "config_only", "shopkeeper_only", "run_in_executor"]
+__all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only", "shopkeeper_only", "run_in_executor"]
 
 def run_in_executor(f):
     @functools.wraps(f)
@@ -21,8 +21,9 @@ class Fail(Exception):
         self.message = message
         self.debug = debug
 
-class NoReact:
+class NoReactType:
     pass
+NoReact = NoReactType()
 
 def passfail(func):
     "Add error handling to function"
@@ -47,7 +48,7 @@ def passfail(func):
                 await ctx.send(embed=result)
             elif isinstance(result, str):
                 await ctx.send(result)
-            elif not isinstance(result, NoReact):
+            elif not isinstance(result, NoReactType):
                 await ctx.message.add_reaction("✅")
 
     return wrapper
@@ -64,7 +65,7 @@ async def shopkeeper_only(ctx):
             return True
     return False
 
-class Breqcog(commands.Cog):
+class BaseCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis

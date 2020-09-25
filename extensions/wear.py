@@ -4,9 +4,9 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import *
+from .utils import *
 
-class Wear(Breqcog):
+class Wear(BaseCog):
     "Wear the items in your inventory"
 
     @commands.command()

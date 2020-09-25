@@ -4,9 +4,9 @@ import typing
 import discord
 from discord.ext import commands
 
-from .breqcog import *
+from .utils import *
 
-class Website(Breqcog):
+class Website(BaseCog):
     "Information about Breqbot's accompanying website"
 
     @commands.command()

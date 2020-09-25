@@ -3,9 +3,9 @@ from discord.ext import commands
 
 from mcstatus import MinecraftServer
 
-from .breqcog import *
+from .utils import *
 
-class Minecraft(Breqcog):
+class Minecraft(BaseCog):
     "Tools for Minecraft servers"
 
     @commands.command()

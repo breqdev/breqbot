@@ -4,11 +4,11 @@ import time
 import discord
 from discord.ext import commands
 
-from .breqcog import *
+from .utils import *
 
 startup_timestamp = time.time()
 
-class Info(Breqcog):
+class Info(BaseCog):
     "Information and debugging tools"
 
     @commands.command()

@@ -8,7 +8,7 @@ import bs4
 import discord
 from discord.ext import commands
 
-from .breqcog import *
+from .utils import *
 
 @run_in_executor
 def fetch_animegirl(number):
@@ -69,7 +69,7 @@ def fetch_xkcd(number):
         raise Fail(f"Comic {number} not found!")
     return comic
 
-class Comics(Breqcog):
+class Comics(BaseCog):
     "View some cool comics!"
 
 
@@ -81,7 +81,7 @@ class Comics(Breqcog):
         async with ctx.channel.typing():
             caption, files = await fetch_animegirl(number)
         await ctx.send(content=caption, files=files)
-        return NoReact()
+        return NoReact
 
     @commands.command()
     @passfail

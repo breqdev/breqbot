@@ -5,9 +5,9 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import *
+from .utils import *
 
-class Inventory(Breqcog):
+class Inventory(BaseCog):
     "Store items from the shop"
 
     @commands.command()

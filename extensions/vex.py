@@ -3,9 +3,9 @@ import requests
 import discord
 from discord.ext import commands
 
-from .breqcog import *
+from .utils import *
 
-class Vex(Breqcog):
+class Vex(BaseCog):
     "Information about the VEX Robotics Competition"
 
     SEASON = "Tower Takeover"

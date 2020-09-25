@@ -7,7 +7,7 @@ import prawcore
 import discord
 from discord.ext import commands
 
-from .breqcog import *
+from .utils import *
 
 reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
                       client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
@@ -57,7 +57,7 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
         return "No images found!"
 
 
-class Reddit(Breqcog):
+class Reddit(BaseCog):
     "Get memes and other posts from Reddit"
     @commands.command()
     @passfail

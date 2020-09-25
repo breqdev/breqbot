@@ -7,9 +7,9 @@ import discord
 from discord.ext import commands
 
 from .items import Item
-from .breqcog import *
+from .utils import *
 
-class Portal(Breqcog):
+class Portal(BaseCog):
     "Interface with real-world things"
 
     @commands.command()

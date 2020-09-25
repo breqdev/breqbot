@@ -9,7 +9,7 @@ from discord.ext import commands
 import emoji
 import youtube_dl
 
-from .breqcog import *
+from .utils import *
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -52,7 +52,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
 
-class Soundboard(Breqcog):
+class Soundboard(BaseCog):
     "Play sounds in the voice channel!"
     def __init__(self, bot):
         super().__init__(bot)
@@ -241,7 +241,7 @@ class Soundboard(Breqcog):
                 reaction, user = await self.bot.wait_for("reaction_add", timeout=120, check=check)
                 await reaction.remove(user)
             except asyncio.TimeoutError:
-                return NoReact()
+                return NoReact
             else:
                 if self.clients.get(ctx.guild.id) and self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", reaction.emoji):
                     sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{reaction.emoji}")
