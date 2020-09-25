@@ -15,6 +15,7 @@ class SpaceGame(Game):
     def __init__(self, ctx):
         self.ctx = ctx
         self.message = None
+        self.running = True
 
         self.field = [
             ["🟧", "🟧", "🟧", "🟧", "🟧", "🟧", "🟧", "🟧"],
@@ -93,11 +94,15 @@ class SpaceGame(Game):
     async def timeout(self):
         await self.message.clear_reactions()
 
+    async def game_over(self):
+        await self.message.clear_reactions()
+
 
 class The2048Game(Game):
     def __init__(self, ctx):
         self.ctx = ctx
         self.message = None
+        self.running = True
 
         self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
         self.moves = ["⬆️", "➡️", "⬇️", "⬅️"]
@@ -260,11 +265,11 @@ class The2048Game(Game):
 
         if not self.winnable:
             await self.game_over()
-            raise Fail("Game Over")
+            self.running = False
 
         if self.won:
             await self.show_win()
-            raise Fail("You Win!")
+            self.running = False
 
     async def draw(self):
         text = "\n".join("".join(row) for row in self.grid)
@@ -303,18 +308,20 @@ class Games(BaseCog):
                 await game.move(user, reaction.emoji)
                 await reaction.remove(user)
                 await game.draw()
+                if not game.running:
+                    return NoReact
 
     @commands.command()
     @passfail
     async def space(self, ctx):
         "Game where you can walk around :space_invader:"
-        await self.play(ctx, SpaceGame)
+        return await self.play(ctx, SpaceGame)
 
     @commands.command(name="2048")
     @passfail
     async def game2048(self, ctx):
         "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
-        await self.play(ctx, The2048Game)
+        return await self.play(ctx, The2048Game)
 
 def setup(bot):
     bot.add_cog(Games(bot))
