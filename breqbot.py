@@ -1,5 +1,4 @@
 import os
-import typing
 
 import redis
 import discord
@@ -8,9 +7,14 @@ from discord.ext import commands
 prefix = os.getenv("BOT_PREFIX") or ";"
 
 activity = discord.Game(f"{prefix}help | breq.dev")
-breqbot = commands.Bot(prefix, description="Hi, I'm Breqbot! Beep boop :robot:", activity=activity)
+breqbot = commands.Bot(
+    prefix,
+    description="Hi, I'm Breqbot! Beep boop :robot:",
+    activity=activity
+)
 
-breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
+                                     decode_responses=True)
 
 # General
 breqbot.load_extension("extensions.info")

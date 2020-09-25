@@ -1,5 +1,3 @@
-import os
-import time
 import typing
 
 import discord
@@ -7,6 +5,7 @@ from discord.ext import commands
 
 from .items import Item
 from .utils import *
+
 
 class Currency(BaseCog):
     "Earn and spend Breqcoins!"
@@ -29,13 +28,15 @@ class Currency(BaseCog):
     @passfail
     async def givecoins(self, ctx, user: discord.User, amount: int):
         "Give coins to another user"
-        balance = self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
+        balance = self.redis.get(
+            f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
 
         if int(balance) < amount:
             raise Fail("Not enough coins!")
             return
 
-        self.redis.decr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
+        self.redis.decr(
+            f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
         self.redis.incr(f"currency:balance:{ctx.guild.id}:{user.id}", amount)
 
     @commands.command()
@@ -45,17 +46,20 @@ class Currency(BaseCog):
         "List items in the shop!"
 
         item_uuids = self.redis.smembers(f"shop:items:{ctx.guild.id}")
-        shop_items = {uuid: Item.from_redis(self.redis, uuid) for uuid in item_uuids}
+        shop_items = {uuid: Item.from_redis(self.redis, uuid)
+                      for uuid in item_uuids}
         prices = {}
 
         for item_uuid in item_uuids:
-            prices[item_uuid] = self.redis.get(f"shop:prices:{ctx.guild.id}:{item_uuid}")
+            prices[item_uuid] = self.redis.get(
+                f"shop:prices:{ctx.guild.id}:{item_uuid}")
 
         embed = discord.Embed(title=f"Items for sale on {ctx.guild.name}")
 
         if prices:
-            embed.description = "\n".join(f"{shop_items[uuid].name}: {prices[uuid]} coins"
-                                          for uuid in shop_items.keys())
+            embed.description = "\n".join(
+                f"{shop_items[uuid].name}: {prices[uuid]} coins"
+                for uuid in shop_items.keys())
         else:
             embed.description = "The shop is empty for now."
 
@@ -74,13 +78,16 @@ class Currency(BaseCog):
             raise Fail("Item is not for sale!")
 
         price = int(price_ea) * amount
-        balance = int(self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
+        balance = int(self.redis.get(
+            f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
             raise Fail("Not enough coins!")
 
-        self.redis.decr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
-        self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
+        self.redis.decr(
+            f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
+        self.redis.hincrby(
+            f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
 
     @commands.command()
     @commands.check(shopkeeper_only)
@@ -99,6 +106,7 @@ class Currency(BaseCog):
         item = self.get_item(item)
         self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
+
 
 def setup(bot):
     bot.add_cog(Currency(bot))

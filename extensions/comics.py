@@ -10,12 +10,15 @@ from discord.ext import commands
 
 from .utils import *
 
+
 @run_in_executor
 def fetch_animegirl(number):
 
     def get_id(number):
         for pageno in range(1, 13):
-            page = requests.get(f"https://www.webtoons.com/en/challenge/i-want-to-be-a-cute-anime-girl/list?title_no=349416&page={pageno}")
+            page = requests.get("https://www.webtoons.com/en/challenge"
+                                "/i-want-to-be-a-cute-anime-girl"
+                                f"/list?title_no=349416&page={pageno}")
             soup = bs4.BeautifulSoup(page.content, "html.parser")
 
             episodes = soup.find(id="_listUl")
@@ -38,19 +41,27 @@ def fetch_animegirl(number):
 
     title, episode_id = get_id(number)
 
-    page = requests.get(f"https://www.webtoons.com/en/challenge/i-want-to-be-a-cute-anime-girl/image-change/viewer?title_no=349416&episode_no={episode_id}")
+    page = requests.get("https://www.webtoons.com/en/challenge"
+                        "/i-want-to-be-a-cute-anime-girl/image-change/"
+                        f"viewer?title_no=349416&episode_no={episode_id}")
     soup = bs4.BeautifulSoup(page.content, "html.parser")
 
     files = []
 
     images = soup.find(id="_imageList")
     for idx, image in enumerate(images.find_all("img")):
-        image_file = requests.get(image.attrs["data-url"], headers={"Referer": "http://www.webtoons.com"}).content
-        image_file = discord.File(io.BytesIO(image_file), filename=f"{idx}.jpg")
+        image_file = requests.get(
+            image.attrs["data-url"],
+            headers={"Referer": "http://www.webtoons.com"}
+        ).content
+
+        image_file = discord.File(
+            io.BytesIO(image_file), filename=f"{idx}.jpg")
         files.append(image_file)
 
     caption = f"**{title}** | *I Want To Be a Cute Anime Girl!*"
     return caption, files
+
 
 @run_in_executor
 def fetch_xkcd(number):
@@ -59,7 +70,7 @@ def fetch_xkcd(number):
         url = f"https://xkcd.com/{random.randint(1, max_no)}/info.0.json"
 
     elif number == "latest":
-        url = f"https://xkcd.com/info.0.json"
+        url = "https://xkcd.com/info.0.json"
     else:
         url = f"https://xkcd.com/{number}/info.0.json"
 
@@ -69,9 +80,9 @@ def fetch_xkcd(number):
         raise Fail(f"Comic {number} not found!")
     return comic
 
+
 class Comics(BaseCog):
     "View some cool comics!"
-
 
     @commands.command()
     @passfail
@@ -96,6 +107,7 @@ class Comics(BaseCog):
         embed.set_footer(text=comic["alt"])
 
         return embed
+
 
 def setup(bot):
     bot.add_cog(Comics(bot))

@@ -7,6 +7,7 @@ from discord.ext import commands
 from .items import Item
 from .utils import *
 
+
 class Inventory(BaseCog):
     "Store items from the shop"
 
@@ -24,7 +25,8 @@ class Inventory(BaseCog):
         amounts = {Item.from_redis(self.redis, item): int(amount)
                    for item, amount in inventory.items() if int(amount) > 0}
 
-        balance = self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or 0
+        balance = (
+            self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or 0)
 
         embed.description = (f"*Breqcoins: {balance}*\n"
                              + "\n".join(f"{item.name}: **{amount}**"
@@ -35,13 +37,16 @@ class Inventory(BaseCog):
     @commands.command()
     @commands.guild_only()
     @passfail
-    async def give(self, ctx, user: discord.User, item: str, amount: typing.Optional[int] = 1):
+    async def give(self, ctx, user: discord.User, item: str,
+                   amount: typing.Optional[int] = 1):
         "Give an item to another user"
         item = self.get_item(item)
         self.ensure_item(ctx, ctx.author, item, amount)
 
-        self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -amount)
-        self.redis.hincrby(f"inventory:{ctx.guild.id}:{user.id}", item.uuid, amount)
+        self.redis.hincrby(
+            f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -amount)
+        self.redis.hincrby(
+            f"inventory:{ctx.guild.id}:{user.id}", item.uuid, amount)
 
     @commands.command()
     @commands.guild_only()
@@ -51,7 +56,8 @@ class Inventory(BaseCog):
         item = self.get_item(item)
         self.ensure_item(ctx, ctx.author, item)
 
-        # self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
+        # self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}",
+        #                    item.uuid, -1)
 
         return f"You used {item.name}. It did nothing!"
 
@@ -61,14 +67,16 @@ class Inventory(BaseCog):
         "Get information about an item"
         item = self.get_item(item)
 
-        return f"{item.name}: {item.desc} {'(wearable)' if item.wearable else ''}"
+        return (f"{item.name}: {item.desc} "
+                f"{'(wearable)' if item.wearable else ''}")
 
     @commands.command()
     @commands.check(config_only)
     @passfail
     async def list_items(self, ctx):
-        return "Items:\n"+"\n".join(str(Item.from_redis(self.redis, uuid))
-                                    for uuid in self.redis.smembers("items:list"))
+        return "Items:\n"+"\n".join(
+            str(Item.from_redis(self.redis, uuid))
+            for uuid in self.redis.smembers("items:list"))
 
     @commands.command()
     @commands.check(config_only)
@@ -114,6 +122,7 @@ class Inventory(BaseCog):
         "Give a user an item on that server."
         item = Item.from_name(self.redis, item)
         self.redis.hincrby(f"inventory:{guild_id}:{user_id}", item.uuid)
+
 
 def setup(bot):
     bot.add_cog(Inventory(bot))

@@ -10,8 +10,9 @@ from discord.ext import commands
 from .utils import *
 
 reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
-                      client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-                      user_agent="Breqbot! https://breq.dev/")
+                     client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+                     user_agent="Breqbot! https://breq.dev/")
+
 
 @run_in_executor
 def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
@@ -62,12 +63,13 @@ class Reddit(BaseCog):
     @commands.command()
     @passfail
     async def doki(self, ctx):
-        "picture of doki from ddlc! also try `doki fun` or ||`doki nsfw` :smirk:||"
+        """picture of doki from ddlc!
+        also try `doki fun` or ||`doki nsfw` :smirk:||"""
         async with ctx.channel.typing():
-            image = await get_posts("DDLC", spoiler=None,
-                                    nsfw=("nsfw" in ctx.message.content),
-                                    flair=(["Fun"] if "fun" in ctx.message.content
-                                           else ["Fanart", "Media"]))
+            image = await get_posts(
+                "DDLC", spoiler=None, nsfw=("nsfw" in ctx.message.content),
+                flair=(["Fun"] if "fun" in ctx.message.content
+                       else ["Fanart", "Media"]))
         return image
 
     async def default(self, ctx, subreddit):
@@ -122,9 +124,10 @@ class Reddit(BaseCog):
     async def reddit(self, ctx, subreddit: str):
         "post from a subreddit of your choice!"
         async with ctx.channel.typing():
-            image = await get_posts(subreddit,
-                                    nsfw=(None if ctx.channel.is_nsfw() else False))
+            image = await get_posts(
+                subreddit, nsfw=(None if ctx.channel.is_nsfw() else False))
         return image
+
 
 def setup(bot):
     bot.add_cog(Reddit(bot))

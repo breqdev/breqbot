@@ -1,6 +1,3 @@
-import discord
-from discord.ext import commands
-
 def setup(bot):
     @bot.event
     async def on_ready():
@@ -12,7 +9,8 @@ def setup(bot):
             bot.redis.hset(f"guild:{guild.id}", "name", guild.name)
 
             bot.redis.delete(f"guild:member:{guild.id}")
-            bot.redis.sadd(f"guild:member:{guild.id}", *(member.id for member in guild.members))
+            bot.redis.sadd(f"guild:member:{guild.id}",
+                           *(member.id for member in guild.members))
 
         for member in bot.get_all_members():
             bot.redis.set(f"user:name:{member.id}", member.name)
@@ -31,7 +29,8 @@ def setup(bot):
         bot.redis.hset(f"guild:{guild.id}", "name", guild.name)
 
         bot.redis.delete(f"guild:member:{guild.id}")
-        bot.redis.sadd(f"guild:member:{guild.id}", *(member.id for member in guild.members))
+        bot.redis.sadd(f"guild:member:{guild.id}",
+                       *(member.id for member in guild.members))
 
     @bot.event
     async def on_guild_leave(guild):

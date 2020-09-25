@@ -6,15 +6,16 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .items import Item
 from .utils import *
+
 
 class Portal(BaseCog):
     "Interface with real-world things"
 
     @commands.command()
     @passfail
-    async def makeportal(self, ctx, id: str, name: str = None, desc: str = None):
+    async def makeportal(self, ctx, id: str, name: str = None,
+                         desc: str = None):
         "Register a new Portal"
 
         name = name or id
@@ -41,7 +42,8 @@ class Portal(BaseCog):
 
         embed.add_field(name=name, value=desc, inline=False)
         embed.add_field(name="Portal ID", value=id, inline=False)
-        embed.add_field(name="Portal Token (keep this secret!)", value=f"||{token}||", inline=False)
+        embed.add_field(name="Portal Token (keep this secret!)",
+                        value=f"||{token}||", inline=False)
 
         await ctx.author.send(embed=embed)
 
@@ -63,11 +65,11 @@ class Portal(BaseCog):
     @staticmethod
     def portal_status_to_emoji(status):
         if status == 0:
-            return ":x:" # Disconnected
+            return ":x:"  # Disconnected
         elif status == 1:
-            return ":orange_circle:" # Connected, Not Ready
+            return ":orange_circle:"  # Connected, Not Ready
         elif status == 2:
-            return ":green_circle:" # Connected, Ready
+            return ":green_circle:"  # Connected, Ready
 
     @commands.command()
     @passfail
@@ -87,8 +89,10 @@ class Portal(BaseCog):
             }
             portals.append(portal)
 
-        embed.description = "\n".join(f"{self.portal_status_to_emoji(portal['status'])} `{portal['id']}`: {portal['name']}, {portal['desc']}"
-                                      for portal in portals)
+        embed.description = "\n".join(
+            f"{self.portal_status_to_emoji(portal['status'])} "
+            f"`{portal['id']}`: {portal['name']}, {portal['desc']}"
+            for portal in portals)
         return embed
 
     @commands.command()
@@ -100,17 +104,21 @@ class Portal(BaseCog):
         pubsub = self.redis.pubsub()
         pubsub.subscribe(f"portal:{portal}:{job_id}")
 
-        message = json.dumps({"type": "query",
-                              "job": job_id,
-                              "portal": portal,
-                              "data": command})
+        message = json.dumps({
+            "type": "query",
+            "job": job_id,
+            "portal": portal,
+            "data": command
+        })
 
         self.redis.publish(f"portal:{portal}:{job_id}", message)
 
         message = None
         ts = time.time()
-        while message is None or json.loads(message["data"])["type"] != "response":
-            message = pubsub.get_message(ignore_subscribe_messages=True, timeout=0)
+        while (message is None
+               or json.loads(message["data"])["type"] != "response"):
+            message = pubsub.get_message(
+                ignore_subscribe_messages=True, timeout=0)
             if time.time() - ts > 10:
                 raise Fail("Connection to Portal timed out")
             await asyncio.sleep(0.2)
@@ -126,7 +134,6 @@ class Portal(BaseCog):
         portal_name = self.redis.hget(f"portal:{portal}", "name")
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
         return embed
-
 
 
 def setup(bot):

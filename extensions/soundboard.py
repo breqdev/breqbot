@@ -22,7 +22,7 @@ ytdl_format_options = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
+    'source_address': '0.0.0.0'
 }
 
 ffmpeg_options = {
@@ -30,6 +30,7 @@ ffmpeg_options = {
 }
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
+
 
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
@@ -43,14 +44,17 @@ class YTDLSource(discord.PCMVolumeTransformer):
     @classmethod
     async def from_url(cls, url, *, loop=None, stream=False):
         loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
+        data = await loop.run_in_executor(
+            None, lambda: ytdl.extract_info(url, download=not stream))
 
         if 'entries' in data:
             # take first item from a playlist
             data = data['entries'][0]
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
+        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options),
+                   data=data)
+
 
 class Soundboard(BaseCog):
     "Play sounds in the voice channel!"
@@ -74,7 +78,8 @@ class Soundboard(BaseCog):
         self.clients[ctx.guild.id] = client = await channel.connect()
 
         # Public API doesn't expose deafen function, do something hacky
-        await client.main_ws.voice_state(ctx.guild.id, channel.id, self_deaf=True)
+        await client.main_ws.voice_state(ctx.guild.id, channel.id,
+                                         self_deaf=True)
 
     @commands.command()
     @commands.guild_only()
@@ -174,16 +179,19 @@ class Soundboard(BaseCog):
 
         sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
 
-        sounds = {name: self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{name}")
+        sounds = {name: self.redis.hgetall("soundboard:sounds:"
+                                           f"{ctx.guild.id}:{name}")
                   for name in sound_names}
 
         if sounds:
-            embed.description = "\n".join(f"{name}: {sound['title']} "
-                                          + f"[({sound['youtube-id']})]"
-                                          + f"(https://youtu.be/{sound['youtube-id']})"
-                                          for name, sound in sounds.items())
+            embed.description = "\n".join(
+                f"{name}: {sound['title']} "
+                + f"[({sound['youtube-id']})]"
+                + f"(https://youtu.be/{sound['youtube-id']})"
+                for name, sound in sounds.items())
         else:
-            embed.description = f"The soundboard is currently empty. Try a `{self.bot.command_prefix}newsound` ?"
+            embed.description = ("The soundboard is currently empty. Try a "
+                                 f"`{self.bot.command_prefix}newsound` ?")
         return embed
 
     async def play_sound(self, guild_id, id):
@@ -193,7 +201,8 @@ class Soundboard(BaseCog):
         while self.clients[guild_id].is_playing():
             await asyncio.sleep(0.5)
         player = await YTDLSource.from_url(id, loop=self.bot.loop, stream=True)
-        self.clients[guild_id].play(player, after=lambda e: print(f"Player error: {e}") if e else None)
+        self.clients[guild_id].play(
+            player, after=lambda e: print(f"Player error: {e}") if e else None)
 
     @commands.command()
     @commands.guild_only()
@@ -210,7 +219,8 @@ class Soundboard(BaseCog):
         emoji_text = []
         for letter in text:
             if letter in string.ascii_letters:
-                emoji_text.append(emoji.emojize(f":regional_indicator_{letter.lower()}:"))
+                emoji_text.append(emoji.emojize(
+                    f":regional_indicator_{letter.lower()}:"))
             elif letter == " ":
                 emoji_text.append(emoji.emojize(f":blue_square:"))
         return " ".join(emoji_text)
@@ -234,17 +244,23 @@ class Soundboard(BaseCog):
                 await message.add_reaction(name)
 
         def check(reaction, user):
-            return reaction.message.id == message.id and user.id != self.bot.user.id
+            return (reaction.message.id == message.id
+                    and user.id != self.bot.user.id)
 
         while True:
             try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=120, check=check)
+                reaction, user = await self.bot.wait_for(
+                    "reaction_add", timeout=120, check=check)
                 await reaction.remove(user)
             except asyncio.TimeoutError:
                 return NoReact
             else:
-                if self.clients.get(ctx.guild.id) and self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", reaction.emoji):
-                    sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{reaction.emoji}")
+                if (self.clients.get(ctx.guild.id)
+                        and self.redis.sismember(
+                            f"soundboard:sounds:{ctx.guild.id}",
+                            reaction.emoji)):
+                    sound = self.redis.hgetall(
+                        f"soundboard:sounds:{ctx.guild.id}:{reaction.emoji}")
                     await self.play_sound(ctx.guild.id, sound["youtube-id"])
 
 

@@ -4,6 +4,7 @@ import uuid
 import discord
 from discord.ext import commands
 
+
 class HelpCommand(commands.HelpCommand):
     def __init__(self):
         super().__init__(command_attrs={
@@ -50,7 +51,8 @@ class HelpCommand(commands.HelpCommand):
         await self.context.channel.send(embed=embed)
 
     async def send_cog_help(self, cog):
-        embed = discord.Embed(title=f"{cog.qualified_name} | {cog.description}")
+        embed = discord.Embed()
+        embed.title = f"{cog.qualified_name} | {cog.description}"
 
         commands = []
         commands_unfiltered = cog.get_commands()
@@ -75,20 +77,24 @@ class HelpCommand(commands.HelpCommand):
 
         await self.context.channel.send(embed=embed)
 
+
 def setup(bot):
     @bot.event
     async def on_command_error(ctx, exception):
-        if isinstance(exception, commands.CheckFailure) or isinstance(exception, commands.DisabledCommand):
+        if (isinstance(exception, commands.CheckFailure)
+                or isinstance(exception, commands.DisabledCommand)):
             await ctx.message.add_reaction("⛔")
 
         elif isinstance(exception, commands.UserInputError):
             embed = discord.Embed()
             embed.title = "Usage:"
             if ctx.command.signature:
-                embed.description = f"`{bot.command_prefix}{ctx.command.name} {ctx.command.signature}`"
+                embed.description = (f"`{bot.command_prefix}{ctx.command.name}"
+                                     f" {ctx.command.signature}`")
             else:
                 embed.description = f"`{bot.command_prefix}{ctx.command.name}`"
-            embed.set_footer(text=ctx.command.brief or ctx.command.help.split("\n")[0])
+            embed.set_footer(
+                text=ctx.command.brief or ctx.command.help.split("\n")[0])
             await ctx.send(embed=embed)
 
         elif isinstance(exception, commands.CommandNotFound):
@@ -98,13 +104,15 @@ def setup(bot):
             error_id = str(uuid.uuid4())
 
             embed = discord.Embed(title="Aw, snap!")
-            embed.description = f"Something went wrong while running this command. If this continues, [report this]({os.getenv('BUG_REPORT')}) to Breq."
+            embed.description = ("Something went wrong while running this "
+                                 "command. If this continues, "
+                                 f"[report this]({os.getenv('BUG_REPORT')}) "
+                                 "to Breq.")
 
             embed.add_field(name="Error ID", value=error_id)
 
-            error_message = await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
             await ctx.message.add_reaction("⚠️")
-            # await error_message.delete(delay=5)
 
             print("="*20)
             print(f"Exception raised with error ID {error_id}")

@@ -5,6 +5,7 @@ from mcstatus import MinecraftServer
 
 from .utils import *
 
+
 class Minecraft(BaseCog):
     "Tools for Minecraft servers"
 
@@ -39,15 +40,18 @@ class Minecraft(BaseCog):
         description = "".join(description)
         embed.add_field(name="Description", value=description)
 
-        playerstr = f"Players: **{status['players']['online']}**/{status['players']['max']}"
+        playerstr = (f"Players: **{status['players']['online']}**"
+                     f"/{status['players']['max']}")
 
         if status["players"].get("sample"):
-            online = "\n".join(f"• {player['name']}" for player in status["players"]["sample"])
+            online = "\n".join(f"• {player['name']}"
+                               for player in status["players"]["sample"])
         else:
             online = "None"
 
         embed.add_field(name=playerstr, value=online)
         return embed
+
 
 def setup(bot):
     bot.add_cog(Minecraft(bot))

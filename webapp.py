@@ -1,6 +1,5 @@
 import os
 import json
-import queue
 
 from flask import Flask, render_template, abort
 from flask_sockets import Sockets
@@ -13,15 +12,19 @@ from cogs.items import Item
 
 app = Flask(__name__)
 sockets = Sockets(app)
-redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"),
+                                    decode_responses=True)
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
 
 @app.route("/server/<int:id>")
 def server(id):
@@ -54,6 +57,7 @@ def server(id):
                            richest_members=richest_members,
                            shop_items=shop_items)
 
+
 @app.route("/user/<int:guild_id>/<int:user_id>")
 def user(guild_id, user_id):
     website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
@@ -66,17 +70,21 @@ def user(guild_id, user_id):
     if not user_name:
         return abort(404)
 
-    balance = int(redis_client.get(f"currency:balance:{guild_id}:{user_id}") or 0)
+    balance = int(
+        redis_client.get(f"currency:balance:{guild_id}:{user_id}") or 0)
 
     inventory = redis_client.hgetall(f"inventory:{guild_id}:{user_id}")
 
     amounts = {Item.from_redis(redis_client, item): int(amount)
                for item, amount in inventory.items() if int(amount) > 0}
 
-    wearing = [Item.from_redis(redis_client, uuid) for uuid in redis_client.smembers(f"wear:{guild_id}:{user_id}")]
+    wearing = [Item.from_redis(redis_client, uuid)
+               for uuid in redis_client.smembers(f"wear:{guild_id}:{user_id}")]
 
     return render_template("user.html", server=guild_name, user=user_name,
-                           balance=balance, inventory=amounts.items(), wearing=wearing)
+                           balance=balance, inventory=amounts.items(),
+                           wearing=wearing)
+
 
 class PortalBackend():
     def __init__(self):
@@ -124,8 +132,10 @@ class PortalBackend():
     def start(self):
         gevent.spawn(self.run)
 
+
 portal_backend = PortalBackend()
 portal_backend.start()
+
 
 def auth_portal(auth_info):
     id = auth_info["id"]
@@ -133,10 +143,10 @@ def auth_portal(auth_info):
 
     portal_token = redis_client.hget(f"portal:{id}", "token")
     if portal_token is None:
-        return False # Portal does not exist
+        return False  # Portal does not exist
 
     if user_token != portal_token:
-        return False # Invalid token
+        return False  # Invalid token
 
     return redis_client.hgetall(f"portal:{id}")
 
@@ -183,6 +193,7 @@ def portal_requests(ws):
 
     redis_client.hset(f"portal:{id}", "status", "0")
     portal_backend.unregister(portal, ws)
+
 
 if __name__ == "__main__":
     app.run("0.0.0.0")

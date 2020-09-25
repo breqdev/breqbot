@@ -7,7 +7,9 @@ from discord.ext import commands
 
 from .items import Item
 
-__all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only", "shopkeeper_only", "run_in_executor"]
+__all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only",
+           "shopkeeper_only", "run_in_executor"]
+
 
 def run_in_executor(f):
     @functools.wraps(f)
@@ -16,14 +18,19 @@ def run_in_executor(f):
         return loop.run_in_executor(None, lambda: f(*args, **kwargs))
     return inner
 
+
 class Fail(Exception):
     def __init__(self, message, debug=None):
         self.message = message
         self.debug = debug
 
+
 class NoReactType:
     pass
+
+
 NoReact = NoReactType()
+
 
 def passfail(func):
     "Add error handling to function"
@@ -34,13 +41,12 @@ def passfail(func):
             result = await func(self, ctx, *args, **kwargs)
 
         except Fail as e:
-            message = await ctx.send(e.message)
-            # await message.delete(delay=10)
+            await ctx.send(e.message)
             await ctx.message.add_reaction("🚫")
 
         except Exception as e:
             await ctx.message.add_reaction("⚠️")
-            raise e # Server failure
+            raise e  # Server failure
 
         else:
             # Command success
@@ -53,9 +59,11 @@ def passfail(func):
 
     return wrapper
 
+
 async def config_only(ctx):
     return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
             and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
+
 
 async def shopkeeper_only(ctx):
     if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
@@ -64,6 +72,7 @@ async def shopkeeper_only(ctx):
         if role.name == "Shopkeeper":
             return True
     return False
+
 
 class BaseCog(commands.Cog):
     def __init__(self, bot):
@@ -79,6 +88,8 @@ class BaseCog(commands.Cog):
             return item
 
     def ensure_item(self, ctx, user, item, qty=1):
-        has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}", item.uuid))
+        has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}",
+                                  item.uuid) or "0")
         if has < qty:
-            raise Fail(f"You need at least {qty} of {item.name}, you only have {has}")
+            raise Fail(f"You need at least {qty} of {item.name}, "
+                       f"you only have {has}")

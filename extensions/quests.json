@@ -1,0 +1,18 @@
+[
+    {
+        "name": "Dig for treasure",
+        "prompt": "You have a shovel and some treasure maps. Choose a site to dig",
+        "choices": ["under the tree", "in the desert", "on the beach", "by the railroad"],
+        "large": "You found a treasure chest {choice}! Collect **{coins} coins.**",
+        "medium": "You found some gold {choice}! Collect **{coins} coins.**",
+        "small": "All you found was a shiny rock. Collect **{coins} coins.**"
+    },
+    {
+        "name": "Invest in cryptocurrency",
+        "prompt": "You won free cryptocurrency! Choose a coin",
+        "choices": ["DokiCoin", "CuffCoin", "DubstepCoin", "MemeCoin"],
+        "large": "{choice} went to the moon! Collect **{coins} coins.**",
+        "medium": "{choice} held steady. Collect **{coins} coins.**",
+        "small": "{choice} crashed. Collect **{coins} coins.**"
+    }
+]

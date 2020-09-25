@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+
 class Item():
     def __init__(self, name=None, desc=None, wearable=0, *, uuid=None):
         self.uuid = uuid or str(uuid4())
@@ -8,7 +9,9 @@ class Item():
         self.wearable = wearable
 
     def __str__(self):
-        return f"{self.name}: {self.desc} {'(wearable)' if int(self.wearable or 0) else ''} ({self.uuid})"
+        return (f"{self.name}: {self.desc} "
+                f"{'(wearable)' if int(self.wearable or 0) else ''} "
+                f"({self.uuid})")
 
     @property
     def redis_key(self):

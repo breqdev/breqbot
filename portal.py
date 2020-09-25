@@ -1,8 +1,8 @@
 import os
 import json
-import time
 
 import websocket
+
 
 class Portal:
     def __init__(self, url, id, token):
@@ -71,12 +71,15 @@ class Portal:
     def run(self):
         self.socket.run_forever()
 
+
 portal = Portal(os.getenv("PORTAL_URL"), "echo", os.getenv("PORTAL_TOKEN"))
+
 
 @portal.on_request()
 def on_request(data):
     print(data)
     return {"title": data,
             "description": "Echo portal, made with <3 by breq!"}
+
 
 portal.run()
