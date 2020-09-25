@@ -1,4 +1,5 @@
 import os
+import json
 import random
 
 import praw
@@ -58,8 +59,7 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
         return "No images found!"
 
 
-class Reddit(BaseCog):
-    "Get memes and other posts from Reddit"
+class BaseReddit(BaseCog):
     @commands.command()
     @passfail
     async def doki(self, ctx):
@@ -79,54 +79,27 @@ class Reddit(BaseCog):
 
     @commands.command()
     @passfail
-    async def okhet(self, ctx):
-        "ok buddy hetero"
-        return await self.default(ctx, "okbuddyhetero")
-
-    @commands.command()
-    @passfail
-    async def wholesome(self, ctx):
-        "wholesome meme"
-        return await self.default(ctx, "wholesomememes")
-
-    @commands.command()
-    @passfail
-    async def lgballt(self, ctx):
-        "Comic from the LGBallT subreddit"
-        return await self.default(ctx, "lgballt")
-
-    @commands.command()
-    @passfail
-    async def meme(self, ctx):
-        "Meme from r/memes"
-        return await self.default(ctx, "memes")
-
-    @commands.command()
-    @passfail
-    async def egg_irl(self, ctx):
-        "Still cis tho... aha..."
-        return await self.default(ctx, "egg_irl")
-
-    @commands.command()
-    @passfail
-    async def animeme(self, ctx):
-        "Meme about anime"
-        return await self.default(ctx, "animemes")
-
-    @commands.command()
-    @passfail
-    async def traa(self, ctx):
-        "traaaaaaannnnnnnnnns"
-        return await self.default(ctx, "traaaaaaannnnnnnnnns")
-
-    @commands.command()
-    @passfail
     async def reddit(self, ctx, subreddit: str):
         "post from a subreddit of your choice!"
         async with ctx.channel.typing():
             image = await get_posts(
                 subreddit, nsfw=(None if ctx.channel.is_nsfw() else False))
         return image
+
+
+with open("extensions/reddit.json") as f:
+    aliases = json.load(f)
+
+new_commands = {}
+for alias in aliases:
+    @commands.command(name=alias["command"], brief=alias["desc"])
+    @passfail
+    async def command(self, ctx):
+        return await self.default(ctx, alias["sub"])
+
+    new_commands[alias["command"]] = command
+
+Reddit = type("Reddit", (BaseReddit,), new_commands)
 
 
 def setup(bot):

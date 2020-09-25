@@ -1,0 +1,42 @@
+[
+    {
+        "command": "okbh",
+        "sub": "okbuddyhetero",
+        "desc": "Ok ~buddy~ hetero"
+    },
+    {
+        "command": "wholesome",
+        "sub": "wholesomememes",
+        "desc": "Wholesome :blush: meme"
+    },
+    {
+        "command": "lgballt",
+        "sub": "lgballt",
+        "desc": "Polandball style comics, but gayer"
+    },
+    {
+        "command": "meme",
+        "sub": "memes",
+        "desc": "Meme from r/memes"
+    },
+    {
+        "command": "dankmeme",
+        "sub": "funny",
+        "desc": "Nothing but the dankest: r/funny"
+    },
+    {
+        "command": "egg_irl",
+        "sub": "egg_irl",
+        "desc": "Still cis tho... aha..."
+    },
+    {
+        "command": "animeme",
+        "sub": "animemes",
+        "desc": "Meme about anime! Baka~"
+    },
+    {
+        "command": "traa",
+        "sub": "traaaaaaannnnnnnnnns",
+        "desc": "traaaaaaannnnnnnnnns :transgender_flag:"
+    }
+]
