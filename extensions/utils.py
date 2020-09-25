@@ -1,6 +1,8 @@
 import os
 import functools
 import asyncio
+import emoji
+import string
 
 import discord
 from discord.ext import commands
@@ -8,7 +10,7 @@ from discord.ext import commands
 from .items import Item
 
 __all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only",
-           "shopkeeper_only", "run_in_executor"]
+           "shopkeeper_only", "run_in_executor", "text_to_emoji"]
 
 
 def run_in_executor(f):
@@ -17,6 +19,16 @@ def run_in_executor(f):
         loop = asyncio.get_running_loop()
         return loop.run_in_executor(None, lambda: f(*args, **kwargs))
     return inner
+
+def text_to_emoji(text):
+    emoji_text = []
+    for letter in text:
+        if letter in string.ascii_letters:
+            emoji_text.append(emoji.emojize(
+                f":regional_indicator_symbol_letter_{letter.lower()}:"))
+        elif letter == " ":
+            emoji_text.append(emoji.emojize(f":blue_square:"))
+    return " ".join(emoji_text)
 
 
 class Fail(Exception):

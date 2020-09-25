@@ -215,16 +215,6 @@ class Soundboard(BaseCog):
 
         await self.play_sound(ctx.guild.id, sound["youtube-id"])
 
-    def text_to_emoji(self, text):
-        emoji_text = []
-        for letter in text:
-            if letter in string.ascii_letters:
-                emoji_text.append(emoji.emojize(
-                    f":regional_indicator_{letter.lower()}:"))
-            elif letter == " ":
-                emoji_text.append(emoji.emojize(f":blue_square:"))
-        return " ".join(emoji_text)
-
     @commands.command()
     @commands.guild_only()
     @passfail
@@ -235,7 +225,7 @@ class Soundboard(BaseCog):
         if client is None:
             raise Fail("Not connected to voice.")
 
-        message = await ctx.send(self.text_to_emoji("Soundboard"))
+        message = await ctx.send(text_to_emoji("Soundboard"))
         # await message.add_reaction("➡️")
 
         sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
