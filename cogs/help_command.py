@@ -76,7 +76,7 @@ def setup(bot):
     @bot.event
     async def on_command_error(ctx, exception):
         if isinstance(exception, commands.CheckFailure) or isinstance(exception, commands.DisabledCommand):
-            await ctx.message.add_reaction("🚫")
+            await ctx.message.add_reaction("⛔")
 
         elif isinstance(exception, commands.UserInputError):
             embed = discord.Embed()
