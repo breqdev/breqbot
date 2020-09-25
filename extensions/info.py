@@ -76,7 +76,11 @@ class Info(BaseCog):
         embed.description = "\n".join(f"{name}: {size}" for name, size in guilds)
         return embed
 
-
+    @commands.command()
+    @commands.check(config_only)
+    @passfail
+    async def awsnap(self, ctx):
+        raise ValueError("Test Exception")
 
 def setup(bot):
     bot.add_cog(Info(bot))

@@ -1,3 +1,6 @@
+import os
+import uuid
+
 import discord
 from discord.ext import commands
 
@@ -92,9 +95,19 @@ def setup(bot):
             # await ctx.message.add_reaction("🤔")
             pass
         else:
-            error_message = await ctx.send(f"Error: {exception}")
+            error_id = str(uuid.uuid4())
+
+            embed = discord.Embed(title="Aw, snap!")
+            embed.description = f"Something went wrong while running this command. If this continues, [report this]({os.getenv('BUG_REPORT')}) to Breq."
+
+            embed.add_field(name="Error ID", value=error_id)
+
+            error_message = await ctx.send(embed=embed)
             await ctx.message.add_reaction("⚠️")
             # await error_message.delete(delay=5)
+
+            print("="*20)
+            print(f"Exception raised with error ID {error_id}")
             raise exception
 
     bot.help_command = HelpCommand()
