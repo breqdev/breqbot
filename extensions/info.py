@@ -4,10 +4,13 @@ import time
 import discord
 from discord.ext import commands
 
+import git
+
 from .utils import *
 
 startup_timestamp = time.time()
 
+repo = git.Repo()
 
 class Info(BaseCog):
     "Information and debugging tools"
@@ -42,28 +45,35 @@ class Info(BaseCog):
 
     @commands.command()
     @passfail
-    async def debug(self, ctx):
-        "Display debug info about the bot"
+    async def stats(self, ctx):
+        "Stats for nerds"
 
-        embed = discord.Embed(title="Debug")
+        embed = discord.Embed(title="`Stats for nerds`")
+
+        fields = []
 
         name = self.bot.user.name + "#" + self.bot.user.discriminator
-        embed.add_field(name="Connected as", value=name)
+        fields.append(f"Connected as **{name}**")
 
         domain = os.getenv("DOMAIN")
-        embed.add_field(name="Running on", value=domain)
+        fields.append(f"Running on **{domain}**")
 
         latency = round(self.bot.latency*1000, 1)
-        embed.add_field(name="Latency", value=f"{latency} ms")
+        fields.append(f"Latency is **{latency}** ms")
 
         uptime = time.time() - startup_timestamp
         days_online = int(uptime / (60*60*24))
         time_str = (f"{days_online} days, "
                     + time.strftime("%T", time.gmtime(uptime)))
-        embed.add_field(name="Uptime", value=time_str)
+        fields.append(f"Uptime is **{time_str}**")
 
         guilds = self.redis.scard("guild:list")
-        embed.add_field(name="Servers", value=f"{guilds}")
+        fields.append(f"Member of **{guilds}** servers")
+
+        latest_commit = repo.head.object.hexsha[:7]
+        fields.append(f"Latest commit: `{latest_commit}`")
+
+        embed.description = "\n".join(fields)
 
         return embed
 
@@ -85,7 +95,6 @@ class Info(BaseCog):
         return embed
 
     @commands.command()
-    @commands.check(config_only)
     @passfail
     async def awsnap(self, ctx):
         raise ValueError("Test Exception")
