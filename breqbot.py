@@ -28,6 +28,7 @@ breqbot.load_extension("extensions.comics")
 # Breqbot Features
 breqbot.load_extension("extensions.soundboard")
 breqbot.load_extension("extensions.portal")
+breqbot.load_extension("extensions.games")
 
 # Economy/shop/outfits
 breqbot.load_extension("extensions.website")
