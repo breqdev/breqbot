@@ -19,7 +19,7 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
 
     try:
         sub.id
-    except prawcore.Redirect:
+    except (prawcore.Redirect, prawcore.NotFound):
         raise Fail("Subreddit not found.")
 
     if nsfw is False and sub.over18:
