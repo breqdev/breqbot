@@ -16,9 +16,13 @@ class Quests(BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
 
-        self.GET_COINS_INTERVAL = int(os.getenv("GET_COINS_INTERVAL"))
-        self.GET_COINS_AMOUNT = int(os.getenv("GET_COINS_AMOUNT"))
-        self.GET_ITEM_FREQUENCY = float(os.getenv("GET_ITEM_FREQUENCY"))
+        if os.getenv("BYPASS_FREE_LIMITS"):
+            self.GET_COINS_INTERVAL = 1
+        else:
+            self.GET_COINS_INTERVAL = 3600
+
+        self.GET_COINS_AMOUNT = 10
+        self.GET_ITEM_FREQUENCY = 0.5
 
         with open("extensions/quests.json") as f:
             self.QUEST_MESSAGES = json.load(f)
