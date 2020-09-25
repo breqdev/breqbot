@@ -1,12 +1,20 @@
 import os
 import functools
+import asyncio
 
 import discord
 from discord.ext import commands
 
 from .items import Item
 
-__all__ = ["Breqcog", "Fail", "NoReact", "passfail", "config_only", "shopkeeper_only"]
+__all__ = ["Breqcog", "Fail", "NoReact", "passfail", "config_only", "shopkeeper_only", "run_in_executor"]
+
+def run_in_executor(f):
+    @functools.wraps(f)
+    def inner(*args, **kwargs):
+        loop = asyncio.get_running_loop()
+        return loop.run_in_executor(None, lambda: f(*args, **kwargs))
+    return inner
 
 class Fail(Exception):
     def __init__(self, message, debug=None):

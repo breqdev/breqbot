@@ -1,7 +1,5 @@
 import os
 import random
-import functools
-import asyncio
 
 import praw
 import prawcore
@@ -14,13 +12,6 @@ from .breqcog import *
 reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
                       client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
                       user_agent="Breqbot! https://breq.dev/")
-
-def run_in_executor(f):
-    @functools.wraps(f)
-    def inner(*args, **kwargs):
-        loop = asyncio.get_running_loop()
-        return loop.run_in_executor(None, lambda: f(*args, **kwargs))
-    return inner
 
 @run_in_executor
 def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
