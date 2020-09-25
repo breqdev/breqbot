@@ -79,21 +79,52 @@ class Reddit(Breqcog):
                                            else ["Fanart", "Media"]))
         return image
 
+    async def default(self, ctx, subreddit):
+        async with ctx.channel.typing():
+            image = await get_posts(subreddit, nsfw=False)
+        return image
+
     @commands.command()
     @passfail
     async def okhet(self, ctx):
         "ok buddy hetero"
-        async with ctx.channel.typing():
-            image = await get_posts("okbuddyhetero")
-        return image
+        return await self.default(ctx, "okbuddyhetero")
 
     @commands.command()
     @passfail
     async def wholesome(self, ctx):
         "wholesome meme"
-        async with ctx.channel.typing():
-            image = await get_posts("wholesomememes")
-        return image
+        return await self.default(ctx, "wholesomememes")
+
+    @commands.command()
+    @passfail
+    async def lgballt(self, ctx):
+        "Comic from the LGBallT subreddit"
+        return await self.default(ctx, "lgballt")
+
+    @commands.command()
+    @passfail
+    async def meme(self, ctx):
+        "Meme from r/memes"
+        return await self.default(ctx, "memes")
+
+    @commands.command()
+    @passfail
+    async def egg_irl(self, ctx):
+        "Still cis tho... aha..."
+        return await self.default(ctx, "egg_irl")
+
+    @commands.command()
+    @passfail
+    async def animeme(self, ctx):
+        "Meme about anime"
+        return await self.default(ctx, "animemes")
+
+    @commands.command()
+    @passfail
+    async def traa(self, ctx):
+        "traaaaaaannnnnnnnnns"
+        return await self.default(ctx, "traaaaaaannnnnnnnnns")
 
     @commands.command()
     @passfail
