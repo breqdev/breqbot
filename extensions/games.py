@@ -319,15 +319,19 @@ games = {
     "2048": The2048Game,
 }
 
+def make_command(name, game):
+    @commands.command(name=name, brief=game.desc)
+    @commands.guild_only()
+    @passfail
+    async def _command(self, ctx):
+        return await self.play(ctx, game)
+
+    return _command
+
 
 new_commands = {}
 for name, game in games.items():
-    @commands.command(name=name, brief=game.desc)
-    @passfail
-    async def command(self, ctx):
-        return await self.play(ctx, game)
-
-    new_commands[name] = command
+    new_commands[name] = make_command(name, game)
 
 Games = type("Games", (BaseGames,), new_commands)
 

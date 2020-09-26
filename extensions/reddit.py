@@ -92,14 +92,17 @@ class BaseReddit(BaseCog):
 with open("extensions/reddit.json") as f:
     aliases = json.load(f)
 
-new_commands = {}
-for alias in aliases:
+def make_command(alias):
     @commands.command(name=alias["command"], brief=alias["desc"])
     @passfail
-    async def command(self, ctx):
+    async def _command(self, ctx):
         return await self.default(ctx, alias["sub"])
 
-    new_commands[alias["command"]] = command
+    return _command
+
+new_commands = {}
+for alias in aliases:
+    new_commands[alias["command"]] = make_command(alias)
 
 Reddit = type("Reddit", (BaseReddit,), new_commands)
 
