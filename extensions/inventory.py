@@ -24,6 +24,15 @@ class Inventory(BaseCog):
         amounts = {Item.from_redis(self.redis, item): int(amount)
                    for item, amount in inventory.items() if int(amount) > 0}
 
+        missing = []
+        for item in amounts.keys():
+            if isinstance(item, MissingItem):
+                self.redis.hdel(f"inventory:{ctx.guild.id}:{user.id}", item.uuid)
+                missing.append(item)
+
+        for item in missing:
+            del amounts[item]
+
         balance = (
             self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or 0)
 

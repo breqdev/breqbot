@@ -9,7 +9,8 @@ import discord
 from discord.ext import commands
 
 __all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only",
-           "shopkeeper_only", "run_in_executor", "text_to_emoji", "Item"]
+           "shopkeeper_only", "run_in_executor", "text_to_emoji", "Item",
+           "MissingItem"]
 
 
 class Item():
@@ -32,7 +33,9 @@ class Item():
     def from_redis(redis, uuid):
         exists = redis.sismember("items:list", uuid)
         if not exists:
-            raise ValueError("Item does not exist")
+            item = MissingItem(uuid)
+            item.cleanup(redis)
+            return item
 
         item = Item()
         item.uuid = uuid
@@ -46,14 +49,30 @@ class Item():
     def from_name(redis, name):
         uuid = redis.get(f"items:from_name:{name.lower()}")
         if not uuid:
-            raise ValueError("Item does not exist")
-        return Item.from_redis(redis, uuid)
+            raise Fail("Item does not exist")
+
+        item = Item.from_redis(redis, uuid)
+        if isinstance(item, MissingItem):
+            redis.delete(f"items:from_name:{name.lower()}")
+            raise Fail("Item does not exist")
+
+        return item
 
     @staticmethod
     def check_name(redis, name):
         "Ensure the name is not in use."
         uuid = redis.get(f"items:from_name:{name.lower()}")
-        return (uuid is None)
+
+        if uuid is None:
+            return True
+
+        item = Item.from_redis(redis, uuid)
+        if isinstance(item, MissingItem):
+            redis.delete(f"items:from_name:{name.lower()}")
+            return True
+
+        return False
+
 
     def to_redis(self, redis):
         redis.sadd("items:list", self.uuid)
@@ -82,6 +101,16 @@ class Item():
                 "desc": self.desc,
                 "wearable": self.wearable}
 
+class MissingItem(Item):
+    def __init__(self, uuid):
+        self.uuid = uuid
+        self.name = "MissingNo"
+        self.desc = "Deleted Item"
+        self.wearable = "0"
+        self.author = "0"
+
+    def cleanup(self, redis):
+        redis.delete(f"items:{self.uuid}")
 
 def run_in_executor(f):
     @functools.wraps(f)

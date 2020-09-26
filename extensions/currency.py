@@ -49,6 +49,16 @@ class Currency(BaseCog):
                       for uuid in item_uuids}
         prices = {}
 
+        missing = []
+        for uuid, item in shop_items.items():
+            if isinstance(item, MissingItem):
+                missing.append(uuid)
+                self.redis.srem(f"shop:items:{ctx.guild.id}", uuid)
+
+        for uuid in missing:
+            self.redis.delete(f"shop:prices:{ctx.guild.id}:{item_uuid}")
+            del shop_items[uuid]
+
         for item_uuid in item_uuids:
             prices[item_uuid] = self.redis.get(
                 f"shop:prices:{ctx.guild.id}:{item_uuid}")

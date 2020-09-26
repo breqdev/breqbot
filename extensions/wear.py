@@ -61,6 +61,14 @@ class Wear(BaseCog):
                  for uuid in self.redis.smembers(
                      f"wear:{ctx.guild.id}:{user.id}")]
 
+        missing = []
+        for item in items:
+            if isinstance(item, MissingItem):
+                missing.append(item)
+                self.redis.srem(f"wear:{ctx.guild.id}:{user.id}", item.uuid)
+
+        items = [item for item in items if item not in missing]
+
         if items:
             embed.description = "\n".join(f"• {item.name} ({item.desc})"
                                           for item in items)
