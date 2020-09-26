@@ -72,6 +72,7 @@ class Item():
 
         item = Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
+            redis.srem(f"items:list:{self.guild}", item.uuid)
             redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
             return True
 
