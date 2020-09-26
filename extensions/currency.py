@@ -3,7 +3,6 @@ import typing
 import discord
 from discord.ext import commands
 
-from .items import Item
 from .utils import *
 
 
