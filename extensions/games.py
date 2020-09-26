@@ -107,7 +107,7 @@ class The2048Game(Game):
         self.message = None
         self.running = True
 
-        self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+        self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "⭐"]
         self.moves = ["⬆️", "➡️", "⬇️", "⬅️"]
 
         self.grid = [["⬛" for _ in range(4)] for _ in range(4)]
@@ -154,7 +154,7 @@ class The2048Game(Game):
     def won(self):
         for row in self.grid:
             for square in row:
-                if square == "🔟":
+                if square == "⭐":
                     return True
         return False
 
