@@ -99,6 +99,7 @@ class Currency(BaseCog):
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
 
     @commands.command()
+    @commands.guild_only()
     @commands.check(shopkeeper_only)
     @passfail
     async def list(self, ctx, item: str, price: int):
@@ -108,6 +109,7 @@ class Currency(BaseCog):
         self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
 
     @commands.command()
+    @commands.guild_only()
     @commands.check(shopkeeper_only)
     @passfail
     async def delist(self, ctx, item: str):

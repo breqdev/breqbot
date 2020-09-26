@@ -207,6 +207,8 @@ async def config_only(ctx):
 async def shopkeeper_only(ctx):
     if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
         return True
+    if not ctx.guild:
+        return False
     for role in ctx.author.roles:
         if role.name == "Shopkeeper":
             return True

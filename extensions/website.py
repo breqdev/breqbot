@@ -11,6 +11,7 @@ class Website(BaseCog):
     "Information about Breqbot's accompanying website"
 
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def website(self, ctx, user: typing.Optional[discord.User]):
         "Link to the bot's website :computer:"
@@ -35,6 +36,7 @@ class Website(BaseCog):
         return embed
 
     @commands.command()
+    @commands.guild_only()
     @commands.check(shopkeeper_only)
     @passfail
     async def enwebsite(self, ctx, state: int):

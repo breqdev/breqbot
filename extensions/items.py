@@ -7,7 +7,9 @@ from .utils import *
 
 
 class Items(BaseCog):
+    "Manage items! These can be purchased, traded, used, or worn."
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def item(self, ctx, item: str):
         "Get information about an item :information_source:"
@@ -22,6 +24,7 @@ class Items(BaseCog):
         return embed
 
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def items(self, ctx, user: typing.Optional[discord.User] = None):
         "Get a list of items, optionally filter by creator :dividers:"
@@ -51,6 +54,7 @@ class Items(BaseCog):
         return embed
 
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def makeitem(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
@@ -61,6 +65,7 @@ class Items(BaseCog):
         item.to_redis(self.redis)
 
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def delitem(self, ctx, item: str):
         "Delete an item"
@@ -69,6 +74,7 @@ class Items(BaseCog):
         item.delete(self.redis)
 
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def renameitem(self, ctx, oldname: str, newname: str):
         "Rename an item"
@@ -77,6 +83,7 @@ class Items(BaseCog):
         item.rename(self.redis, newname)
 
     @commands.command()
+    @commands.guild_only()
     @passfail
     async def modifyitem(self, ctx, item: str, field: str, value: str):
         "Modify an item"
