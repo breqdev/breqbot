@@ -8,7 +8,7 @@ import gevent
 import geventwebsocket
 import redis
 
-from cogs.items import Item
+from extensions.items import Item
 
 app = Flask(__name__)
 sockets = Sockets(app)
