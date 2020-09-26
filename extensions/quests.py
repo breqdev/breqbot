@@ -21,7 +21,6 @@ class Quests(BaseCog):
             self.GET_COINS_INTERVAL = 3600
 
         self.GET_COINS_AMOUNT = 10
-        self.GET_ITEM_FREQUENCY = 0.5
 
         with open("extensions/quests.json") as f:
             self.QUEST_MESSAGES = json.load(f)
@@ -47,7 +46,7 @@ class Quests(BaseCog):
     @commands.guild_only()
     @passfail
     async def free(self, ctx):
-        "Get free items and coins! Rate limited. :coin:"
+        "Get free coins! Rate limited. :coin:"
 
         await self.free_limit(ctx)
 
@@ -55,50 +54,12 @@ class Quests(BaseCog):
         self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
                         self.GET_COINS_AMOUNT)
 
-        item = None
-
-        if random.random() < self.GET_ITEM_FREQUENCY:
-            item_uuid = self.redis.srandmember("quests:free:items")
-            if item_uuid is not None:
-                self.redis.hincrby(
-                    f"inventory:{ctx.guild.id}:{ctx.author.id}", item_uuid)
-                item = Item.from_redis(self.redis, item_uuid)
-
         # Calculate time to wait until next free collection
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
-        if item is not None:
-            return (f"{ctx.author.name}, you have claimed "
-                    f"**{self.GET_COINS_AMOUNT}** coins and a "
-                    f"**{item.name}**! Wait {ftime} to claim more.")
-        else:
-            return (f"{ctx.author.name}, you have claimed "
-                    f"**{self.GET_COINS_AMOUNT}** coins! "
-                    f"Wait {ftime} to claim more.")
 
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def list_free(self, ctx):
-        "List available free items :dividers:"
-        items = [Item.from_redis(self.redis, uuid)
-                 for uuid in self.redis.smembers("quests:free:items")]
-        return "Items:\n"+"\n".join(item.name for item in items)
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def add_free(self, ctx, item: str):
-        "Add a new free item :new:"
-        item = self.get_item(item)
-        self.redis.sadd("quests:free:items", item.uuid)
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def remove_free(self, ctx, item: str):
-        "Remove a free item :no_entry_sign:"
-        item = self.get_item(item)
-        self.redis.srem("quests:free:items", item.uuid)
+        return (f"{ctx.author.name}, you have claimed "
+                f"**{self.GET_COINS_AMOUNT}** coins! "
+                f"Wait {ftime} to claim more.")
 
     @commands.command()
     @commands.guild_only()
