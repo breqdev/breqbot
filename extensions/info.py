@@ -10,7 +10,7 @@ from .utils import *
 
 startup_timestamp = time.time()
 
-repo = git.Repo()
+git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
 class Info(BaseCog):
     "Information and debugging tools"
@@ -69,7 +69,7 @@ class Info(BaseCog):
         guilds = self.redis.scard("guild:list")
         fields.append(f"Member of **{guilds}** servers")
 
-        latest_commit = repo.head.object.hexsha[:7]
+        latest_commit = git_hash[:7]
         fields.append(f"Latest commit: `{latest_commit}`")
 
         embed.description = "\n".join(fields)
