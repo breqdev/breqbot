@@ -80,7 +80,7 @@ class Currency(BaseCog):
     async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
         "Buy an item from the shop :coin:"
 
-        item = self.get_item(item)
+        item = Item.from_name(self.redis, ctx.guild.id, item)
 
         price_ea = self.redis.get(f"shop:prices:{ctx.guild.id}:{item.uuid}")
         if price_ea is None:
@@ -103,7 +103,7 @@ class Currency(BaseCog):
     @passfail
     async def list(self, ctx, item: str, price: int):
         "List an item in the shop :new:"
-        item = self.get_item(item)
+        item = Item.from_name(self.redis, ctx.guild.id, item)
         self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
 
@@ -112,7 +112,7 @@ class Currency(BaseCog):
     @passfail
     async def delist(self, ctx, item: str):
         "Remove an item from the shop :no_entry:"
-        item = self.get_item(item)
+        item = Item.from_name(self.redis, ctx.guild.id, item)
         self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
 

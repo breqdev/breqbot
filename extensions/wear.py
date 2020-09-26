@@ -14,7 +14,7 @@ class Wear(BaseCog):
     @passfail
     async def wear(self, ctx, item: str):
         "Wear an item :lab_coat:"
-        item = self.get_item(item)
+        item = Item.from_name(self.redis, ctx.guild.id, item)
 
         if not int(item.wearable):
             raise Fail("Item is not wearable!")
@@ -35,7 +35,7 @@ class Wear(BaseCog):
     @passfail
     async def takeoff(self, ctx, item: str):
         "Take off an item :x:"
-        item = self.get_item(item)
+        item = Item.from_name(self.redis, ctx.guild.id, item)
 
         wearing = self.redis.sismember(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)

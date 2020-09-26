@@ -14,10 +14,11 @@ __all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only",
 
 
 class Item():
-    def __init__(self, name=None, owner=None, desc=None, wearable=0, *, uuid=None):
+    def __init__(self, name=None, guild_id=None, owner_id=None, desc=None, wearable=0, *, uuid=None):
         self.uuid = uuid or str(uuid4())
         self.name = name
-        self.owner = owner.id if owner else None
+        self.owner = owner_id if owner_id else None
+        self.guild = guild_id if guild_id else None
         self.desc = desc
         self.wearable = wearable
 
@@ -42,35 +43,36 @@ class Item():
         item.uuid = uuid
 
         item.name = redis.hget(item.redis_key, "name")
-        item.owner = redis.hget(item.redis_key, "owner")
+        item.guild = int(redis.hget(item.redis_key, "guild"))
+        item.owner = int(redis.hget(item.redis_key, "owner"))
         item.desc = redis.hget(item.redis_key, "desc")
         item.wearable = redis.hget(item.redis_key, "wearable") or "0"
         return item
 
     @staticmethod
-    def from_name(redis, name):
-        uuid = redis.get(f"items:from_name:{name.lower()}")
+    def from_name(redis, guild_id, name):
+        uuid = redis.get(f"items:from_name:{guild_id}:{name.lower()}")
         if not uuid:
             raise Fail("Item does not exist")
 
         item = Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
-            redis.delete(f"items:from_name:{name.lower()}")
+            redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
             raise Fail("Item does not exist")
 
         return item
 
     @staticmethod
-    def check_name(redis, name):
+    def check_name(redis, guild_id, name):
         "Ensure the name is not in use."
-        uuid = redis.get(f"items:from_name:{name.lower()}")
+        uuid = redis.get(f"items:from_name:{guild_id}:{name.lower()}")
 
         if uuid is None:
             return True
 
         item = Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
-            redis.delete(f"items:from_name:{name.lower()}")
+            redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
             return True
 
         return False
@@ -78,25 +80,32 @@ class Item():
 
     def to_redis(self, redis):
         redis.sadd("items:list", self.uuid)
+        redis.sadd(f"items:list:{self.guild}", self.uuid)
+        redis.sadd(f"items:list:{self.guild}:{self.owner}", self.uuid)
 
         redis.hset(self.redis_key, "name", self.name)
+        redis.hset(self.redis_key, "guild", self.guild)
         redis.hset(self.redis_key, "owner", self.owner)
         redis.hset(self.redis_key, "desc", self.desc)
         redis.hset(self.redis_key, "wearable", self.wearable)
 
-        redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
-        redis.set(f"items:list:{self.owner}", self.uuid)
+        redis.set(f"items:from_name:{self.guild}:{self.name.lower()}", self.uuid)
 
     def rename(self, redis, newname):
-        redis.delete(f"items:from_name:{self.name.lower()}")
+        if not check_name(redis, self.guild, newname):
+            raise Fail("Item name in use")
+
+        redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
         self.name = newname
         redis.hset(self.redis_key, "name", self.name)
-        redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
+        redis.set(f"items:from_name:{self.guild}:{self.name.lower()}", self.uuid)
 
     def delete(self, redis):
         redis.srem("items:list", self.uuid)
-        redis.delete(f"items:from_name:{self.name.lower()}")
-        redis.srem(f"items:list:{self.owner}", self.uuid)
+        redis.srem(f"items:list:{self.guild}", self.uuid)
+        redis.srem(f"items:list:{self.guild}:{self.owner}", self.uuid)
+
+        redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
         redis.delete(self.redis_key)
 
     def is_owner(self, user):
@@ -110,6 +119,7 @@ class Item():
     def dict(self):
         return {"uuid": self.uuid,
                 "name": self.name,
+                "guild": self.guild,
                 "owner": self.owner,
                 "desc": self.desc,
                 "wearable": self.wearable}
@@ -118,6 +128,7 @@ class MissingItem(Item):
     def __init__(self, uuid):
         self.uuid = uuid
         self.name = "MissingNo"
+        self.guild = 0
         self.owner = 0
         self.desc = "Deleted Item"
         self.wearable = "0"
@@ -203,14 +214,6 @@ class BaseCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
-
-    def get_item(self, name):
-        try:
-            item = Item.from_name(self.redis, name)
-        except ValueError:
-            raise Fail("Item does not exist!")
-        else:
-            return item
 
     def ensure_item(self, ctx, user, item, qty=1):
         has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}",
