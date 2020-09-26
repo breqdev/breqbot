@@ -34,6 +34,7 @@ breqbot.load_extension("extensions.games")
 breqbot.load_extension("extensions.website")
 breqbot.load_extension("extensions.currency")
 breqbot.load_extension("extensions.inventory")
+breqbot.load_extension("extensions.items")
 breqbot.load_extension("extensions.quests")
 breqbot.load_extension("extensions.wear")
 

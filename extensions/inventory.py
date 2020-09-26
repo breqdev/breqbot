@@ -61,60 +61,6 @@ class Inventory(BaseCog):
         return f"You used {item.name}. It did nothing!"
 
     @commands.command()
-    @passfail
-    async def item(self, ctx, item: str):
-        "Get information about an item :information_source:"
-        item = self.get_item(item)
-
-        return (f"{item.name}: {item.desc} "
-                f"{'(wearable)' if item.wearable else ''}")
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def list_items(self, ctx):
-        return "Items:\n"+"\n".join(
-            str(Item.from_redis(self.redis, uuid))
-            for uuid in self.redis.smembers("items:list"))
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def delete_item(self, ctx, item: str):
-        item = self.get_item(item)
-        item.delete(self.redis)
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def rename_item(self, ctx, oldname: str, newname: str):
-        item = self.get_item(oldname)
-        item.rename(self.redis, newname)
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def modify_item(self, ctx, item: str, field: str, value: str):
-        item = Item.from_name(self.redis, item)
-        if field == "desc":
-            item.desc = value
-        elif field == "wearable":
-            item.wearable = value
-        else:
-            Fail("Invalid field!")
-        item.to_redis(self.redis)
-
-    @commands.command()
-    @commands.check(config_only)
-    @passfail
-    async def create_item(self, ctx, item: str, desc: str, wearable: int = 0):
-        if not Item.check_name(self.redis, item):
-            Fail("Name in use!")
-
-        item = Item(item, desc, wearable)
-        item.to_redis(self.redis)
-
-    @commands.command()
     @commands.check(config_only)
     @passfail
     async def divine_gift(self, ctx, item: str, guild_id: int, user_id: int):
