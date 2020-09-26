@@ -14,9 +14,10 @@ __all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only",
 
 
 class Item():
-    def __init__(self, name=None, desc=None, wearable=0, *, uuid=None):
+    def __init__(self, name=None, owner=None, desc=None, wearable=0, *, uuid=None):
         self.uuid = uuid or str(uuid4())
         self.name = name
+        self.owner = owner.id if owner else None
         self.desc = desc
         self.wearable = wearable
 
@@ -41,6 +42,7 @@ class Item():
         item.uuid = uuid
 
         item.name = redis.hget(item.redis_key, "name")
+        item.owner = redis.hget(item.redis_key, "owner")
         item.desc = redis.hget(item.redis_key, "desc")
         item.wearable = redis.hget(item.redis_key, "wearable") or "0"
         return item
@@ -78,10 +80,12 @@ class Item():
         redis.sadd("items:list", self.uuid)
 
         redis.hset(self.redis_key, "name", self.name)
+        redis.hset(self.redis_key, "owner", self.owner)
         redis.hset(self.redis_key, "desc", self.desc)
         redis.hset(self.redis_key, "wearable", self.wearable)
 
         redis.set(f"items:from_name:{self.name.lower()}", self.uuid)
+        redis.set(f"items:list:{self.owner}", self.uuid)
 
     def rename(self, redis, newname):
         redis.delete(f"items:from_name:{self.name.lower()}")
@@ -92,12 +96,21 @@ class Item():
     def delete(self, redis):
         redis.srem("items:list", self.uuid)
         redis.delete(f"items:from_name:{self.name.lower()}")
+        redis.srem(f"items:list:{self.owner}", self.uuid)
         redis.delete(self.redis_key)
+
+    def is_owner(self, user):
+        return (user.id == self.owner)
+
+    def check_owner(self, user):
+        if not self.is_owner(user):
+            raise Fail("You do not own this item")
 
     @property
     def dict(self):
         return {"uuid": self.uuid,
                 "name": self.name,
+                "owner": self.owner,
                 "desc": self.desc,
                 "wearable": self.wearable}
 
@@ -105,6 +118,7 @@ class MissingItem(Item):
     def __init__(self, uuid):
         self.uuid = uuid
         self.name = "MissingNo"
+        self.owner = 0
         self.desc = "Deleted Item"
         self.wearable = "0"
         self.author = "0"
