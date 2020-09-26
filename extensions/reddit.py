@@ -60,6 +60,8 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
 
 
 class BaseReddit(BaseCog):
+    "View memes and images from Reddit"
+
     @commands.command()
     @passfail
     async def doki(self, ctx):

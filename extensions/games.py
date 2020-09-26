@@ -12,6 +12,8 @@ class Game():
 
 
 class SpaceGame(Game):
+    desc = "Game where you can walk around :space_invader:"
+
     def __init__(self, ctx):
         self.ctx = ctx
         self.message = None
@@ -99,6 +101,7 @@ class SpaceGame(Game):
 
 
 class The2048Game(Game):
+    desc = "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
     def __init__(self, ctx):
         self.ctx = ctx
         self.message = None
@@ -284,8 +287,8 @@ class The2048Game(Game):
     async def timeout(self):
         await self.message.clear_reactions()
 
-class Games(BaseCog):
-    "A cog with some simple games"
+class BaseGames(BaseCog):
+    "Play a few simple games right in Discord"
 
     async def play(self, ctx, GameType):
         game = GameType(ctx)
@@ -311,17 +314,23 @@ class Games(BaseCog):
                 if not game.running:
                     return NoReact
 
-    @commands.command()
-    @passfail
-    async def space(self, ctx):
-        "Game where you can walk around :space_invader:"
-        return await self.play(ctx, SpaceGame)
+games = {
+    "space": SpaceGame,
+    "2048": The2048Game,
+}
 
-    @commands.command(name="2048")
+
+new_commands = {}
+for name, game in games.items():
+    @commands.command(name=name, brief=game.desc)
     @passfail
-    async def game2048(self, ctx):
-        "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
-        return await self.play(ctx, The2048Game)
+    async def command(self, ctx):
+        return await self.play(ctx, game)
+
+    new_commands[name] = command
+
+Games = type("Games", (BaseGames,), new_commands)
+
 
 def setup(bot):
     bot.add_cog(Games(bot))
