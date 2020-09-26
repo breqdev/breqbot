@@ -13,8 +13,13 @@ class Items(BaseCog):
         "Get information about an item :information_source:"
         item = Item.from_name(self.redis, ctx.guild.id, item)
 
-        return (f"{item.name}: {item.desc} "
-                f"{'*(wearable)*' if item.wearable else ''}")
+        embed = discord.Embed()
+        embed.title = item.name
+        embed.description = item.desc
+
+        embed.add_field(name="Wearable", value=("Yes" if item.wearable else "No"))
+
+        return embed
 
     @commands.command()
     @passfail
@@ -36,7 +41,14 @@ class Items(BaseCog):
             else:
                 items.append(item)
 
-        return "Items:\n"+"\n".join(str(item) for item in items)
+        embed = discord.Embed(title=f"Items on {ctx.guild.name}")
+
+        embed.description = "\n".join(
+            f"• {item.name}: {item.desc}"
+            + (" *(wearable)*" if item.wearable else "")
+            for item in items)
+
+        return embed
 
     @commands.command()
     @passfail
