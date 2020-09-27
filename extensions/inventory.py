@@ -18,7 +18,7 @@ class Inventory(BaseCog):
         if user is None:
             user = ctx.author
 
-        embed = discord.Embed(title=f"{user.name}'s Inventory")
+        embed = discord.Embed(title=f"{user.display_name}'s Inventory")
 
         inventory = self.redis.hgetall(f"inventory:{ctx.guild.id}:{user.id}")
         amounts = {Item.from_redis(self.redis, item): int(amount)

@@ -55,7 +55,7 @@ class Wear(BaseCog):
         if user is None:
             user = ctx.author
 
-        embed = discord.Embed(title=f"{user.name} is wearing...")
+        embed = discord.Embed(title=f"{user.display_name} is wearing...")
 
         items = [Item.from_redis(self.redis, uuid)
                  for uuid in self.redis.smembers(
@@ -73,7 +73,7 @@ class Wear(BaseCog):
             embed.description = "\n".join(f"• {item.name} ({item.desc})"
                                           for item in items)
         else:
-            embed.description = (f"{user.name} does not have any swag. "
+            embed.description = (f"{user.display_name} does not have any swag. "
                                  f"`{self.bot.command_prefix}give` them some?")
 
         return embed

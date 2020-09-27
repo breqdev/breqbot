@@ -35,7 +35,7 @@ class Quests(BaseCog):
 
         if time_until > 0:
             ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
-            raise Fail(f"{ctx.author.name}, "
+            raise Fail(f"{ctx.author.display_name}, "
                        f"you must wait **{ftime}** to claim more coins!")
 
         # Update latest collection
@@ -57,7 +57,7 @@ class Quests(BaseCog):
         # Calculate time to wait until next free collection
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
 
-        return (f"{ctx.author.name}, you have claimed "
+        return (f"{ctx.author.display_name}, you have claimed "
                 f"**{self.GET_COINS_AMOUNT}** coins! "
                 f"Wait {ftime} to claim more.")
 

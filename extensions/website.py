@@ -19,14 +19,14 @@ class Website(BaseCog):
 
         if self.redis.hget(f"guild:{ctx.guild.id}", "website"):
             if user:
-                embed.title = user.name
+                embed.title = user.display_name
                 embed.description = (f"{os.getenv('WEBSITE')}user/"
                                      f"{ctx.guild.id}/{user.id}")
             else:
                 embed.title = ctx.guild.name
                 embed.description = (f"{os.getenv('WEBSITE')}server/"
                                      f"{ctx.guild.id}")
-                embed.add_field(name=ctx.author.name,
+                embed.add_field(name=ctx.author.display_name,
                                 value=f"{os.getenv('WEBSITE')}user/"
                                 f"{ctx.guild.id}/{ctx.author.id}")
         else:

@@ -13,7 +13,7 @@ def setup(bot):
                            *(member.id for member in guild.members))
 
         for member in bot.get_all_members():
-            bot.redis.set(f"user:name:{member.id}", member.name)
+            bot.redis.set(f"user:name:{member.guild.id}:{member.id}", member.display_name)
 
     @bot.event
     async def on_member_join(member):

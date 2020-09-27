@@ -20,7 +20,7 @@ class Currency(BaseCog):
         if coins is None:
             self.redis.set(f"currency:balance:{ctx.guild.id}:{user.id}", 0)
             coins = 0
-        return f"{user.name} has **{coins}** Breqcoins."
+        return f"{user.display_name} has **{coins}** Breqcoins."
 
     @commands.command()
     @commands.guild_only()

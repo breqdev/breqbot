@@ -39,7 +39,7 @@ def server(id):
 
     for member in guild_members:
         balance = int(redis_client.get(f"currency:balance:{id}:{member}") or 0)
-        member_name = redis_client.get(f"user:name:{member}")
+        member_name = redis_client.get(f"user:name:{id}:{member}")
         balances.append((balance, member_name))
 
     richest_members = sorted(balances, key=lambda a: a[0], reverse=True)
@@ -65,7 +65,7 @@ def user(guild_id, user_id):
         return abort(404)
 
     guild_name = redis_client.hget(f"guild:{guild_id}", "name")
-    user_name = redis_client.get(f"user:name:{user_id}")
+    user_name = redis_client.get(f"user:name:{guild_id}:{user_id}")
 
     if not user_name:
         return abort(404)
