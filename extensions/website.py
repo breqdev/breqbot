@@ -17,7 +17,7 @@ class Website(BaseCog):
         "Link to the bot's website :computer:"
         embed = discord.Embed()
 
-        if self.redis.hget(f"guild:{ctx.guild.id}", "website"):
+        if int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
             if user:
                 embed.title = user.display_name
                 embed.description = (f"{os.getenv('WEBSITE')}user/"
