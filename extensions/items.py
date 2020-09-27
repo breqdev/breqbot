@@ -19,7 +19,7 @@ class Items(BaseCog):
         embed.title = item.name
         embed.description = item.desc
 
-        embed.add_field(name="Wearable", value=("Yes" if item.wearable else "No"))
+        embed.add_field(name="Wearable", value=("Yes" if int(item.wearable) else "No"))
 
         return embed
 
@@ -48,7 +48,7 @@ class Items(BaseCog):
 
         embed.description = "\n".join(
             f"• {item.name}: {item.desc}"
-            + (" *(wearable)*" if item.wearable else "")
+            + (" *(wearable)*" if int(item.wearable) else "")
             for item in items)
 
         return embed
