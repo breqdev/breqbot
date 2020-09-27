@@ -60,8 +60,6 @@ def get_posts(sub_name, nsfw=None, spoiler=None, flair=None):
 
 
 class BaseReddit(BaseCog):
-    "View memes and images from Reddit"
-
     @commands.command()
     @passfail
     async def doki(self, ctx):
@@ -105,6 +103,7 @@ for alias in aliases:
     new_commands[alias["command"]] = make_command(alias)
 
 Reddit = type("Reddit", (BaseReddit,), new_commands)
+Reddit.description = "View memes, images, and other posts from Reddit"
 
 
 def setup(bot):

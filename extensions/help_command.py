@@ -60,20 +60,23 @@ class HelpCommand(commands.HelpCommand):
         for command in commands_filtered:
             commands.append(self.get_command_description(command))
 
-        commands = "\n".join(commands)
-        embed.add_field(name="Commands", value=commands, inline=False)
+        if commands:
+            commands = "\n".join(commands)
+            embed.add_field(name="Commands", value=commands, inline=False)
+        else:
+            embed.description = f"No commands from {cog.qualified_name} are usable here."
 
         await self.context.channel.send(embed=embed)
 
     async def send_command_help(self, command):
         signature = self.get_command_signature(command)
-        help = command.help or ""
+        help = command.help or command.brief or ""
 
         embed = discord.Embed(title=signature)
         embed.description = help
 
         if command.cog:
-            embed.set_footer(text=command.cog.qualified_name)
+            embed.set_footer(text=f"{command.cog.qualified_name} | {command.cog.description}")
 
         await self.context.channel.send(embed=embed)
 

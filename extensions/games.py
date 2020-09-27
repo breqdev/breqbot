@@ -288,8 +288,6 @@ class The2048Game(Game):
         await self.message.clear_reactions()
 
 class BaseGames(BaseCog):
-    "Play a few simple games right in Discord"
-
     async def play(self, ctx, GameType):
         game = GameType(ctx)
         await game.new_player(ctx.author)
@@ -334,7 +332,7 @@ for name, game in games.items():
     new_commands[name] = make_command(name, game)
 
 Games = type("Games", (BaseGames,), new_commands)
-
+Games.description = "Play a few simple games right in Discord"
 
 def setup(bot):
     bot.add_cog(Games(bot))
