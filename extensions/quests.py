@@ -15,7 +15,7 @@ class Quests(BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
 
-        if os.getenv("BYPASS_FREE_LIMITS"):
+        if int(os.getenv("BYPASS_FREE_LIMITS")):
             self.GET_COINS_INTERVAL = 1
         else:
             self.GET_COINS_INTERVAL = 3600
