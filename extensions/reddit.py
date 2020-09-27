@@ -81,9 +81,10 @@ class BaseReddit(BaseCog):
     @passfail
     async def reddit(self, ctx, subreddit: str):
         "post from a subreddit of your choice!"
+        channel_is_nsfw = ctx.guild and ctx.channel.is_nsfw()
         async with ctx.channel.typing():
             image = await get_posts(
-                subreddit, nsfw=(None if ctx.channel.is_nsfw() else False))
+                subreddit, nsfw=(None if channel_is_nsfw else False))
         return image
 
 
