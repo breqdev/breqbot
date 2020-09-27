@@ -28,7 +28,7 @@ class Quests(BaseCog):
     async def free_limit(self, ctx):
         # Calculate time to wait before collecting
         last_daily = float(
-            self.redis.get("quests:free:latest:{ctx.guild.id}:{ctx.author.id}")
+            self.redis.get(f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}")
             or 0)
         current_time = time.time()
         time_until = (last_daily + self.GET_COINS_INTERVAL) - current_time
