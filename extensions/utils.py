@@ -43,8 +43,8 @@ class Item():
         item.uuid = uuid
 
         item.name = redis.hget(item.redis_key, "name")
-        item.guild = int(redis.hget(item.redis_key, "guild"))
-        item.owner = int(redis.hget(item.redis_key, "owner"))
+        item.guild = int(redis.hget(item.redis_key, "guild") or "0")
+        item.owner = int(redis.hget(item.redis_key, "owner") or "0")
         item.desc = redis.hget(item.redis_key, "desc")
         item.wearable = redis.hget(item.redis_key, "wearable") or "0"
         return item
