@@ -1,6 +1,7 @@
 import random
 import asyncio
 import typing
+import os
 
 import discord
 from discord.ext import commands
@@ -13,12 +14,17 @@ class Game():
         self.ctx = ctx
         self.args = args.split(" ") if args else []
 
+    async def get_emoji(self, emoji_name):
+        guild = self.ctx.bot.get_guild(int(os.getenv("CONFIG_GUILD")))
+        for emoji in guild.emojis:
+            if emoji.name == emoji_name:
+                return str(emoji)
+
 
 class SpaceGame(Game):
     desc = "Game where you can walk around :space_invader:"
 
-    def __init__(self, ctx, args):
-        super().__init__(ctx, args)
+    async def init(self):
         self.message = None
         self.running = True
 
@@ -109,12 +115,14 @@ class SpaceGame(Game):
 
 class The2048Game(Game):
     desc = "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
-    def __init__(self, ctx, args):
-        super().__init__(ctx, args)
+    async def init(self):
         self.message = None
         self.running = True
 
-        self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "⭐"]
+        # self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "⭐"]
+        number_names = ["4096", "2_", "4_", "8_", "16", "32", "64", "128", "256", "512", "1024", "2048"]
+        self.numbers = [await self.get_emoji(name) for name in number_names]
+
         self.moves = ["⬆️", "➡️", "⬇️", "⬅️"]
 
         self.grid = [["⬛" for _ in range(4)] for _ in range(4)]
@@ -130,7 +138,7 @@ class The2048Game(Game):
         while self.grid[y][x] != "⬛":
             x, y = random.randint(0, 3), random.randint(0, 3)
 
-        tile = "2️⃣" if (random.random() > 0.9) else "1️⃣"
+        tile = self.numbers[2] if (random.random() > 0.9) else self.numbers[1]
         self.grid[y][x] = tile
 
     @property
@@ -161,7 +169,7 @@ class The2048Game(Game):
     def won(self):
         for row in self.grid:
             for square in row:
-                if square == "⭐":
+                if square == self.numbers[11]:
                     return True
         return False
 
@@ -303,6 +311,7 @@ class The2048Game(Game):
 class BaseGames(BaseCog):
     async def play(self, ctx, GameType, args):
         game = GameType(ctx, args)
+        await game.init()
         await game.new_player(ctx.author)
 
         message = await game.draw()
