@@ -6,7 +6,7 @@ from discord.ext import commands
 
 prefix = os.getenv("BOT_PREFIX") or ";"
 
-activity = discord.Game(f"{prefix}help | breq.dev")
+activity = discord.Game(f"{prefix}help | bot.breq.dev")
 breqbot = commands.Bot(
     prefix,
     description="Hi, I'm Breqbot! Beep boop :robot:",

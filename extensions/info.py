@@ -94,6 +94,14 @@ class Info(BaseCog):
         return embed
 
     @commands.command()
+    @commands.check(config_only)
+    @passfail
+    async def activity(self, ctx, *, activity: str):
+        "Change Breqbot's status in Discord"
+        game = discord.Game(activity)
+        await self.bot.change_presence(status=discord.Status.online, activity=game)
+
+    @commands.command()
     @passfail
     async def awsnap(self, ctx):
         "Intentionally crash the bot :skull: in order to test its error handling"
