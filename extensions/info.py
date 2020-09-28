@@ -79,7 +79,7 @@ class Info(BaseCog):
     @commands.command()
     @commands.check(config_only)
     @passfail
-    async def guilds_list(self, ctx):
+    async def guilds(self, ctx):
         "List guilds that the bot is in"
 
         embed = discord.Embed(title="Breqbot is in...")
@@ -101,4 +101,16 @@ class Info(BaseCog):
 
 
 def setup(bot):
+    @bot.listen()
+    async def on_ready():
+        channel = bot.get_channel(int(os.getenv("UPDATE_CHANNEL")))
+        embed = discord.Embed(title="Breqbot Connected! :blush: Hello World!")
+
+        start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(time.time()))
+
+        embed.description = (f"Started at **{start_time}** UTC\n"
+                             f"Latest commit **{git_hash[:7]}**")
+        await channel.send(embed=embed)
+
+
     bot.add_cog(Info(bot))
