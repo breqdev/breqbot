@@ -27,10 +27,10 @@ class Info(BaseCog):
                              "features!")
 
         embed.add_field(name="Invite Breqbot to your server!",
-                        value=f"[OAuth2 URL]({os.getenv('BOT_INVITE')})",
+                        value=f"{os.getenv('WEBSITE')}invite",
                         inline=False)
         embed.add_field(name="Join the Breqbot discussion server!",
-                        value=os.getenv("TESTING_DISCORD"), inline=False)
+                        value=f"{os.getenv('TESTING_DISCORD')}", inline=False)
 
         return embed
 

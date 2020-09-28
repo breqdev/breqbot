@@ -1,7 +1,7 @@
 import os
 import json
 
-from flask import Flask, render_template, abort
+from flask import Flask, render_template, abort, redirect
 from flask_sockets import Sockets
 
 import gevent
@@ -85,6 +85,17 @@ def user(guild_id, user_id):
                            balance=balance, inventory=amounts.items(),
                            wearing=wearing)
 
+@app.route("/guild")
+def guild():
+    return redirect(os.getenv("TESTING_DISCORD"))
+
+@app.route("/bugs")
+def bugs():
+    return redirect(os.getenv("BUG_REPORT"))
+
+@app.route("/invite")
+def invite():
+    return redirect(os.getenv("BOT_INVITE"))
 
 class PortalBackend():
     def __init__(self):

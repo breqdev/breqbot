@@ -113,8 +113,8 @@ def setup(bot):
             embed = discord.Embed(title="Aw, snap!")
             embed.description = ("Something went wrong while running this "
                                  "command. If this continues, "
-                                 f"[report this]({os.getenv('BUG_REPORT')}) "
-                                 f"to Breq. (*Error ID: {error_id}*)")
+                                 f"[report]({os.getenv('BUG_REPORT')}) "
+                                 f"it to Breq. (*Error ID: {error_id}*)")
 
             await ctx.send(embed=embed)
             await ctx.message.add_reaction("⚠️")
