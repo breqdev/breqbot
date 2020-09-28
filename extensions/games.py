@@ -1,5 +1,6 @@
 import random
 import asyncio
+import typing
 
 import discord
 from discord.ext import commands
@@ -8,14 +9,16 @@ from .utils import *
 
 
 class Game():
-    pass
+    def __init__(self, ctx, args):
+        self.ctx = ctx
+        self.args = args.split(" ") if args else []
 
 
 class SpaceGame(Game):
     desc = "Game where you can walk around :space_invader:"
 
-    def __init__(self, ctx):
-        self.ctx = ctx
+    def __init__(self, ctx, args):
+        super().__init__(ctx, args)
         self.message = None
         self.running = True
 
@@ -82,10 +85,14 @@ class SpaceGame(Game):
             for emoji in self.moves:
                 await self.message.add_reaction(emoji)
             await self.message.add_reaction("🆕")
+            await self.message.add_reaction("❌")
 
             return self.message
 
     async def move(self, user, emoji):
+        if emoji == "❌":
+            await self.timeout()
+            self.running = False
         if user.id in self.players:
             if emoji in self.moves:
                 self.players[user.id].move(*self.moves[emoji])
@@ -102,8 +109,8 @@ class SpaceGame(Game):
 
 class The2048Game(Game):
     desc = "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
-    def __init__(self, ctx):
-        self.ctx = ctx
+    def __init__(self, ctx, args):
+        super().__init__(ctx, args)
         self.message = None
         self.running = True
 
@@ -256,8 +263,13 @@ class The2048Game(Game):
         return False
 
     async def move(self, user, emoji):
-        if user.id != self.player.id:
-            return
+        if "single" in self.args:
+            if user.id != self.player.id:
+                return
+
+        if emoji == "❌":
+            await self.timeout()
+            self.running = False
 
         board_changed = self.move_grid(emoji)
 
@@ -282,14 +294,15 @@ class The2048Game(Game):
             self.message = await self.ctx.send(text)
             for emoji in self.moves:
                 await self.message.add_reaction(emoji)
+            await self.message.add_reaction("❌")
             return self.message
 
     async def timeout(self):
         await self.message.clear_reactions()
 
 class BaseGames(BaseCog):
-    async def play(self, ctx, GameType):
-        game = GameType(ctx)
+    async def play(self, ctx, GameType, args):
+        game = GameType(ctx, args)
         await game.new_player(ctx.author)
 
         message = await game.draw()
@@ -301,7 +314,7 @@ class BaseGames(BaseCog):
         while True:
             try:
                 reaction, user = await self.bot.wait_for(
-                    "reaction_add", timeout=120, check=check)
+                    "reaction_add", timeout=3600, check=check)
             except asyncio.TimeoutError:
                 await game.timeout()
                 return NoReact
@@ -321,8 +334,8 @@ def make_command(name, game):
     @commands.command(name=name, brief=game.desc)
     @commands.guild_only()
     @passfail
-    async def _command(self, ctx):
-        return await self.play(ctx, game)
+    async def _command(self, ctx, *, args: typing.Optional[str] = None):
+        return await self.play(ctx, game, args)
 
     return _command
 
