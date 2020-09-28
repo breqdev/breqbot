@@ -44,7 +44,7 @@ class Vex(BaseCog):
             if not awards:
                 awards = "This team has not won any awards."
 
-            embed.add_field(name="Awards", value=awards, inline=False)
+            awards = "**Awards:**\n" + awards
 
             rankings_raw = requests.get(
                 "https://api.vexdb.io/v1/get_rankings",
@@ -72,7 +72,9 @@ class Vex(BaseCog):
             if not rankings:
                 rankings = "This team has not competed."
 
-            embed.add_field(name="Rankings", value=rankings, inline=False)
+            rankings = "**Rankings:**\n"
+
+            embed.description = awards + "\n" + rankings
         return embed
 
 

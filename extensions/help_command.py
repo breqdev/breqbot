@@ -34,21 +34,25 @@ class HelpCommand(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         embed = discord.Embed(title="Hi, I'm Breqbot! Beep boop :robot:")
 
+        description = ""
+
         for cog, commands_unfiltered in mapping.items():
             commands_filtered = await self.filter_commands(commands_unfiltered)
             if len(commands_filtered) == 0:
                 continue
 
             if cog:
-                name = f"**{cog.qualified_name}:**"
+                name = f"**{cog.qualified_name}** - "
             else:
-                name = "**General:**"
+                name = "**General** - "
 
             value = " ".join(f"`{self.get_command_signature(command)}`"
-                             for command in commands_filtered)
-            embed.add_field(name=name, value=value, inline=False)
+                             for command in commands_filtered) + "\n"
+            description += (name + value)
 
-        await self.context.channel.send(embed=embed)
+        embed.description = description
+
+        await self.context.send(embed=embed)
 
     async def send_cog_help(self, cog):
         embed = discord.Embed()

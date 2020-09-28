@@ -37,19 +37,18 @@ class Minecraft(BaseCog):
         else:
             description.append(status["description"])
 
-        description = "".join(description)
-        embed.add_field(name="Description", value=description)
+        description = "**Description**\n" + "".join(description)
 
         playerstr = (f"Players: **{status['players']['online']}**"
                      f"/{status['players']['max']}")
 
         if status["players"].get("sample"):
-            online = "\n".join(f"• {player['name']}"
-                               for player in status["players"]["sample"])
+            online = "\n" + "\n".join(f"• {player['name']}"
+                                      for player in status["players"]["sample"])
         else:
-            online = "None"
+            online = ""
 
-        embed.add_field(name=playerstr, value=online)
+        embed.description = description + "\n" + playerstr + online
         return embed
 
 

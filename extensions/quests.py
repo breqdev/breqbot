@@ -73,10 +73,9 @@ class Quests(BaseCog):
         scenario = random.choice(self.QUEST_MESSAGES)
 
         embed = discord.Embed(title=f"Quest: {scenario['name']}:")
-        embed.add_field(
-            name=scenario["prompt"],
-            value="\n".join(f"{emojis[idx]}: {choice}"
-                            for idx, choice in enumerate(scenario["choices"])))
+        embed.description = (f"{scenario['prompt']}\n\n"
+            + "\n".join(f"{emojis[idx]}: {choice}"
+            for idx, choice in enumerate(scenario["choices"])))
         message = await ctx.send(embed=embed)
         for emoji in emojis:
             await message.add_reaction(emoji)
