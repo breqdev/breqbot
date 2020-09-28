@@ -205,10 +205,12 @@ async def config_only(ctx):
 
 
 async def shopkeeper_only(ctx):
-    if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
-        return True
     if not ctx.guild:
         return False
+    if ctx.author.permissions_in(ctx.channel).administrator:
+        return True
+    if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
+        return True
     for role in ctx.author.roles:
         if role.name == "Shopkeeper":
             return True
