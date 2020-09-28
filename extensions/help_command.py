@@ -114,9 +114,7 @@ def setup(bot):
             embed.description = ("Something went wrong while running this "
                                  "command. If this continues, "
                                  f"[report this]({os.getenv('BUG_REPORT')}) "
-                                 "to Breq.")
-
-            embed.add_field(name="Error ID", value=error_id)
+                                 f"to Breq. (*Error ID: {error_id}*)")
 
             await ctx.send(embed=embed)
             await ctx.message.add_reaction("⚠️")
