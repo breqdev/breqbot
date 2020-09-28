@@ -55,6 +55,7 @@ class Items(BaseCog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.check(shopkeeper_only)
     @passfail
     async def makeitem(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
