@@ -28,7 +28,10 @@ class Currency(BaseCog):
     async def givecoins(self, ctx, user: discord.User, amount: int):
         "Give coins to another user :incoming_envelope:"
         balance = self.redis.get(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
+            f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
+
+        if amount < 0:
+            raise Fail(f"Nice try {ctx.author.mention}, you cannot steal coins.")
 
         if int(balance) < amount:
             raise Fail("Not enough coins!")
