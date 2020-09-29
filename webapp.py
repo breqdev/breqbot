@@ -26,7 +26,7 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 
-@app.route("/server/<int:id>")
+@app.route("/<int:id>")
 def server(id):
     website_enabled = int(redis_client.hget(f"guild:{id}", "website"))
     if not website_enabled:
@@ -40,7 +40,7 @@ def server(id):
     for member in guild_members:
         balance = int(redis_client.get(f"currency:balance:{id}:{member}") or 0)
         member_name = redis_client.get(f"user:name:{id}:{member}")
-        balances.append((balance, member_name))
+        balances.append((balance, member_name, member))
 
     richest_members = sorted(balances, key=lambda a: a[0], reverse=True)
 
@@ -50,15 +50,16 @@ def server(id):
 
     for item_id in shop_item_ids:
         price = int(redis_client.get(f"shop:prices:{id}:{item_id}"))
-        name = redis_client.hget(f"items:{item_id}", "name")
+        name = Item.from_redis(redis_client, item_id)
         shop_items.append((price, name))
 
     return render_template("server.html", server=guild_name,
+                           server_id=id, server_size=len(guild_members),
                            richest_members=richest_members,
                            shop_items=shop_items)
 
 
-@app.route("/user/<int:guild_id>/<int:user_id>")
+@app.route("/<int:guild_id>/<int:user_id>")
 def user(guild_id, user_id):
     website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
     if not website_enabled:
@@ -66,6 +67,8 @@ def user(guild_id, user_id):
 
     guild_name = redis_client.hget(f"guild:{guild_id}", "name")
     user_name = redis_client.get(f"user:name:{guild_id}:{user_id}")
+
+    guild_size = redis_client.scard(f"guild:member:{guild_id}")
 
     if not user_name:
         return abort(404)
@@ -81,7 +84,8 @@ def user(guild_id, user_id):
     wearing = [Item.from_redis(redis_client, uuid)
                for uuid in redis_client.smembers(f"wear:{guild_id}:{user_id}")]
 
-    return render_template("user.html", server=guild_name, user=user_name,
+    return render_template("user.html", server=guild_name, server_id=guild_id,
+                           server_size=guild_size, user=user_name,
                            balance=balance, inventory=amounts.items(),
                            wearing=wearing)
 

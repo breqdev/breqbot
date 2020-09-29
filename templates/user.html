@@ -1,35 +1,66 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>{{ user }} is with Breqbot on {{ server }}!</h1>
 <br>
-<h3>Balance: {{ balance }} Breqcoins</h3>
+<div class="jumbotron">
+    <h1 class="username">{{ user }}</h1>
+    <p class="lead">is on</p>
+    <h1 class="server"><a href="/{{ server_id }}">{{ server }}</a></h1>
+    <p>({{ server_size }} members)</p>
+</div>
+
+<div class="balance-parent">
+    <div class="balance rounded-pill">
+        <h3 class="balance-text">Balance: <span class="balance-number">{{ balance }}</span> coins</h3>
+    </div>
+</div>
+
 <br>
-<h3>Items:</h3>
-<table>
-    <tr>
-        <th>Item</th>
-        <th>Breqcoins</th>
-    </tr>
-    {% for item in inventory %}
-    <tr>
-        <td>{{ item[0].name }}</td>
-        <td>{{ item[1] }}</td>
-    </tr>
-    {% endfor %}
-</table>
-<br>
-<h3>Wearing:</h3>
-<table>
-    <tr>
-        <th>Item</th>
-        <th>Description</th>
-    </tr>
-    {% for item in wearing %}
-    <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.desc }}</td>
-    </tr>
-    {% endfor %}
-</table>
+
+<div class="row">
+    <div class="col-sm">
+        <div class="table">
+            <h3>Inventory</h3>
+            {% if inventory %}
+            <table>
+                <tr>
+                    <th>Item</th>
+                    <th>Description</th>
+                </tr>
+                {% for item in inventory %}
+                <tr>
+                    <td>{{ item[0].name }}</td>
+                    <td>{{ item[0].desc }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <br>
+            <p>{{ user }}'s inventory is empty.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-sm">
+        <div class="table">
+            <h3>Outfit</h3>
+            {% if wearing %}
+            <table>
+                <tr>
+                    <th>Item</th>
+                    <th>Description</th>
+                </tr>
+                {% for item in wearing %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.desc }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <br>
+            <p>{{ user }} does not have an outfit.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

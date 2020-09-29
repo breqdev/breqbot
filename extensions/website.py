@@ -20,14 +20,14 @@ class Website(BaseCog):
         if int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
             if user:
                 embed.title = user.display_name
-                embed.description = (f"{os.getenv('WEBSITE')}user/"
+                embed.description = (f"{os.getenv('WEBSITE')}"
                                      f"{ctx.guild.id}/{user.id}")
             else:
                 embed.title = ctx.guild.name
-                embed.description = (f"{os.getenv('WEBSITE')}server/"
+                embed.description = (f"{os.getenv('WEBSITE')}"
                                      f"{ctx.guild.id}")
                 embed.add_field(name=ctx.author.display_name,
-                                value=f"{os.getenv('WEBSITE')}user/"
+                                value=f"{os.getenv('WEBSITE')}"
                                 f"{ctx.guild.id}/{ctx.author.id}")
         else:
             embed.title = f"{ctx.guild.name}'s website is disabled."
