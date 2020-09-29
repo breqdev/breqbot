@@ -25,7 +25,7 @@ class Currency(BaseCog):
     @commands.command()
     @commands.guild_only()
     @passfail
-    async def givecoins(self, ctx, user: discord.User, amount: int):
+    async def pay(self, ctx, user: discord.User, amount: int):
         "Give coins to another user :incoming_envelope:"
         balance = self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
