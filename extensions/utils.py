@@ -223,6 +223,8 @@ class BaseCog(commands.Cog):
         self.redis = bot.redis
 
     def ensure_item(self, ctx, user, item, qty=1):
+        if qty < 0:
+            raise Fail("Negative numbers are not allowed.")
         has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}",
                                   item.uuid) or "0")
         if has < qty:
