@@ -155,26 +155,25 @@ class BaseReddit(BaseCog):
             await build_post_cache(alias, self.redis)
 
     async def default(self, ctx, alias):
-        async with ctx.channel.typing():
-            cache_size = self.redis.zcard(f"reddit:{alias['command']}")
+        cache_size = self.redis.zcard(f"reddit:{alias['command']}")
 
-            if cache_size < 1:
-                raise Fail("The cache is still being built!")
+        if cache_size < 1:
+            raise Fail("The cache is still being built!")
 
-            post_idx = random.randint(0, cache_size-1)
+        post_idx = random.randint(0, cache_size-1)
 
-            post_id = self.redis.zrange(f"reddit:{alias['command']}", post_idx, post_idx)[0]
-            post = reddit.submission(post_id)
+        post_id = self.redis.zrange(f"reddit:{alias['command']}", post_idx, post_idx)[0]
+        post = reddit.submission(post_id)
 
-            if alias.get("text"):
-                ret = discord.Embed()
-                ret.title = post.title
-                ret.url = post.url
-                ret.description = post.selftext
-            else:
-                image = post.url
-                title = post.title
-                ret = f"**{title}** | {image}"
+        if alias.get("text"):
+            ret = discord.Embed()
+            ret.title = post.title
+            ret.url = post.url
+            ret.description = post.selftext
+        else:
+            image = post.url
+            title = post.title
+            ret = f"**{title}** | {image}"
 
         return ret
 
