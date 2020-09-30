@@ -1,5 +1,17 @@
 [
     {
+        "command": "doki",
+        "sub": "ddlc",
+        "desc": "DDLC fanart. ~~Just Monika!~~",
+        "flair": ["Fanart"]
+    },
+    {
+        "command": "dokifun",
+        "sub": "ddlc",
+        "desc": "Memes from the Literature Club!",
+        "flair": ["Fun", "Media"]
+    },
+    {
         "command": "okbh",
         "sub": "okbuddyhetero",
         "desc": "Ok ~buddy~ hetero"
@@ -38,6 +50,17 @@
         "command": "traa",
         "sub": "traaaaaaannnnnnnnnns",
         "desc": "traaaaaaannnnnnnnnns :transgender_flag:"
+    },
+    {
+        "command": "ph",
+        "sub": "programmerhumor",
+        "desc": "Memes about programming"
+    },
+    {
+        "command": "dokinsfw",
+        "sub": "ddlcrule34",
+        "desc": "Lewd dokis :flushed:",
+        "nsfw": true
     },
     {
         "command": "tifu",

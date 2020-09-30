@@ -8,7 +8,7 @@ import praw
 import prawcore
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from .utils import *
 
@@ -24,6 +24,56 @@ def content_type(url):
     else:
         return "none"
 
+
+@run_in_executor
+def build_post_cache(alias, redis):
+    # print(f"Building cache for {alias['sub']}...", end="", flush=True)
+    sub = reddit.subreddit(alias["sub"])
+
+    now = time.time()
+
+    for submission in sub.top("week", limit=100):
+        if alias.get("text"):
+            if not submission.is_self:
+                continue
+            if len(submission.selftext) > 2000:
+                continue
+        else:
+            if submission.is_self:
+                continue
+
+        if "spoiler" in alias:
+            if submission.spoiler != alias["spoiler"]:
+                continue
+
+        if "nsfw" in alias:
+            if alias["nsfw"] is not None:
+                if submission.over_18 != alias["nsfw"]:
+                    continue
+        else:
+            if submission.over_18:
+                continue
+
+        if "flair" in alias:
+            if submission.link_flair_text is None:
+                continue
+            for word in alias["flair"]:
+                if word in submission.link_flair_text:
+                    break
+            else:
+                continue
+
+        if not alias.get("text"):
+            content = content_type(submission.url)
+            if content != "image":
+                continue
+
+        # print("X", end="", flush=True)
+        redis.zadd(f"reddit:{alias['command']}", {submission.id: now})
+
+    # print("...Built")
+    # Remove old posts
+    redis.zremrangebyscore(f"reddit:{alias['command']}", "-inf", (now-1))
 
 @run_in_executor
 def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair=None, text=False):
@@ -95,32 +145,38 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
 
 
 class BaseReddit(BaseCog):
-    @commands.command()
-    @passfail
-    async def doki(self, ctx):
-        """picture of doki from ddlc!
-        also try `doki fun` or ||`doki nsfw` :smirk:||"""
-        async with ctx.channel.typing():
-            image = await get_posts(
-                "DDLC",
-                channel=ctx.channel.id,
-                redis=self.redis,
-                spoiler=None,
-                nsfw=("nsfw" in ctx.message.content),
-                flair=(["Fun"] if "fun" in ctx.message.content else ["Fanart", "Media"])
-            )
-        return image
+    def __init__(self, bot):
+        super().__init__(bot)
+        self.build_cache.start()
 
-    async def default(self, ctx, params):
+    @tasks.loop(hours=24)
+    async def build_cache(self):
+        for alias in self.aliases:
+            await build_post_cache(alias, self.redis)
+
+    async def default(self, ctx, alias):
         async with ctx.channel.typing():
-            image = await get_posts(
-                params["sub"],
-                channel=ctx.channel.id,
-                redis=self.redis,
-                nsfw=(None if ctx.channel.is_nsfw() else False),
-                text=params.get("text") or False
-            )
-        return image
+            cache_size = self.redis.zcard(f"reddit:{alias['command']}")
+
+            if cache_size < 1:
+                raise Fail("The cache is still being built!")
+
+            post_idx = random.randint(0, cache_size-1)
+
+            post_id = self.redis.zrange(f"reddit:{alias['command']}", post_idx, post_idx)[0]
+            post = reddit.submission(post_id)
+
+            if alias.get("text"):
+                ret = discord.Embed()
+                ret.title = post.title
+                ret.url = post.url
+                ret.description = post.selftext
+            else:
+                image = post.url
+                title = post.title
+                ret = f"**{title}** | {image}"
+
+        return ret
 
     @commands.command()
     @passfail
@@ -140,19 +196,29 @@ class BaseReddit(BaseCog):
 with open("extensions/reddit.json") as f:
     aliases = json.load(f)
 
+def conditional_decorator(dec, condition):
+    def decorator(func):
+        if not condition:
+            return func
+        return dec(func)
+    return decorator
+
 def make_command(alias):
     @commands.command(name=alias["command"], brief=alias["desc"])
+    @conditional_decorator(commands.is_nsfw(), alias.get("nsfw"))
     @passfail
     async def _command(self, ctx):
         return await self.default(ctx, alias)
 
     return _command
 
-new_commands = {}
+new_attrs = {}
 for alias in aliases:
-    new_commands[alias["command"]] = make_command(alias)
+    new_attrs[alias["command"]] = make_command(alias)
 
-Reddit = type("Reddit", (BaseReddit,), new_commands)
+new_attrs["aliases"] = aliases
+
+Reddit = type("Reddit", (BaseReddit,), new_attrs)
 Reddit.description = "View memes, images, and other posts from Reddit"
 
 
