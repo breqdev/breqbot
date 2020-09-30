@@ -39,10 +39,10 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
 
     # Clear old posts
     now = time.time()
-    # long_ago = now - 3600  # 1 hr ago
+    long_ago = now - 7200  # 2 hrs ago
 
     if channel:
-        # redis.zremrangebyscore(f"reddit:{channel}", 0, long_ago)
+        redis.zremrangebyscore(f"reddit:{channel}", 0, long_ago)
         redis.zremrangebyrank(f"reddit:{channel}", 0, -20)
 
     frontpage = sub.top("month", limit=1000)
