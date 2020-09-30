@@ -60,7 +60,7 @@ class Portal(BaseCog):
 
     @commands.command()
     @passfail
-    async def modifyportal(self, ctx, id: str, field: str, value: str):
+    async def modifyportal(self, ctx, id: str, field: str, *, value: str):
         "Modify an existing Portal"
 
         portal = await self.get_portal(id, ctx.author.id)
@@ -221,6 +221,8 @@ class Portal(BaseCog):
         if not portal_id:
             raise Fail(f"Portal {name} does not exist!")
 
+        portal_name = self.redis.hget(f"portal:{portal_id}", "name")
+
         pubsub = self.redis.pubsub()
         pubsub.subscribe(f"portal:{portal_id}:{job_id}")
 
@@ -231,16 +233,37 @@ class Portal(BaseCog):
             "data": command
         })
 
+        clocks = "🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛"
+
+        embed = discord.Embed(title="Waiting for response...")
+
+        dismsg = await ctx.send(embed=embed)
+
         self.redis.publish(f"portal:{portal_id}:{job_id}", message)
 
         message = None
         ts = time.time()
-        while (message is None
-               or json.loads(message["data"])["type"] != "response"):
+        frame = 0
+
+        while message is None or json.loads(message["data"])["type"] != "response":
+            if time.time() - ts > 30:
+                # Connection timed out
+                embed.title = "Timed Out"
+                embed.description = f"Portal {portal_name} did not respond in time."
+                await dismsg.edit(embed=embed)
+                return NoReact
+
+            if frame % 5 == 0:
+                clock_index = (frame // 5) % len(clocks)
+                clock = clocks[clock_index]
+                embed.description = clock
+                await dismsg.edit(embed=embed)
+
             message = pubsub.get_message(
                 ignore_subscribe_messages=True, timeout=0)
-            if time.time() - ts > 10:
-                raise Fail("Connection to Portal timed out")
+
+            frame += 1
+
             await asyncio.sleep(0.2)
 
         data = json.loads(message["data"])["data"]
@@ -251,9 +274,10 @@ class Portal(BaseCog):
         if "description" in data:
             embed.description = data["description"]
 
-        portal_name = self.redis.hget(f"portal:{portal_id}", "name")
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
-        return embed
+
+        await dismsg.edit(embed=embed)
+        return NoReact
 
 
 def setup(bot):
