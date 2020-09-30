@@ -95,6 +95,8 @@ class Quests(BaseCog):
             else:
                 await reaction.remove(user)
 
+        await message.clear_reactions()
+
         choice = scenario["choices"][emojis.index(reaction.emoji)]
 
         result = random.choice(("large", "medium", "small"))
@@ -102,14 +104,17 @@ class Quests(BaseCog):
         coin_multipliers = {"large": 2, "medium": 1, "small": 0.2}
 
         coins = int(coin_multipliers[result] * self.GET_COINS_AMOUNT)
-        message = scenario[result].format(coins=coins, choice=choice)
+        result = scenario[result].format(coins=coins, choice=choice)
 
         self.redis.incr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", coins)
 
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
-        message += f"\nWait {ftime} to play again!"
-        return message
+        result += f"\nWait {ftime} to play again!"
+
+        embed.description += "\n\n" + result
+        await message.edit(embed=embed)
+        return NoReact
 
 
 def setup(bot):
