@@ -89,7 +89,7 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
             embed.description = submission.selftext
             return embed
         else:
-            return submission.url
+            return f"**{submission.title}** | {submission.url}"
 
     return "No images found!"
 
