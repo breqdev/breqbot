@@ -72,7 +72,7 @@ class Portal:
         self.socket.run_forever()
 
 
-portal = Portal(os.getenv("PORTAL_URL"), "echo", os.getenv("PORTAL_TOKEN"))
+portal = Portal(os.getenv("PORTAL_URL"), os.getenv("PORTAL_ID"), os.getenv("PORTAL_TOKEN"))
 
 
 @portal.on_request()
