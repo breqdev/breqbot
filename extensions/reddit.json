@@ -38,5 +38,11 @@
         "command": "traa",
         "sub": "traaaaaaannnnnnnnnns",
         "desc": "traaaaaaannnnnnnnnns :transgender_flag:"
+    },
+    {
+        "command": "tifu",
+        "sub": "tifu",
+        "desc": "Today I Fr*cked Up",
+        "text": true
     }
 ]

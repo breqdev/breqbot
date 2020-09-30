@@ -2,6 +2,7 @@ import os
 import json
 import time
 import random
+import requests
 
 import praw
 import prawcore
@@ -16,8 +17,16 @@ reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
                      user_agent="Breqbot! https://breq.dev/")
 
 
+def content_type(url):
+    r = requests.head(url).headers.get("content-type")
+    if r:
+        return r.split(";")[0].split("/")[0]
+    else:
+        return "none"
+
+
 @run_in_executor
-def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair=None):
+def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair=None, text=False):
     sub = reddit.subreddit(sub_name)
 
     try:
@@ -34,12 +43,18 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
 
     if channel:
         # redis.zremrangebyscore(f"reddit:{channel}", 0, long_ago)
-        redis.zremrangebyscore(f"reddit:{channel}", 0, -50)
+        redis.zremrangebyrank(f"reddit:{channel}", 0, -20)
 
     frontpage = sub.top("month", limit=1000)
     for submission in frontpage:
-        if submission.is_self:
-            continue
+        if text:
+            if not submission.is_self:
+                continue
+            if len(submission.selftext) > 2000:
+                continue
+        else:
+            if submission.is_self:
+                continue
 
         if spoiler is not None:
             if submission.spoiler != spoiler:
@@ -52,8 +67,8 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
         if flair is not None:
             if submission.link_flair_text is None:
                 continue
-            for text in flair:
-                if text in submission.link_flair_text:
+            for word in flair:
+                if word in submission.link_flair_text:
                     break
             else:
                 continue
@@ -62,9 +77,19 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
             if redis.zscore(f"reddit:{channel}", submission.id):
                 continue  # Submission posted recently
 
+        if not text:
+            content = content_type(submission.url)
+            if content != "image":
+                continue
+
         redis.zadd(f"reddit:{channel}", {submission.id: now})
 
-        return submission.url
+        if submission.is_self:
+            embed = discord.Embed(title=submission.title, url=f"https://reddit.com{submission.permalink}")
+            embed.description = submission.selftext
+            return embed
+        else:
+            return submission.url
 
     return "No images found!"
 
@@ -86,13 +111,14 @@ class BaseReddit(BaseCog):
             )
         return image
 
-    async def default(self, ctx, subreddit):
+    async def default(self, ctx, params):
         async with ctx.channel.typing():
             image = await get_posts(
-                subreddit,
+                params["sub"],
                 channel=ctx.channel.id,
                 redis=self.redis,
-                nsfw=(None if ctx.channel.is_nsfw() else False)
+                nsfw=(None if ctx.channel.is_nsfw() else False),
+                text=params.get("text") or False
             )
         return image
 
@@ -118,7 +144,7 @@ def make_command(alias):
     @commands.command(name=alias["command"], brief=alias["desc"])
     @passfail
     async def _command(self, ctx):
-        return await self.default(ctx, alias["sub"])
+        return await self.default(ctx, alias)
 
     return _command
 
