@@ -19,16 +19,11 @@ class Website(BaseCog):
 
         if int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
             if user:
-                embed.title = user.display_name
-                embed.description = (f"{os.getenv('WEBSITE')}"
-                                     f"{ctx.guild.id}/{user.id}")
+                embed.title = f"Website: **{user.display_name}** on {ctx.guild.name}"
+                embed.url = f"{os.getenv('WEBSITE')}{ctx.guild.id}/{user.id}"
             else:
-                embed.title = ctx.guild.name
-                embed.description = (f"{os.getenv('WEBSITE')}"
-                                     f"{ctx.guild.id}")
-                embed.add_field(name=ctx.author.display_name,
-                                value=f"{os.getenv('WEBSITE')}"
-                                f"{ctx.guild.id}/{ctx.author.id}")
+                embed.title = f"Website: **{ctx.guild.name}**"
+                embed.url = f"{os.getenv('WEBSITE')}{ctx.guild.id}"
         else:
             embed.title = f"{ctx.guild.name}'s website is disabled."
             embed.description = (f"Shopkeepers can enable it with "
