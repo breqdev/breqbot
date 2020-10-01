@@ -161,6 +161,7 @@ class BaseReddit(BaseCog):
 
     async def default(self, ctx, alias):
         cache_size = self.redis.zcard(f"reddit:cache:{alias['command']}")
+        history_size = self.redis.zcard(f"reddit:history:{ctx.channel.id}")
 
         if cache_size < 1:
             raise Fail("The cache is still being built!")
@@ -173,6 +174,7 @@ class BaseReddit(BaseCog):
 
         while self.redis.zscore(f"reddit:history:{ctx.channel.id}", post.id):
             # Submission has been posted recently, fetch a new one
+            print(f"warning: submission found in history. hsize: {history_size}")
             post_idx = random.randint(0, cache_size-1)
             post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
             post = reddit.submission(post_id)
