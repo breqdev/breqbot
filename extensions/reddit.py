@@ -27,7 +27,6 @@ def content_type(url):
 
 @run_in_executor
 def build_post_cache(alias, redis):
-    # print(f"Building cache for {alias['sub']}...", end="", flush=True)
     sub = reddit.subreddit(alias["sub"])
 
     now = time.time()
@@ -68,12 +67,19 @@ def build_post_cache(alias, redis):
             if content != "image":
                 continue
 
-        # print("X", end="", flush=True)
-        redis.zadd(f"reddit:cache:{alias['command']}", {submission.id: now})
+        redis.zadd(f"reddit:cache:list:{alias['command']}", {submission.id: now})
+        redis.hset(f"reddit:cache:{submission.id}", mapping={
+            "title": submission.title,
+            "url": submission.url,
+            "text": submission.selftext
+        })
 
-    # print("...Built")
     # Remove old posts
-    redis.zremrangebyscore(f"reddit:cache:{alias['command']}", "-inf", (now-1))
+    old_posts = redis.zrangebyscore(f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
+    redis.zremrangebyscore(f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
+
+    for post_id in old_posts:
+        redis.delete(f"reddit:cache:{post_id}")
 
 @run_in_executor
 def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair=None, text=False):
@@ -160,7 +166,7 @@ class BaseReddit(BaseCog):
             self.redis.zremrangebyrank(channel, 0, -20)
 
     async def default(self, ctx, alias):
-        cache_size = self.redis.zcard(f"reddit:cache:{alias['command']}")
+        cache_size = self.redis.zcard(f"reddit:cache:list:{alias['command']}")
         history_size = self.redis.zcard(f"reddit:history:{ctx.channel.id}")
 
         if cache_size < 1:
@@ -169,32 +175,27 @@ class BaseReddit(BaseCog):
         random.seed(ctx.message.id)
         post_idx = random.randint(0, cache_size-1)
 
-        post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
+        post_id = self.redis.zrange(f"reddit:cache:list:{alias['command']}", post_idx, post_idx)[0]
 
-        post = reddit.submission(post_id)
-
-        while self.redis.zscore(f"reddit:history:{ctx.channel.id}", post.id):
+        while self.redis.zscore(f"reddit:history:{ctx.channel.id}", post_id):
             # Submission has been posted recently, fetch a new one
             print(f"warning: submission found in history. hsize: {history_size}")
             post_idx = random.randint(0, cache_size-1)
-            post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
-            post = reddit.submission(post_id)
+            post_id = self.redis.zrange(f"reddit:cache:list:{alias['command']}", post_idx, post_idx)[0]
 
-        self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post.id: time.time()})
+        self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post_id: time.time()})
 
-        ts = time.time()
+        post = self.redis.hgetall(f"reddit:cache:{post_id}")
 
         if alias.get("text"):
             ret = discord.Embed()
-            ret.title = post.title
-            ret.url = post.url
-            ret.description = post.selftext
+            ret.title = post["title"]
+            ret.url = post["url"]
+            ret.description = post["text"]
         else:
-            image = post.url
-            title = post.title
+            image = post["url"]
+            title = post["title"]
             ret = f"**{title}** | {image}"
-
-        print(f"Reddit fetched in {round(time.time()-ts, 3)} sec")
 
         return ret
 
