@@ -142,21 +142,22 @@ class BaseReddit(BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
         self.build_cache.start()
+        self.prune_history.start()
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=3)
     async def build_cache(self):
         for alias in self.aliases:
             await build_post_cache(alias, self.redis)
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=1)
     async def prune_history(self):
         channels = self.redis.keys("reddit:history:*")
         for channel in channels:
             now = time.time()
             long_ago = now - 7200  # 2 hrs ago
 
-            redis.zremrangebyscore(channel, 0, long_ago)
-            redis.zremrangebyrank(channel, 0, -20)
+            self.redis.zremrangebyscore(channel, 0, long_ago)
+            self.redis.zremrangebyrank(channel, 0, -20)
 
     async def default(self, ctx, alias):
         cache_size = self.redis.zcard(f"reddit:cache:{alias['command']}")
