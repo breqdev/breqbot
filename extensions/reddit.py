@@ -170,6 +170,7 @@ class BaseReddit(BaseCog):
         post_idx = random.randint(0, cache_size-1)
 
         post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
+
         post = reddit.submission(post_id)
 
         while self.redis.zscore(f"reddit:history:{ctx.channel.id}", post.id):
@@ -181,6 +182,8 @@ class BaseReddit(BaseCog):
 
         self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post.id: time.time()})
 
+        ts = time.time()
+
         if alias.get("text"):
             ret = discord.Embed()
             ret.title = post.title
@@ -190,6 +193,8 @@ class BaseReddit(BaseCog):
             image = post.url
             title = post.title
             ret = f"**{title}** | {image}"
+
+        print(f"Reddit fetched in {round(time.time()-ts, 3)} sec")
 
         return ret
 
