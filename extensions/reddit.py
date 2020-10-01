@@ -160,6 +160,7 @@ class BaseReddit(BaseCog):
         if cache_size < 1:
             raise Fail("The cache is still being built!")
 
+        random.seed(ctx.message.id)
         post_idx = random.randint(0, cache_size-1)
 
         post_id = self.redis.zrange(f"reddit:{alias['command']}", post_idx, post_idx)[0]
