@@ -31,6 +31,7 @@ breqbot.load_extension("extensions.games")
 breqbot.load_extension("extensions.fun")
 breqbot.load_extension("extensions.soundboard")
 breqbot.load_extension("extensions.rolemenu")
+breqbot.load_extension("extensions.watcher")
 
 # Economy/shop/outfits
 breqbot.load_extension("extensions.website")
