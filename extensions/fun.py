@@ -1,3 +1,6 @@
+import random
+import asyncio
+
 import discord
 from discord.ext import commands
 
@@ -9,7 +12,7 @@ class Fun(BaseCog):
     @commands.command()
     @commands.guild_only()
     @passfail
-    async def poll(self, ctx, question, *answers):
+    async def poll(self, ctx, question: str, *answers: str):
         "Run a poll to vote for your favorite answers!"
 
         embed = discord.Embed(title=f"Poll: **{question}**")
@@ -23,6 +26,19 @@ class Fun(BaseCog):
 
         for emoji in choices:
             await message.add_reaction(emoji)
+
+        return NoReact
+
+    @commands.command(name="8ball")
+    @passfail
+    async def eightball(self, ctx):
+        "Ask the magic 8 ball..."
+
+        message = await ctx.send("The 8 ball says... :8ball: ~~*shake shake*~~...")
+        await asyncio.sleep(5)
+
+        response = random.choice(["YES", "NO", "MAYBE"])
+        await message.edit(content=f"The 8 ball says... :8ball: **{response}**")
 
         return NoReact
 
