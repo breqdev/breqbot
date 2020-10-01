@@ -76,10 +76,20 @@ class Menu:
             self.channel_id = channel.id
             self.message_id = message.id
 
-        await message.clear_reactions()
+        # Remove unused reactions
+        for reaction in message.reactions:
+            if reaction.emoji in self.mapping:
+                continue
+            await message.clear_reaction(reaction.emoji)
 
+        # Add new reactions
         for emoji in self.mapping:
-            await message.add_reaction(emoji)
+            for reaction in message.reactions:
+                if reaction.emoji == emoji:
+                    break
+            else:
+                # Emoji not found in reactions
+                await message.add_reaction(emoji)
 
     def get_reaction_context(self, bot, payload):
         if payload.user_id == bot.user.id:
