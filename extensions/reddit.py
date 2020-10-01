@@ -87,13 +87,7 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
     if nsfw is False and sub.over18:
         raise Fail("NSFW content is limited to NSFW channels only.")
 
-    # Clear old posts
     now = time.time()
-    long_ago = now - 7200  # 2 hrs ago
-
-    if channel:
-        redis.zremrangebyscore(f"reddit:history:{channel}", 0, long_ago)
-        redis.zremrangebyrank(f"reddit:history:{channel}", 0, -20)
 
     frontpage = sub.top("month", limit=1000)
     for submission in frontpage:
@@ -154,15 +148,17 @@ class BaseReddit(BaseCog):
         for alias in self.aliases:
             await build_post_cache(alias, self.redis)
 
+    @tasks.loop(minutes=5)
+    async def prune_history(self):
+        channels = self.redis.keys("reddit:history:*")
+        for channel in channels:
+            now = time.time()
+            long_ago = now - 7200  # 2 hrs ago
+
+            redis.zremrangebyscore(channel, 0, long_ago)
+            redis.zremrangebyrank(channel, 0, -20)
+
     async def default(self, ctx, alias):
-
-        # Clear old posts
-        now = time.time()
-        long_ago = now - 7200  # 2 hrs ago
-        self.redis.zremrangebyscore(f"reddit:history:{ctx.channel.id}", 0, long_ago)
-        self.redis.zremrangebyrank(f"reddit:history:{ctx.channel.id}", 0, -20)
-
-
         cache_size = self.redis.zcard(f"reddit:cache:{alias['command']}")
 
         if cache_size < 1:
@@ -180,7 +176,7 @@ class BaseReddit(BaseCog):
             post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
             post = reddit.submission(post_id)
 
-        self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post.id: now})
+        self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post.id: time.time()})
 
         if alias.get("text"):
             ret = discord.Embed()
