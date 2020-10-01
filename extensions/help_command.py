@@ -46,7 +46,7 @@ class HelpCommand(commands.HelpCommand):
             else:
                 name = "**General** - "
 
-            value = " ".join(f"`{self.get_command_signature(command)}`"
+            value = " ".join(f"`{self.clean_prefix}{command.qualified_name}`"
                              for command in commands_filtered) + "\n"
             description += (name + value)
 
