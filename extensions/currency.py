@@ -1,5 +1,6 @@
 import typing
 import random
+import asyncio
 
 import discord
 from discord.ext import commands
@@ -125,35 +126,22 @@ class Currency(BaseCog):
     @commands.command()
     @commands.guild_only()
     @passfail
-    async def roulette(self, ctx, bet: str, wager: str):
+    async def roulette(self, ctx, wager: int):
         "Gamble coins - will you earn more, or lose them all?"
 
-        balance = int(self.redis.get(f"currency:balance:{ctx.guild.id}:{ctx.author.id}"))
+        embed = discord.Embed(title=f"Roulette ({wager} coins)")
+        embed.description = "Choose a reaction to place your bet!\nCloses in 10 seconds..."
 
-        if wager == "all":
-            wager = balance
-        elif wager == "none":
-            wager = 0
-        elif wager == "half":
-            wager = balance // 2
-        else:
-            try:
-                wager = int(wager)
-            except ValueError:
-                raise Fail(f"Invalid wager: {wager}")
+        message = await ctx.send(embed=embed)
 
-        if wager > balance:
-            raise Fail("You cannot wager more than you have.")
-        if wager < 0:
-            raise Fail("Wager must be a positive number.")
+        bet_types = ["🟥", "⬛", "🟩", "🇪", "🇴", "🇭", "🇱"]
+        for bet in bet_types:
+            await message.add_reaction(bet)
 
-        if bet not in ("red", "black", "even", "odd", "high", "low"):
-            try:
-                bet = int(bet)
-            except ValueError:
-                raise Fail(f"Invalid bet: {bet}")
+        # Now get the actual message, not just the cached one, so we can view reactions
+        message = await ctx.fetch_message(message.id)
 
-        self.redis.decr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", wager)
+        await asyncio.sleep(10)
 
         wheel = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
 
@@ -161,36 +149,55 @@ class Currency(BaseCog):
         black = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
 
         ball = random.choice(wheel)
+        color = "🟥" if ball in red else "⬛" if ball in black else "🟩"
+        parity = None if ball == 0 else "🇪" if ball % 2 == 0 else "🇴"
+        range = "🇭" if ball >= 19 else "🇱" if ball >= 1 else None
 
-        color = "red" if ball in red else "black" if ball in black else "green"
-        parity = "none" if ball == 0 else "even" if ball % 2 == 0 else "odd"
-        range = "high" if ball >= 19 else "low" if ball >= 1 else "none"
-
-        color_emoji = {
-            "red": "🟥",
-            "black": "⬛",
-            "green": "🟩"
+        parity_name = {
+            "🇪": "Even",
+            "🇴": "Odd"
         }
 
-        message = await ctx.send(f"{ball}: {color_emoji[color]}")
+        range_name = {
+            "🇭": "High",
+            "🇱": "Low"
+        }
 
-        if bet == color:
-            winnings = wager * 2
-        elif bet == parity:
-            winnings = wager * 2
-        elif bet == range:
-            winnings = wager * 2
-        elif bet == ball:
-            winnings = wager * 36
-        else:
-            winnings = 0
+        embed.description = "The wheel has spun! Result:\n"
+        embed.description += f"**{ball}** | {color} | {parity_name.get(parity)} | {range_name.get(range)}\nResults:\n"
 
-        self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}", winnings)
+        results = []
 
-        if winnings > 0:
-            return f"You win **{winnings - wager}** coins!"
-        else:
-            return f"You lost **{wager}** coins."
+        for reaction in message.reactions:
+            if reaction.emoji not in bet_types:
+                await reaction.clear()
+                continue
+
+            if reaction.emoji == "🟩" and color == "🟩":
+                payout = 36 * wager
+            elif reaction.emoji in (color, parity, range):
+                payout = 2 * wager
+            else:
+                payout = 0
+
+            async for user in reaction.users():
+                if user.id == self.bot.user.id:
+                    continue
+
+                balance = int(self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or "0")
+
+                if balance < wager:
+                    await reaction.remove(user)
+                    continue
+
+                net_winnings = payout - wager
+                self.redis.incr(f"currency:balance:{ctx.guild.id}:{user.id}", net_winnings)
+                results.append(f"• {user.display_name} {'won' if net_winnings >= 0 else 'lost'} {abs(net_winnings)} coins")
+
+        embed.description += "\n".join(results)
+
+        await message.edit(embed=embed)
+        return NoReact
 
 
 def setup(bot):
