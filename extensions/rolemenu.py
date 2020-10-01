@@ -81,6 +81,57 @@ class Menu:
         for emoji in self.mapping:
             await message.add_reaction(emoji)
 
+    def get_reaction_context(self, bot, payload):
+        if payload.user_id == bot.user.id:
+            return False, None, None
+
+        emoji = payload.emoji
+        if emoji.is_custom_emoji():
+            return False, None, None
+
+        role_id = self.mapping.get(payload.emoji.name)
+        if not role_id:
+            return False, None, None
+
+        role = bot.get_channel(payload.channel_id).guild.get_role(int(role_id))
+
+        if payload.member:
+            member = payload.member
+        else:
+            member = bot.get_channel(payload.channel_id).guild.get_member(payload.user_id)
+            if not member:
+                return False, None, None
+
+        return True, role, member
+
+    async def handle_reaction_add(self, bot, payload):
+        valid, role, member = self.get_reaction_context(bot, payload)
+        if not valid:
+            return
+
+        for irole in member.roles:
+            if irole.id == role.id:
+                return
+
+        roles = member.roles
+        roles.append(role)
+        await member.edit(roles=roles)
+
+    async def handle_reaction_remove(self, bot, payload):
+        valid, role, member = self.get_reaction_context(bot, payload)
+        if not valid:
+            return
+
+        for irole in member.roles:
+            if role.id == role.id:
+                break  # Role exists
+        else:
+            return  # Role does not exist, cannot be removed
+
+        roles = member.roles
+        roles.remove(role)
+        await member.edit(roles=roles)
+
 
 class RoleMenu(BaseCog):
     "Create and manage menus for users to choose their roles"
@@ -164,48 +215,11 @@ def setup(bot):
         if bot.redis.sismember("rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
             await bot.wait_until_ready()
             menu = Menu.from_redis(bot.redis, payload.channel_id, payload.message_id)
-
-            emoji = payload.emoji
-            if emoji.is_custom_emoji():
-                return
-
-            role_id = menu.mapping.get(payload.emoji.name)
-            if not role_id:
-                return
-
-            role = bot.get_channel(payload.channel_id).guild.get_role(int(role_id))
-
-            roles = payload.member.roles
-            if role in roles:
-                return
-
-            roles.append(role)
-
-            print("Role Add")
-            await payload.member.edit(roles=roles)
+            await menu.handle_reaction_add(bot, payload)
 
     @bot.listen()
     async def on_raw_reaction_remove(payload):
         if bot.redis.sismember("rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
             await bot.wait_until_ready()
             menu = Menu.from_redis(bot.redis, payload.channel_id, payload.message_id)
-
-            emoji = payload.emoji
-            if emoji.is_custom_emoji():
-                return
-
-            role_id = menu.mapping.get(payload.emoji.name)
-            if not role_id:
-                return
-
-            message = await bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
-
-            roles = message.author.roles
-            for role in roles:
-                if role.id == role_id:
-                    break
-
-            roles.remove(role)
-
-            print("Role Remove")
-            await message.author.edit(roles=roles)
+            await menu.handle_reaction_remove(bot, payload)
