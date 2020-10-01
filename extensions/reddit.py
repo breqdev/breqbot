@@ -69,11 +69,11 @@ def build_post_cache(alias, redis):
                 continue
 
         # print("X", end="", flush=True)
-        redis.zadd(f"reddit:{alias['command']}", {submission.id: now})
+        redis.zadd(f"reddit:cache:{alias['command']}", {submission.id: now})
 
     # print("...Built")
     # Remove old posts
-    redis.zremrangebyscore(f"reddit:{alias['command']}", "-inf", (now-1))
+    redis.zremrangebyscore(f"reddit:cache:{alias['command']}", "-inf", (now-1))
 
 @run_in_executor
 def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair=None, text=False):
@@ -92,8 +92,8 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
     long_ago = now - 7200  # 2 hrs ago
 
     if channel:
-        redis.zremrangebyscore(f"reddit:{channel}", 0, long_ago)
-        redis.zremrangebyrank(f"reddit:{channel}", 0, -20)
+        redis.zremrangebyscore(f"reddit:history:{channel}", 0, long_ago)
+        redis.zremrangebyrank(f"reddit:history:{channel}", 0, -20)
 
     frontpage = sub.top("month", limit=1000)
     for submission in frontpage:
@@ -124,7 +124,7 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
                 continue
 
         if channel:
-            if redis.zscore(f"reddit:{channel}", submission.id):
+            if redis.zscore(f"reddit:history:{channel}", submission.id):
                 continue  # Submission posted recently
 
         if not text:
@@ -132,7 +132,7 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
             if content != "image":
                 continue
 
-        redis.zadd(f"reddit:{channel}", {submission.id: now})
+        redis.zadd(f"reddit:history:{channel}", {submission.id: now})
 
         if submission.is_self:
             embed = discord.Embed(title=submission.title, url=f"https://reddit.com{submission.permalink}")
@@ -155,7 +155,15 @@ class BaseReddit(BaseCog):
             await build_post_cache(alias, self.redis)
 
     async def default(self, ctx, alias):
-        cache_size = self.redis.zcard(f"reddit:{alias['command']}")
+
+        # Clear old posts
+        now = time.time()
+        long_ago = now - 7200  # 2 hrs ago
+        self.redis.zremrangebyscore(f"reddit:history:{ctx.channel.id}", 0, long_ago)
+        self.redis.zremrangebyrank(f"reddit:history:{ctx.channel.id}", 0, -20)
+
+
+        cache_size = self.redis.zcard(f"reddit:cache:{alias['command']}")
 
         if cache_size < 1:
             raise Fail("The cache is still being built!")
@@ -163,8 +171,16 @@ class BaseReddit(BaseCog):
         random.seed(ctx.message.id)
         post_idx = random.randint(0, cache_size-1)
 
-        post_id = self.redis.zrange(f"reddit:{alias['command']}", post_idx, post_idx)[0]
+        post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
         post = reddit.submission(post_id)
+
+        while self.redis.zscore(f"reddit:history:{ctx.channel.id}", post.id):
+            # Submission has been posted recently, fetch a new one
+            post_idx = random.randint(0, cache_size-1)
+            post_id = self.redis.zrange(f"reddit:cache:{alias['command']}", post_idx, post_idx)[0]
+            post = reddit.submission(post_id)
+
+        self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post.id: now})
 
         if alias.get("text"):
             ret = discord.Embed()

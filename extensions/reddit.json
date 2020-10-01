@@ -3,7 +3,8 @@
         "command": "doki",
         "sub": "ddlc",
         "desc": "DDLC fanart. ~~Just Monika!~~",
-        "flair": ["Fanart"]
+        "flair": ["Fanart"],
+        "spoiler": false
     },
     {
         "command": "dokifun",
