@@ -1,5 +1,6 @@
 class Feed:
     desc = "A Breqbot Feed"
+    parameter = False
 
     async def has_update(self, oldstate):
         """Checks to see if the Feed has been updated since the last

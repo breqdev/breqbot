@@ -1,5 +1,6 @@
 import json
 import random
+import io
 
 import requests
 import discord
@@ -34,10 +35,12 @@ class XKCD(feedlib.Feed):
 
         embed = discord.Embed()
         embed.title = f"**#{comic['num']}** | {comic['title']} | *xkcd*"
-        embed.set_image(url=comic["img"])
         embed.set_footer(text=comic["alt"])
 
-        return embed
+        image = requests.get(comic["img"]).content
+        image_file = discord.File(io.BytesIO(image), filename="xkcd.jpg")
+
+        return embed, [image_file]
 
     async def get_latest(self):
         return await self._get_embed("https://xkcd.com/info.0.json")

@@ -3,7 +3,12 @@ from discord.ext import commands
 
 from mcstatus import MinecraftServer
 
-from .utils import *
+from . import feedlib
+
+
+class Minecraft(feedlib.Feed):
+    desc = "A feed for Minecraft servers"
+    parameter = True
 
 
 class Minecraft(BaseCog):
