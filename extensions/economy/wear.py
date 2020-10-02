@@ -4,10 +4,7 @@ import discord
 from discord.ext import commands
 
 from .itemlib import Item, MissingItem, ItemBaseCog
-
-
-class WearError(commands.UserInputError):
-    pass
+from ..base import UserError
 
 
 class Wear(ItemBaseCog):
@@ -20,14 +17,14 @@ class Wear(ItemBaseCog):
         item = Item.from_name(self.redis, ctx.guild.id, item)
 
         if not int(item.wearable):
-            raise WearError("Item is not wearable!")
+            raise UserError("Item is not wearable!")
         self.ensure_item(ctx, ctx.author, item)
 
         wearing = self.redis.sismember(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if wearing:
-            raise WearError(f"You are already wearing a {item.name}!")
+            raise UserError(f"You are already wearing a {item.name}!")
 
         self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
@@ -45,7 +42,7 @@ class Wear(ItemBaseCog):
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if not wearing:
-            raise WearError(f"You are not wearing a {item.name}!")
+            raise UserError(f"You are not wearing a {item.name}!")
 
         self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, 1)

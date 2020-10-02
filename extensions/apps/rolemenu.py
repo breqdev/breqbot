@@ -3,11 +3,7 @@ from urllib.parse import urlparse
 from discord.ext import commands
 
 
-from .. import basecog
-
-
-class MenuError(commands.UserInputError):
-    pass
+from ..base import BaseCog, UserError
 
 
 class Menu:
@@ -24,7 +20,7 @@ class Menu:
     def from_redis(redis, channel_id, message_id):
         hash = redis.hgetall(f"rolemenu:{channel_id}:{message_id}")
         if not hash:
-            raise MenuError(f"Role Menu with ID {channel_id}:{message_id} "
+            raise UserError(f"Role Menu with ID {channel_id}:{message_id} "
                             "does not exist")
 
         name = hash["name"]
@@ -152,7 +148,7 @@ class Menu:
         await member.edit(roles=roles)
 
 
-class RoleMenu(basecog.BaseCog):
+class RoleMenu(BaseCog):
     "Create and manage menus for users to choose their roles"
 
     def get_menu_from_link(self, ctx, link):
@@ -162,7 +158,7 @@ class RoleMenu(basecog.BaseCog):
             urlparse(link).path.lstrip("/").split("/")
 
         if int(guild_id) != ctx.guild.id:
-            raise MenuError("That role menu belongs to a different guild!")
+            raise UserError("That role menu belongs to a different guild!")
 
         return Menu.from_redis(self.redis, channel_id, message_id)
 
@@ -200,7 +196,7 @@ class RoleMenu(basecog.BaseCog):
             if irole.name == role:
                 break
         else:
-            raise MenuError(f"Role {role} does not exist")
+            raise UserError(f"Role {role} does not exist")
 
         menu = self.get_menu_from_link(ctx, message_link)
         menu.mapping[emoji] = irole.id

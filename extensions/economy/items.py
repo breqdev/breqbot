@@ -4,10 +4,7 @@ import discord
 from discord.ext import commands
 
 from .itemlib import Item, MissingItem, ItemBaseCog
-
-
-class ItemsError(commands.UserInputError):
-    pass
+from ..base import UserError
 
 
 class Items(ItemBaseCog):
@@ -62,7 +59,7 @@ class Items(ItemBaseCog):
     async def makeitem(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
         if not Item.check_name(self.redis, ctx.guild.id, item):
-            raise ItemsError("Name in use!")
+            raise UserError("Name in use!")
 
         item = Item(item, ctx.guild.id, ctx.author.id, desc, wearable)
         item.to_redis(self.redis)
@@ -100,7 +97,7 @@ class Items(ItemBaseCog):
         elif field == "wearable":
             item.wearable = value
         else:
-            raise ItemsError("Invalid field!")
+            raise UserError("Invalid field!")
         item.to_redis(self.redis)
 
         await ctx.message.add_reaction("✅")

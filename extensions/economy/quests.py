@@ -8,10 +8,7 @@ import discord
 from discord.ext import commands
 
 from .itemlib import ItemBaseCog
-
-
-class QuestsError(commands.UserInputError):
-    pass
+from ..base import UserError
 
 
 class Quests(ItemBaseCog):
@@ -39,8 +36,8 @@ class Quests(ItemBaseCog):
 
         if time_until > 0:
             ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
-            raise QuestsError(f"{ctx.author.display_name}, you must wait "
-                              f"**{ftime}** to claim more coins!")
+            raise UserError(f"{ctx.author.display_name}, you must wait "
+                            f"**{ftime}** to claim more coins!")
 
         # Update latest collection
         self.redis.set(

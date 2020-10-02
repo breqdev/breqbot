@@ -6,19 +6,20 @@ from discord.ext import commands
 
 import git
 
-from .utils import *
+from .base import BaseCog
 
 startup_timestamp = time.time()
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
+
 class Info(BaseCog):
     "Information and debugging tools"
 
     @commands.command()
-    @passfail
     async def info(self, ctx):
-        ":information_source: Show info about Breqbot and invite links! :incoming_envelope:"
+        """:information_source: Show info about Breqbot and invite links!
+        :incoming_envelope:"""
 
         embed = discord.Embed(title="Hi, I'm Breqbot! Beep boop :robot:")
 
@@ -32,18 +33,16 @@ class Info(BaseCog):
         embed.add_field(name="Join the Breqbot discussion server!",
                         value=f"{os.getenv('TESTING_DISCORD')}", inline=False)
 
-        return embed
+        await ctx.send(embed=embed)
 
     @commands.command()
-    @passfail
     async def ping(self, ctx):
         "Pong! :ping_pong: Test system latency."
         await ctx.send(":ping_pong:")
         latency = round(self.bot.latency*1000, 1)
-        return f"`{latency}ms`"
+        await ctx.send(f"`{latency}ms`")
 
     @commands.command()
-    @passfail
     async def stats(self, ctx):
         "Stats for nerds :robot: about the running Breqbot instance"
 
@@ -74,11 +73,10 @@ class Info(BaseCog):
 
         embed.description = "\n".join(fields)
 
-        return embed
+        await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.check(config_only)
-    @passfail
+    @commands.check(BaseCog.config_only)
     async def guilds(self, ctx):
         "List guilds that the bot is in"
 
@@ -91,20 +89,20 @@ class Info(BaseCog):
 
         embed.description = "\n".join(f"{name}: {size}"
                                       for name, size in guilds)
-        return embed
+        await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.check(config_only)
-    @passfail
+    @commands.check(BaseCog.config_only)
     async def activity(self, ctx, *, activity: str):
         "Change Breqbot's status in Discord"
         game = discord.Game(activity)
-        await self.bot.change_presence(status=discord.Status.online, activity=game)
+        await self.bot.change_presence(status=discord.Status.online,
+                                       activity=game)
 
     @commands.command()
-    @passfail
     async def awsnap(self, ctx):
-        "Intentionally crash the bot :skull: in order to test its error handling"
+        """Intentionally crash the bot :skull:
+        in order to test its error handling"""
         raise ValueError("Test Exception")
 
 
@@ -114,11 +112,11 @@ def setup(bot):
         channel = bot.get_channel(int(os.getenv("UPDATE_CHANNEL")))
         embed = discord.Embed(title="Breqbot Connected! :blush: Hello World!")
 
-        start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(time.time()))
+        start_time = time.strftime("%Y-%m-%d %H:%M:%S",
+                                   time.gmtime(time.time()))
 
         embed.description = (f"Started at **{start_time}** UTC\n"
                              f"Latest commit **{git_hash[:7]}**")
         await channel.send(embed=embed)
-
 
     bot.add_cog(Info(bot))

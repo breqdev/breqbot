@@ -6,10 +6,6 @@ from discord.ext import commands
 from .itemlib import Item, MissingItem, ItemBaseCog
 
 
-class InventoryError(commands.UserInputError):
-    pass
-
-
 class Inventory(ItemBaseCog):
     "Store items from the shop"
 

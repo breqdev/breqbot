@@ -5,7 +5,7 @@ import os
 
 from discord.ext import commands
 
-from .. import basecog
+from ..base import BaseCog
 from .. import emoji_utils
 
 
@@ -314,7 +314,7 @@ class The2048Game(Game):
         await self.message.clear_reactions()
 
 
-class BaseGames(basecog.BaseCog):
+class BaseGames(BaseCog):
     async def play(self, ctx, GameType, args):
         game = GameType(ctx, args)
         await game.init()

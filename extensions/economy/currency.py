@@ -6,10 +6,7 @@ import discord
 from discord.ext import commands
 
 from .itemlib import Item, MissingItem, ItemBaseCog
-
-
-class CurrencyError(commands.UserInputError):
-    pass
+from ..base import UserError
 
 
 class Currency(ItemBaseCog):
@@ -35,11 +32,11 @@ class Currency(ItemBaseCog):
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
 
         if amount < 0:
-            raise CurrencyError(f"Nice try {ctx.author.mention}, "
-                                "you cannot steal coins.")
+            raise UserError(f"Nice try {ctx.author.mention}, "
+                            "you cannot steal coins.")
 
         if int(balance) < amount:
-            raise CurrencyError("Not enough coins!")
+            raise UserError("Not enough coins!")
             return
 
         self.redis.decr(
@@ -92,14 +89,14 @@ class Currency(ItemBaseCog):
 
         price_ea = self.redis.get(f"shop:prices:{ctx.guild.id}:{item.uuid}")
         if price_ea is None:
-            raise CurrencyError("Item is not for sale!")
+            raise UserError("Item is not for sale!")
 
         price = int(price_ea) * amount
         balance = int(self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
-            raise CurrencyError("Not enough coins!")
+            raise UserError("Not enough coins!")
 
         self.redis.decr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
