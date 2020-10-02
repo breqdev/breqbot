@@ -10,7 +10,7 @@ import prawcore
 import discord
 from discord.ext import commands, tasks
 
-from .utils import *
+from ..base import BaseCog, UserError, run_in_executor
 
 reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
                      client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
@@ -67,7 +67,8 @@ def build_post_cache(alias, redis):
             if content != "image":
                 continue
 
-        redis.zadd(f"reddit:cache:list:{alias['command']}", {submission.id: now})
+        redis.zadd(
+            f"reddit:cache:list:{alias['command']}", {submission.id: now})
         redis.hset(f"reddit:cache:{submission.id}", mapping={
             "title": submission.title,
             "url": submission.url,
@@ -75,23 +76,27 @@ def build_post_cache(alias, redis):
         })
 
     # Remove old posts
-    old_posts = redis.zrangebyscore(f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
-    redis.zremrangebyscore(f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
+    old_posts = redis.zrangebyscore(
+        f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
+    redis.zremrangebyscore(
+        f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
 
     for post_id in old_posts:
         redis.delete(f"reddit:cache:{post_id}")
 
+
 @run_in_executor
-def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair=None, text=False):
+def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None,
+              flair=None, text=False):
     sub = reddit.subreddit(sub_name)
 
     try:
         sub.id
     except (prawcore.Redirect, prawcore.NotFound):
-        raise Fail("Subreddit not found.")
+        raise UserError("Subreddit not found.")
 
     if nsfw is False and sub.over18:
-        raise Fail("NSFW content is limited to NSFW channels only.")
+        raise UserError("NSFW content is limited to NSFW channels only.")
 
     now = time.time()
 
@@ -135,7 +140,9 @@ def get_posts(sub_name, channel=None, redis=None, nsfw=None, spoiler=None, flair
         redis.zadd(f"reddit:history:{channel}", {submission.id: now})
 
         if submission.is_self:
-            embed = discord.Embed(title=submission.title, url=f"https://reddit.com{submission.permalink}")
+            embed = discord.Embed(
+                title=submission.title,
+                url=f"https://reddit.com{submission.permalink}")
             embed.description = submission.selftext
             return embed
         else:
@@ -167,23 +174,24 @@ class BaseReddit(BaseCog):
 
     async def default(self, ctx, alias):
         cache_size = self.redis.zcard(f"reddit:cache:list:{alias['command']}")
-        history_size = self.redis.zcard(f"reddit:history:{ctx.channel.id}")
 
         if cache_size < 1:
-            raise Fail("The cache is still being built!")
+            raise UserError("The cache is still being built!")
 
         random.seed(ctx.message.id)
         post_idx = random.randint(0, cache_size-1)
 
-        post_id = self.redis.zrange(f"reddit:cache:list:{alias['command']}", post_idx, post_idx)[0]
+        post_id = self.redis.zrange(f"reddit:cache:list:{alias['command']}",
+                                    post_idx, post_idx)[0]
 
         while self.redis.zscore(f"reddit:history:{ctx.channel.id}", post_id):
             # Submission has been posted recently, fetch a new one
-            print(f"warning: submission found in history. hsize: {history_size}")
             post_idx = random.randint(0, cache_size-1)
-            post_id = self.redis.zrange(f"reddit:cache:list:{alias['command']}", post_idx, post_idx)[0]
+            post_id = self.redis.zrange(
+                f"reddit:cache:list:{alias['command']}", post_idx, post_idx)[0]
 
-        self.redis.zadd(f"reddit:history:{ctx.channel.id}", {post_id: time.time()})
+        self.redis.zadd(f"reddit:history:{ctx.channel.id}",
+                        {post_id: time.time()})
 
         post = self.redis.hgetall(f"reddit:cache:{post_id}")
 
@@ -200,7 +208,6 @@ class BaseReddit(BaseCog):
         return ret
 
     @commands.command()
-    @passfail
     async def reddit(self, ctx, subreddit: str):
         "post from a subreddit of your choice!"
         channel_is_nsfw = ctx.guild and ctx.channel.is_nsfw()
@@ -211,11 +218,12 @@ class BaseReddit(BaseCog):
                 redis=self.redis,
                 nsfw=(None if channel_is_nsfw else False)
             )
-        return image
+        await ctx.send(image)
 
 
-with open("extensions/reddit.json") as f:
+with open("extensions/reddit/reddit.json") as f:
     aliases = json.load(f)
+
 
 def conditional_decorator(dec, condition):
     def decorator(func):
@@ -224,14 +232,19 @@ def conditional_decorator(dec, condition):
         return dec(func)
     return decorator
 
+
 def make_command(alias):
     @commands.command(name=alias["command"], brief=alias["desc"])
     @conditional_decorator(commands.is_nsfw(), alias.get("nsfw"))
-    @passfail
     async def _command(self, ctx):
-        return await self.default(ctx, alias)
+        ret = await self.default(ctx, alias)
+        if isinstance(ret, discord.Embed):
+            await ctx.send(embed=ret)
+        else:
+            await ctx.send(ret)
 
     return _command
+
 
 new_attrs = {}
 for alias in aliases:

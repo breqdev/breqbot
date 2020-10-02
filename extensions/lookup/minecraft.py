@@ -3,21 +3,21 @@ from discord.ext import commands
 
 from mcstatus import MinecraftServer
 
-from .utils import *
+from ..base import BaseCog, UserError
 
 
 class Minecraft(BaseCog):
     "Tools for Minecraft servers"
 
     @commands.command()
-    @passfail
     async def mc(self, ctx, ip: str):
-        ":mag: :desktop: Look up information about a Minecraft server :video_game:"
+        """:mag: :desktop: Look up information about a Minecraft server
+        :video_game:"""
         try:
             server = MinecraftServer.lookup(ip)
             status = server.status().raw
         except OSError:
-            raise Fail("Could not connect to Minecraft server")
+            raise UserError("Could not connect to Minecraft server")
 
         embed = discord.Embed(title=ip)
 
@@ -43,13 +43,13 @@ class Minecraft(BaseCog):
                      f"/{status['players']['max']}")
 
         if status["players"].get("sample"):
-            online = "\n" + "\n".join(f"• {player['name']}"
-                                      for player in status["players"]["sample"])
+            online = "\n" + "\n".join(f"• {player['name']}" for player
+                                      in status["players"]["sample"])
         else:
             online = ""
 
         embed.description = description + "\n" + playerstr + online
-        return embed
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

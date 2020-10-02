@@ -34,12 +34,15 @@ breqbot.load_extension("extensions.apps.soundboard")
 breqbot.load_extension("extensions.apps.rolemenu")
 breqbot.load_extension("extensions.apps.portal")
 
-# Feeds
-# breqbot.load_extension("extensions.reddit")
-# breqbot.load_extension("extensions.minecraft")
-# breqbot.load_extension("extensions.vex")
+# Reddit
+breqbot.load_extension("extensions.reddit.reddit")
+
+# Lookups
+breqbot.load_extension("extensions.lookup.minecraft")
+breqbot.load_extension("extensions.lookup.vex")
+
+# Comics
 # breqbot.load_extension("extensions.comics")
-# breqbot.load_extension("extensions.watcher")
 
 # Utility
 breqbot.load_extension("extensions.utility.help_command")

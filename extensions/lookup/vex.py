@@ -3,7 +3,7 @@ import requests
 import discord
 from discord.ext import commands
 
-from .utils import *
+from ..base import BaseCog
 
 
 class Vex(BaseCog):
@@ -12,7 +12,6 @@ class Vex(BaseCog):
     SEASON = "Tower Takeover"
 
     @commands.command()
-    @passfail
     async def vex(self, ctx, team: str):
         ":mag: :robot: Get info about a Vex team :video_game:"
 
@@ -72,10 +71,10 @@ class Vex(BaseCog):
             if not rankings:
                 rankings = "This team has not competed."
 
-            rankings = "**Rankings:**\n"
+            rankings = "**Rankings:**\n" + rankings
 
             embed.description = awards + "\n" + rankings
-        return embed
+        await ctx.send(embed=embed)
 
 
 def setup(bot):
