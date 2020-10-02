@@ -18,6 +18,7 @@ breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
 
 # General
 breqbot.load_extension("extensions.info")
+breqbot.load_extension("extensions.fun")
 
 # Economy
 breqbot.load_extension("extensions.economy.website")
@@ -38,7 +39,6 @@ breqbot.load_extension("extensions.apps.portal")
 # breqbot.load_extension("extensions.minecraft")
 # breqbot.load_extension("extensions.vex")
 # breqbot.load_extension("extensions.comics")
-# breqbot.load_extension("extensions.fun")
 # breqbot.load_extension("extensions.watcher")
 
 # Utility
