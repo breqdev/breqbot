@@ -42,7 +42,7 @@ breqbot.load_extension("extensions.lookup.minecraft")
 breqbot.load_extension("extensions.lookup.vex")
 
 # Comics
-# breqbot.load_extension("extensions.comics")
+breqbot.load_extension("extensions.comics.xkcd")
 
 # Utility
 breqbot.load_extension("extensions.utility.help_command")

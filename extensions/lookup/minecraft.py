@@ -52,7 +52,7 @@ class Minecraft(PublisherCog):
     async def mc(self, ctx, ip: str):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
-        embed = await self.get_update(ip)
+        embed, files = await self.get_update(ip)
         await ctx.send(embed=embed)
 
     async def get_hash(self, ip):
@@ -71,24 +71,7 @@ class Minecraft(PublisherCog):
         else:
             online = ""
         embed.description = description + "\n" + playerstr + online
-        return embed
-
-    @commands.command()
-    async def watchmc(self, ctx, ip: str):
-        await self.register_channel(ip, ctx.channel.id)
-
-    @commands.command()
-    async def watchingmc(self, ctx):
-        watching = await self.get_watching(ctx.channel.id)
-
-        embed = discord.Embed(title="Watching IPs")
-        embed.description = "\n".join(watching)
-
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def unwatchmc(self, ctx, ip: str):
-        await self.unregister_channel(ip, ctx.channel.id)
+        return embed, []
 
 
 def setup(bot):

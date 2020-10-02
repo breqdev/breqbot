@@ -8,7 +8,7 @@ from .. import publisher
 
 
 class Watch(BaseCog):
-    "Watch a comic, Minecraft server, or other feed"
+    "Watch a comic, Minecraft server, or other feed [UNDER HEAVY DEVELOPMENT]"
 
     def __init__(self, bot):
         super().__init__(bot)
@@ -33,7 +33,7 @@ class Watch(BaseCog):
                         f"{publisher.qualified_name}:{parameters}")
 
         # Preload the first hash val
-        hash = publisher.get_hash(*params)
+        hash = await publisher.get_hash(*params)
         self.redis.set(
             f"watching:hash:{publisher.qualified_name}:{parameters}", hash)
 
@@ -99,8 +99,10 @@ class Watch(BaseCog):
                 for channel_id in self.redis.smembers(
                         f"watching:channels:{pub_name}:{parameters}"):
                     channel = self.bot.get_channel(int(channel_id))
-                    embed = await self.publishers[pub_name].get_update(*params)
-                    await channel.send(f"Update from {pub_name}:", embed=embed)
+                    embed, files = await (self.publishers[pub_name]
+                                          .get_update(*params))
+                    await channel.send(f"Update from {pub_name}:",
+                                       embed=embed, files=files)
 
 
 def setup(bot):
