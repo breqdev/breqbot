@@ -68,7 +68,8 @@ class HelpCommand(commands.HelpCommand):
             commands = "\n".join(commands)
             embed.add_field(name="Commands", value=commands, inline=False)
         else:
-            embed.description = f"No commands from {cog.qualified_name} are usable here."
+            embed.description = (f"No commands from {cog.qualified_name}"
+                                 " are usable here.")
 
         await self.context.channel.send(embed=embed)
 
@@ -80,7 +81,8 @@ class HelpCommand(commands.HelpCommand):
         embed.description = help
 
         if command.cog:
-            embed.set_footer(text=f"{command.cog.qualified_name} | {command.cog.description}")
+            embed.set_footer(text=f"{command.cog.qualified_name} | "
+                             f"{command.cog.description}")
 
         await self.context.channel.send(embed=embed)
 

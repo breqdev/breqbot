@@ -3,36 +3,40 @@ import typing
 import discord
 from discord.ext import commands
 
-from .utils import *
+from .itemlib import Item, MissingItem, ItemBaseCog
 
 
-class Wear(BaseCog):
+class WearError(commands.UserInputError):
+    pass
+
+
+class Wear(ItemBaseCog):
     "Wear the items in your inventory"
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def wear(self, ctx, item: str):
         "Wear an item :lab_coat:"
         item = Item.from_name(self.redis, ctx.guild.id, item)
 
         if not int(item.wearable):
-            raise Fail("Item is not wearable!")
+            raise WearError("Item is not wearable!")
         self.ensure_item(ctx, ctx.author, item)
 
         wearing = self.redis.sismember(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if wearing:
-            raise Fail(f"You are already wearing a {item.name}!")
+            raise WearError(f"You are already wearing a {item.name}!")
 
         self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
         self.redis.sadd(f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def takeoff(self, ctx, item: str):
         "Take off an item :x:"
         item = Item.from_name(self.redis, ctx.guild.id, item)
@@ -41,15 +45,16 @@ class Wear(BaseCog):
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if not wearing:
-            raise Fail(f"You are not wearing a {item.name}!")
+            raise WearError(f"You are not wearing a {item.name}!")
 
         self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, 1)
         self.redis.srem(f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def outfit(self, ctx, user: typing.Optional[discord.User]):
         "List the items that a user is wearing :lab_coat:"
         if user is None:
@@ -73,10 +78,10 @@ class Wear(BaseCog):
             embed.description = "\n".join(f"• {item.name} ({item.desc})"
                                           for item in items)
         else:
-            embed.description = (f"{user.display_name} does not have any swag. "
+            embed.description = (f"{user.display_name} does not have any swag."
                                  f"`{self.bot.command_prefix}give` them some?")
 
-        return embed
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

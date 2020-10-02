@@ -8,7 +8,7 @@ import gevent
 import geventwebsocket
 import redis
 
-from extensions.items import Item
+from extensions.economy.itemlib import Item
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -89,17 +89,21 @@ def user(guild_id, user_id):
                            balance=balance, inventory=amounts.items(),
                            wearing=wearing)
 
+
 @app.route("/guild")
 def guild():
     return redirect(os.getenv("TESTING_DISCORD"))
+
 
 @app.route("/bugs")
 def bugs():
     return redirect(os.getenv("BUG_REPORT"))
 
+
 @app.route("/invite")
 def invite():
     return redirect(os.getenv("BOT_INVITE"))
+
 
 class PortalBackend():
     def __init__(self):

@@ -7,10 +7,14 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .utils import *
+from .itemlib import ItemBaseCog
 
 
-class Quests(BaseCog):
+class QuestsError(commands.UserInputError):
+    pass
+
+
+class Quests(ItemBaseCog):
     "Look for items!"
     def __init__(self, bot):
         super().__init__(bot)
@@ -22,21 +26,21 @@ class Quests(BaseCog):
 
         self.GET_COINS_AMOUNT = 10
 
-        with open("extensions/quests.json") as f:
+        with open("extensions/economy/quests.json") as f:
             self.QUEST_MESSAGES = json.load(f)
 
     async def free_limit(self, ctx):
         # Calculate time to wait before collecting
         last_daily = float(
-            self.redis.get(f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}")
-            or 0)
+            self.redis.get(
+                f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}") or 0)
         current_time = time.time()
         time_until = (last_daily + self.GET_COINS_INTERVAL) - current_time
 
         if time_until > 0:
             ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
-            raise Fail(f"{ctx.author.display_name}, "
-                       f"you must wait **{ftime}** to claim more coins!")
+            raise QuestsError(f"{ctx.author.display_name}, you must wait "
+                              f"**{ftime}** to claim more coins!")
 
         # Update latest collection
         self.redis.set(
@@ -44,7 +48,6 @@ class Quests(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def free(self, ctx):
         "Get free coins! Rate limited. :coin:"
 
@@ -57,13 +60,12 @@ class Quests(BaseCog):
         # Calculate time to wait until next free collection
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
 
-        return (f"{ctx.author.display_name}, you have claimed "
-                f"**{self.GET_COINS_AMOUNT}** coins! "
-                f"Wait {ftime} to claim more.")
+        await ctx.send(f"{ctx.author.display_name}, you have claimed "
+                       f"**{self.GET_COINS_AMOUNT}** coins! "
+                       f"Wait {ftime} to claim more.")
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def quest(self, ctx):
         "Complete a quest :medal:"
 
@@ -73,9 +75,11 @@ class Quests(BaseCog):
         scenario = random.choice(self.QUEST_MESSAGES)
 
         embed = discord.Embed(title=f"Quest: {scenario['name']}:")
-        embed.description = (f"{scenario['prompt']}\n\n"
+        embed.description = (
+            f"{scenario['prompt']}\n\n"
             + "\n".join(f"{emojis[idx]}: {choice}"
-            for idx, choice in enumerate(scenario["choices"])))
+                        for idx, choice in enumerate(scenario["choices"])))
+
         message = await ctx.send(embed=embed)
         for emoji in emojis:
             await message.add_reaction(emoji)
@@ -89,7 +93,7 @@ class Quests(BaseCog):
                 reaction, user = await self.bot.wait_for(
                     "reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                return NoReact  # don't do anything
+                return
             if reaction.emoji in emojis:
                 break
             else:
@@ -114,7 +118,6 @@ class Quests(BaseCog):
 
         embed.description += "\n\n" + result
         await message.edit(embed=embed)
-        return NoReact
 
 
 def setup(bot):

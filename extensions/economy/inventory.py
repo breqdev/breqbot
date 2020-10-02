@@ -1,18 +1,20 @@
 import typing
-import os
 
 import discord
 from discord.ext import commands
 
-from .utils import *
+from .itemlib import Item, MissingItem, ItemBaseCog
 
 
-class Inventory(BaseCog):
+class InventoryError(commands.UserInputError):
+    pass
+
+
+class Inventory(ItemBaseCog):
     "Store items from the shop"
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def inventory(self, ctx, user: typing.Optional[discord.User]):
         "List items in your current inventory :dividers:"
         if user is None:
@@ -27,7 +29,8 @@ class Inventory(BaseCog):
         missing = []
         for item in amounts.keys():
             if isinstance(item, MissingItem):
-                self.redis.hdel(f"inventory:{ctx.guild.id}:{user.id}", item.uuid)
+                self.redis.hdel(
+                    f"inventory:{ctx.guild.id}:{user.id}", item.uuid)
                 missing.append(item)
 
         for item in missing:
@@ -40,11 +43,10 @@ class Inventory(BaseCog):
                              + "\n".join(f"{item.name}: **{amount}**"
                                          for item, amount in amounts.items()))
 
-        return embed
+        await ctx.send(embed=embed)
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def give(self, ctx, user: discord.User, item: str,
                    amount: typing.Optional[int] = 1):
         "Give an item to another user :incoming_envelope:"
@@ -56,9 +58,10 @@ class Inventory(BaseCog):
         self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{user.id}", item.uuid, amount)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def use(self, ctx, item: str):
         "Use an item [TESTING]"
         item = Item.from_name(self.redis, ctx.guild.id, item)
@@ -67,7 +70,7 @@ class Inventory(BaseCog):
         # self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}",
         #                    item.uuid, -1)
 
-        return f"You used {item.name}. It did nothing!"
+        await ctx.send(f"You used {item.name}. It did nothing!")
 
 
 def setup(bot):

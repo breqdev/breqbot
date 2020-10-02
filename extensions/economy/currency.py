@@ -5,15 +5,18 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .utils import *
+from .itemlib import Item, MissingItem, ItemBaseCog
 
 
-class Currency(BaseCog):
+class CurrencyError(commands.UserInputError):
+    pass
+
+
+class Currency(ItemBaseCog):
     "Earn and spend Breqcoins!"
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def balance(self, ctx, user: typing.Optional[discord.User]):
         "Check your current coin balance :moneybag:"
         if user is None:
@@ -22,30 +25,31 @@ class Currency(BaseCog):
         if coins is None:
             self.redis.set(f"currency:balance:{ctx.guild.id}:{user.id}", 0)
             coins = 0
-        return f"{user.display_name} has **{coins}** Breqcoins."
+        await ctx.send(f"{user.display_name} has **{coins}** Breqcoins.")
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def pay(self, ctx, user: discord.User, amount: int):
         "Give coins to another user :incoming_envelope:"
         balance = self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
 
         if amount < 0:
-            raise Fail(f"Nice try {ctx.author.mention}, you cannot steal coins.")
+            raise CurrencyError(f"Nice try {ctx.author.mention}, "
+                                "you cannot steal coins.")
 
         if int(balance) < amount:
-            raise Fail("Not enough coins!")
+            raise CurrencyError("Not enough coins!")
             return
 
         self.redis.decr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
         self.redis.incr(f"currency:balance:{ctx.guild.id}:{user.id}", amount)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def shop(self, ctx):
         "List items in the shop :shopping_bags:"
 
@@ -61,7 +65,7 @@ class Currency(BaseCog):
                 self.redis.srem(f"shop:items:{ctx.guild.id}", uuid)
 
         for uuid in missing:
-            self.redis.delete(f"shop:prices:{ctx.guild.id}:{item_uuid}")
+            self.redis.delete(f"shop:prices:{ctx.guild.id}:{uuid}")
             del shop_items[uuid]
 
         for item_uuid in item_uuids:
@@ -77,11 +81,10 @@ class Currency(BaseCog):
         else:
             embed.description = "The shop is empty for now."
 
-        return embed
+        await ctx.send(embed=embed)
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
         "Buy an item from the shop :coin:"
 
@@ -89,48 +92,52 @@ class Currency(BaseCog):
 
         price_ea = self.redis.get(f"shop:prices:{ctx.guild.id}:{item.uuid}")
         if price_ea is None:
-            raise Fail("Item is not for sale!")
+            raise CurrencyError("Item is not for sale!")
 
         price = int(price_ea) * amount
         balance = int(self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
-            raise Fail("Not enough coins!")
+            raise CurrencyError("Not enough coins!")
 
         self.redis.decr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
         self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @commands.check(shopkeeper_only)
-    @passfail
+    @commands.check(ItemBaseCog.shopkeeper_only)
     async def list(self, ctx, item: str, price: int):
         "List an item in the shop :new:"
         item = Item.from_name(self.redis, ctx.guild.id, item)
         self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @commands.check(shopkeeper_only)
-    @passfail
+    @commands.check(ItemBaseCog.shopkeeper_only)
     async def delist(self, ctx, item: str):
         "Remove an item from the shop :no_entry:"
         item = Item.from_name(self.redis, ctx.guild.id, item)
         self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
         self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def roulette(self, ctx, wager: int):
         "Gamble coins - will you earn more, or lose them all?"
 
         embed = discord.Embed(title=f"Roulette ({wager} coins)")
-        embed.description = "Choose a reaction to place your bet!\nCloses in 10 seconds..."
+        embed.description = ("Choose a reaction to place your bet!\n"
+                             "Closes in 10 seconds...")
 
         message = await ctx.send(embed=embed)
 
@@ -138,15 +145,20 @@ class Currency(BaseCog):
         for bet in bet_types:
             await message.add_reaction(bet)
 
-        # Now get the actual message, not just the cached one, so we can view reactions
+        # Now get the actual message, not just the cached one
+        # so we can view reactions
         message = await ctx.fetch_message(message.id)
 
         await asyncio.sleep(10)
 
-        wheel = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
+        wheel = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8,
+                 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28,
+                 12, 35, 3, 26]
 
-        red = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
-        black = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
+        red = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19,
+               21, 23, 25, 27, 30, 32, 34, 36]
+        black = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20,
+                 22, 24, 26, 28, 29, 31, 33, 35]
 
         ball = random.choice(wheel)
         color = "🟥" if ball in red else "⬛" if ball in black else "🟩"
@@ -164,7 +176,9 @@ class Currency(BaseCog):
         }
 
         embed.description = "The wheel has spun! Result:\n"
-        embed.description += f"**{ball}** | {color} | {parity_name.get(parity)} | {range_name.get(range)}\nResults:\n"
+        embed.description += (f"**{ball}** | {color} | "
+                              f"{parity_name.get(parity)} | "
+                              f"{range_name.get(range)}\nResults:\n")
 
         results = []
 
@@ -184,20 +198,24 @@ class Currency(BaseCog):
                 if user.id == self.bot.user.id:
                     continue
 
-                balance = int(self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}") or "0")
+                balance = int(
+                    self.redis.get(
+                        f"currency:balance:{ctx.guild.id}:{user.id}") or "0")
 
                 if balance < wager:
                     await reaction.remove(user)
                     continue
 
                 net_winnings = payout - wager
-                self.redis.incr(f"currency:balance:{ctx.guild.id}:{user.id}", net_winnings)
-                results.append(f"• {user.display_name} {'won' if net_winnings >= 0 else 'lost'} {abs(net_winnings)} coins")
+                self.redis.incr(
+                    f"currency:balance:{ctx.guild.id}:{user.id}", net_winnings)
+                results.append(f"• {user.display_name} "
+                               f"{'won' if net_winnings >= 0 else 'lost'} "
+                               f"{abs(net_winnings)} coins")
 
         embed.description += "\n".join(results)
 
         await message.edit(embed=embed)
-        return NoReact
 
 
 def setup(bot):

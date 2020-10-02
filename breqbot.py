@@ -17,29 +17,29 @@ breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
                                      decode_responses=True)
 
 # General
-breqbot.load_extension("extensions.info")
+# breqbot.load_extension("extensions.info")
 
 # External Features
-breqbot.load_extension("extensions.reddit")
-breqbot.load_extension("extensions.minecraft")
-breqbot.load_extension("extensions.vex")
-breqbot.load_extension("extensions.comics")
+# breqbot.load_extension("extensions.reddit")
+# breqbot.load_extension("extensions.minecraft")
+# breqbot.load_extension("extensions.vex")
+# breqbot.load_extension("extensions.comics")
 
 # Breqbot Features
-breqbot.load_extension("extensions.portal")
-breqbot.load_extension("extensions.games")
-breqbot.load_extension("extensions.fun")
-breqbot.load_extension("extensions.soundboard")
-breqbot.load_extension("extensions.rolemenu")
-breqbot.load_extension("extensions.watcher")
+# breqbot.load_extension("extensions.portal")
+# breqbot.load_extension("extensions.games")
+# breqbot.load_extension("extensions.fun")
+# breqbot.load_extension("extensions.soundboard")
+# breqbot.load_extension("extensions.rolemenu")
+# breqbot.load_extension("extensions.watcher")
 
 # Economy/shop/outfits
-breqbot.load_extension("extensions.website")
-breqbot.load_extension("extensions.currency")
-breqbot.load_extension("extensions.inventory")
-breqbot.load_extension("extensions.items")
-breqbot.load_extension("extensions.quests")
-breqbot.load_extension("extensions.wear")
+breqbot.load_extension("extensions.economy.website")
+breqbot.load_extension("extensions.economy.currency")
+breqbot.load_extension("extensions.economy.inventory")
+breqbot.load_extension("extensions.economy.items")
+breqbot.load_extension("extensions.economy.quests")
+breqbot.load_extension("extensions.economy.wear")
 
 # Utility
 breqbot.load_extension("extensions.help_command")

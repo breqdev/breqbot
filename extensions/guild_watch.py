@@ -13,12 +13,15 @@ def setup(bot):
                            *(member.id for member in guild.members))
 
         for member in bot.get_all_members():
-            bot.redis.set(f"user:name:{member.guild.id}:{member.id}", member.display_name)
+            bot.redis.set(
+                f"user:name:{member.guild.id}:{member.id}",
+                member.display_name)
 
     @bot.event
     async def on_member_join(member):
         bot.redis.sadd(f"guild:member:{member.guild.id}", member.id)
-        bot.redis.set(f"user:name:{member.guild.id}:{member.id}", member.display_name)
+        bot.redis.set(
+            f"user:name:{member.guild.id}:{member.id}", member.display_name)
 
     @bot.event
     async def on_member_leave(member):
@@ -27,7 +30,8 @@ def setup(bot):
 
     @bot.event
     async def on_member_update(old, member):
-        bot.redis.set(f"user:name:{member.guild.id}:{member.id}", member.display_name)
+        bot.redis.set(
+            f"user:name:{member.guild.id}:{member.id}", member.display_name)
 
     @bot.event
     async def on_user_update(user):
