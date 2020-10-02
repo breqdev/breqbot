@@ -31,15 +31,13 @@ breqbot.load_extension("extensions.economy.wear")
 breqbot.load_extension("extensions.apps.games")
 breqbot.load_extension("extensions.apps.soundboard")
 breqbot.load_extension("extensions.apps.rolemenu")
+breqbot.load_extension("extensions.apps.portal")
 
-# External Features
+# Feeds
 # breqbot.load_extension("extensions.reddit")
 # breqbot.load_extension("extensions.minecraft")
 # breqbot.load_extension("extensions.vex")
 # breqbot.load_extension("extensions.comics")
-
-# Breqbot Features
-# breqbot.load_extension("extensions.portal")
 # breqbot.load_extension("extensions.fun")
 # breqbot.load_extension("extensions.watcher")
 
