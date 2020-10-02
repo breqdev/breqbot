@@ -1,11 +1,8 @@
-import hashlib
-
-import aiohttp
-
 import discord
 from discord.ext import commands, tasks
 
 from .utils import *
+from . import feed as feedlib
 
 class Watcher(BaseCog):
     "Keep up to date: Have Breqbot post new updates!"
@@ -13,22 +10,29 @@ class Watcher(BaseCog):
         super().__init__(bot)
         self.watcher.start()
 
-    @staticmethod
-    async def get_hash(url):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                content = await response.text()
+    @commands.command()
+    @passfail
+    async def feeds(self, ctx):
+        "Get available feeds to watch"
+        embed = discord.Embed(title="Feeds")
 
-        content = content.encode("utf-8")
-        return hashlib.sha1(content).hexdigest()
+        feeds = []
+        for name, ifeed in feedlib.feeds.items():
+            feeds.append(f"• {name}: {ifeed.desc}")
+
+        embed.description = "\n".join(feeds)
+        return embed
 
     @commands.command()
     @passfail
-    async def watch(self, ctx, url: str):
-        "Watch a website for changes"
+    async def watch(self, ctx, feed: str):
+        "Watch a feed for changes"
+        if feed not in feedlib.feeds:
+            raise Fail("Feed does not exist")
+
         self.redis.sadd("watcher:channels", ctx.channel.id)
-        self.redis.sadd(f"watcher:list:{ctx.channel.id}", url)
-        self.redis.set(f"watcher:hash:{url}", await self.get_hash(url))
+        self.redis.sadd(f"watcher:list:{ctx.channel.id}", feed)
+        self.redis.set(f"watcher:hash:{feed}", await feedlib.feeds[feed].latest())
 
     @commands.command()
     @passfail
@@ -49,10 +53,10 @@ class Watcher(BaseCog):
 
     @commands.command()
     @passfail
-    async def unwatch(self, ctx, url: str):
-        "Stop watching a website"
-        self.redis.srem(f"watcher:list:{ctx.channel.id}", url)
-        self.redis.delete(f"watcher:hash:{url}")
+    async def unwatch(self, ctx, feed: str):
+        "Stop watching a feed"
+        self.redis.srem(f"watcher:list:{ctx.channel.id}", feed)
+        self.redis.delete(f"watcher:hash:{feed}")
 
         if self.redis.scard(f"watcher:list:{ctx.channel.id}") == 0:
             self.redis.srem("watcher:channels", ctx.channel.id)
@@ -61,12 +65,13 @@ class Watcher(BaseCog):
     async def watcher(self):
         await self.bot.wait_until_ready()
         for channel_id in self.redis.smembers("watcher:channels"):
-            for url in self.redis.smembers(f"watcher:list:{channel_id}"):
-                oldhash = self.redis.get(f"watcher:hash:{url}")
-                newhash = await self.get_hash(url)
+            for feed in self.redis.smembers(f"watcher:list:{channel_id}"):
+                oldhash = self.redis.get(f"watcher:hash:{feed}")
+                newhash = await feedlib.feeds[feed].latest()
                 if oldhash != newhash:
-                    await self.bot.get_channel(int(channel_id)).send(url)
-                    self.redis.set(f"watcher:hash:{url}", newhash)
+                    embed, files = await feedlib.feeds[feed].get_post(newhash)
+                    await self.bot.get_channel(int(channel_id)).send(embed=embed, files=files)
+                    self.redis.set(f"watcher:hash:{feed}", newhash)
 
 
 def setup(bot):
