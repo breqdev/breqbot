@@ -1,5 +1,4 @@
 import asyncio
-import string
 import re
 import urllib.parse
 
@@ -9,7 +8,8 @@ from discord.ext import commands
 import emoji
 import youtube_dl
 
-from .utils import *
+from .. import basecog
+from .. import emoji_utils
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -56,7 +56,11 @@ class YTDLSource(discord.PCMVolumeTransformer):
                    data=data)
 
 
-class Soundboard(BaseCog):
+class SoundboardError(commands.UserInputError):
+    pass
+
+
+class Soundboard(basecog.BaseCog):
     "Play sounds in the voice channel!"
     def __init__(self, bot):
         super().__init__(bot)
@@ -64,14 +68,13 @@ class Soundboard(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def join(self, ctx):
         "Enter a voice channel :loud_sound:"
         user = ctx.author
         voice_state = user.voice
 
         if not voice_state or not voice_state.channel:
-            raise Fail(f"{user.mention} is not in a voice channel!")
+            raise SoundboardError(f"{user.mention} is not in a voice channel!")
 
         channel = voice_state.channel
 
@@ -81,16 +84,19 @@ class Soundboard(BaseCog):
         await client.main_ws.voice_state(ctx.guild.id, channel.id,
                                          self_deaf=True)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def leave(self, ctx):
         "Leave a voice channel :mute:"
         if self.clients.get(ctx.guild.id) is None:
-            raise Fail("Not connected to a channel!")
+            raise SoundboardError("Not connected to a channel!")
 
         await self.clients[ctx.guild.id].disconnect()
         del self.clients[ctx.guild.id]
+
+        await ctx.message.add_reaction("✅")
 
     def extract_id(self, url):
         "Extract the video ID from a YouTube URL"
@@ -101,7 +107,7 @@ class Soundboard(BaseCog):
         parsed = urllib.parse.urlparse(url)
 
         if parsed.scheme not in ("http", "https"):
-            raise Fail(f"Invalid URL scheme: {parsed.scheme}")
+            raise SoundboardError(f"Invalid URL scheme: {parsed.scheme}")
 
         if parsed.netloc not in ("www.youtube.com",
                                  "youtu.be",
@@ -109,7 +115,7 @@ class Soundboard(BaseCog):
                                  "www.youtu.be",
                                  "www.youtube-nocookie.com",
                                  "youtube-nocookie.com"):
-            raise Fail(f"Not a YouTube url: {parsed.netloc}")
+            raise SoundboardError(f"Not a YouTube url: {parsed.netloc}")
 
         if parsed.netloc in ("youtu.be", "www.youtu.be"):
             # Shortened URL
@@ -120,18 +126,18 @@ class Soundboard(BaseCog):
                 # Video URL
                 qs = urllib.parse.parse_qs(parsed.query)
                 if qs.get("v") is None:
-                    raise Fail(f"Video ID not specified: {qs}")
+                    raise SoundboardError(f"Video ID not specified: {qs}")
                 id = qs["v"][0]
             elif parsed.path.startswith("/embed/"):
                 # Embed URL
                 id = parsed.path[len("/embed/"):]
             else:
                 # URL not recognised
-                raise Fail(f"Invalid video path: {parsed.path}")
+                raise SoundboardError(f"Invalid video path: {parsed.path}")
 
         # Verify that the parsed ID looks right
         if not bool(re.match(r"[A-Za-z0-9\-_]{11}", id)):
-            raise Fail(f"Invalid video ID: {id}")
+            raise SoundboardError(f"Invalid video ID: {id}")
 
         return id
 
@@ -139,12 +145,11 @@ class Soundboard(BaseCog):
         try:
             metadata = ytdl.extract_info(id, download=False)
         except youtube_dl.utils.DownloadError:
-            raise Fail(f"Invalid YouTube ID: {id}")
+            raise SoundboardError(f"Invalid YouTube ID: {id}")
         return metadata["title"]
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def newsound(self, ctx, name: str, url: str):
         "Add a new sound from YouTube url :new:"
 
@@ -159,20 +164,22 @@ class Soundboard(BaseCog):
                         })
         self.redis.sadd(f"soundboard:sounds:{ctx.guild.id}", name)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def delsound(self, ctx, name: str):
         "Remove a sound :wastebasket:"
         if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
-            raise Fail("Sound not found")
+            raise SoundboardError("Sound not found")
 
         self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", name)
         self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{name}")
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def listsounds(self, ctx):
         "List enabled sounds :dividers:"
         embed = discord.Embed(title=f"Soundboard on {ctx.guild.name}")
@@ -192,11 +199,11 @@ class Soundboard(BaseCog):
         else:
             embed.description = ("The soundboard is currently empty. Try a "
                                  f"`{self.bot.command_prefix}newsound` ?")
-        return embed
+        await ctx.send(embed=embed)
 
     async def play_sound(self, guild_id, id):
         if not self.clients.get(guild_id):
-            raise Fail("Not connected to voice.")
+            raise SoundboardError("Not connected to voice.")
 
         while self.clients[guild_id].is_playing():
             await asyncio.sleep(0.5)
@@ -206,26 +213,25 @@ class Soundboard(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def play(self, ctx, name: str):
         "Play a sound :arrow_forward:"
         if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
-            raise Fail("Sound not found")
+            raise SoundboardError("Sound not found")
         sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{name}")
 
         await self.play_sound(ctx.guild.id, sound["youtube-id"])
+        await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.guild_only()
-    @passfail
     async def soundboard(self, ctx):
         "React to the soundboard to play sounds :control_knobs:"
 
         client = self.clients.get(ctx.guild.id)
         if client is None:
-            raise Fail("Not connected to voice.")
+            raise SoundboardError("Not connected to voice.")
 
-        message = await ctx.send(text_to_emoji("Soundboard"))
+        message = await ctx.send(emoji_utils.text_to_emoji("Soundboard"))
         # await message.add_reaction("➡️")
 
         sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
@@ -243,7 +249,7 @@ class Soundboard(BaseCog):
                     "reaction_add", timeout=120, check=check)
                 await reaction.remove(user)
             except asyncio.TimeoutError:
-                return NoReact
+                return
             else:
                 if (self.clients.get(ctx.guild.id)
                         and self.redis.sismember(

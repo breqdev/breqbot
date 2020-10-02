@@ -3,10 +3,10 @@ import asyncio
 import typing
 import os
 
-import discord
 from discord.ext import commands
 
-from .utils import *
+from .. import basecog
+from .. import emoji_utils
 
 
 class Game():
@@ -114,13 +114,18 @@ class SpaceGame(Game):
 
 
 class The2048Game(Game):
-    desc = "Play a version of the classic 2048 game :two: :zero: :four: :eight:"
+    desc = ("Play a version of the classic 2048 game "
+            ":two: :zero: :four: :eight:")
+
     async def init(self):
         self.message = None
         self.running = True
 
-        # self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "⭐"]
-        number_names = ["4096", "2_", "4_", "8_", "16", "32", "64", "128", "256", "512", "1024", "2048"]
+        # self.numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣",
+        #                 "4️⃣", "5️⃣", "6️⃣", "7️⃣",
+        #                 "8️⃣", "9️⃣", "🔟", "⭐"]
+        number_names = ["4096", "2_", "4_", "8_", "16", "32", "64",
+                        "128", "256", "512", "1024", "2048"]
         self.numbers = [await self.get_emoji(name) for name in number_names]
 
         self.moves = ["⬆️", "➡️", "⬇️", "⬅️"]
@@ -177,14 +182,14 @@ class The2048Game(Game):
         await self.draw()
         await self.message.clear_reactions()
 
-        for character in text_to_emoji("game ovr").split(" "):
+        for character in emoji_utils.text_to_emoji("game ovr").split(" "):
             await self.message.add_reaction(character)
 
     async def show_win(self):
         await self.draw()
         await self.message.clear_reactions()
 
-        for character in text_to_emoji("you win").split(" "):
+        for character in emoji_utils.text_to_emoji("you win").split(" "):
             await self.message.add_reaction(character)
 
     def compress_row_to_left(self, row):
@@ -308,7 +313,8 @@ class The2048Game(Game):
     async def timeout(self):
         await self.message.clear_reactions()
 
-class BaseGames(BaseCog):
+
+class BaseGames(basecog.BaseCog):
     async def play(self, ctx, GameType, args):
         game = GameType(ctx, args)
         await game.init()
@@ -326,25 +332,26 @@ class BaseGames(BaseCog):
                     "reaction_add", timeout=3600, check=check)
             except asyncio.TimeoutError:
                 await game.timeout()
-                return NoReact
+                return
             else:
                 await game.move(user, reaction.emoji)
                 await reaction.remove(user)
                 await game.draw()
                 if not game.running:
-                    return NoReact
+                    return
+
 
 games = {
     "space": SpaceGame,
     "2048": The2048Game,
 }
 
+
 def make_command(name, game):
     @commands.command(name=name, brief=game.desc)
     @commands.guild_only()
-    @passfail
     async def _command(self, ctx, *, args: typing.Optional[str] = None):
-        return await self.play(ctx, game, args)
+        await self.play(ctx, game, args)
 
     return _command
 
@@ -355,6 +362,7 @@ for name, game in games.items():
 
 Games = type("Games", (BaseGames,), new_commands)
 Games.description = "Play a few simple games right in Discord"
+
 
 def setup(bot):
     bot.add_cog(Games(bot))

@@ -27,13 +27,15 @@ breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
 
 # Breqbot Features
 # breqbot.load_extension("extensions.portal")
-# breqbot.load_extension("extensions.games")
 # breqbot.load_extension("extensions.fun")
-# breqbot.load_extension("extensions.soundboard")
-# breqbot.load_extension("extensions.rolemenu")
 # breqbot.load_extension("extensions.watcher")
 
-# Economy/shop/outfits
+# Apps
+breqbot.load_extension("extensions.apps.games")
+breqbot.load_extension("extensions.apps.soundboard")
+breqbot.load_extension("extensions.apps.rolemenu")
+
+# Economy
 breqbot.load_extension("extensions.economy.website")
 breqbot.load_extension("extensions.economy.currency")
 breqbot.load_extension("extensions.economy.inventory")
