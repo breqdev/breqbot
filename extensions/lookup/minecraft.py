@@ -11,6 +11,7 @@ from ..publisher import PublisherCog
 
 class Minecraft(PublisherCog):
     "Tools for Minecraft servers"
+    watch_params = ("ip",)
 
     @run_in_executor
     def _get_state(self, ip):

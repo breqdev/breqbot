@@ -49,4 +49,7 @@ breqbot.load_extension("extensions.utility.help_command")
 breqbot.load_extension("extensions.utility.error_handler")
 breqbot.load_extension("extensions.utility.guild_watch")
 
+# Watcher
+breqbot.load_extension("extensions.apps.watch")
+
 breqbot.run(os.getenv("DISCORD_TOKEN"))

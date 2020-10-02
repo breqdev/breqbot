@@ -1,0 +1,107 @@
+import json
+
+import discord
+from discord.ext import commands, tasks
+
+from ..base import BaseCog
+from .. import publisher
+
+
+class Watch(BaseCog):
+    "Watch a comic, Minecraft server, or other feed"
+
+    def __init__(self, bot):
+        super().__init__(bot)
+
+        self.publishers = {}
+
+        for name, cog in bot.cogs.items():
+            if isinstance(cog, publisher.PublisherCog):
+                self.publishers[name] = cog
+                self.make_watch_subcommand(cog)
+
+        self.scan.start()
+
+    async def add_watch(self, channel, publisher, params):
+        parameters = json.dumps(params)
+        self.redis.sadd("watching:publishers",
+                        f"{publisher.qualified_name}:{parameters}")
+        self.redis.sadd(
+            f"watching:channels:{publisher.qualified_name}:{parameters}",
+            channel)
+        self.redis.sadd(f"watching:publishers:{channel}",
+                        f"{publisher.qualified_name}:{parameters}")
+
+        # Preload the first hash val
+        hash = publisher.get_hash(*params)
+        self.redis.set(
+            f"watching:hash:{publisher.qualified_name}:{parameters}", hash)
+
+    async def rem_watch(self, channel, publisher, parameters):
+        parameters = json.dumps(parameters)
+        self.redis.srem("watching:publishers",
+                        f"{publisher.qualified_name}:{parameters}")
+        self.redis.srem(
+            f"watching:channels:{publisher.qualified_name}:{parameters}",
+            channel)
+        self.redis.srem(f"watching:publishers:{channel}",
+                        f"{publisher.qualified_name}:{parameters}")
+
+    def make_watch_subcommand(self, publisher):
+        @self.watch.command(name=publisher.qualified_name)
+        async def _watch_command(ctx, *parameters):
+            await self.add_watch(ctx.channel.id, publisher, parameters)
+            await ctx.send(f"Watch: {publisher.qualified_name} / {parameters}")
+
+        @self.unwatch.command(name=publisher.qualified_name)
+        async def _unwatch_command(ctx, *parameters):
+            await self.rem_watch(ctx.channel.id, publisher, parameters)
+            await ctx.send(f"RM-W: {publisher.qualified_name} / {parameters}")
+
+    @commands.group()
+    async def watch(self, ctx):
+        "Begin watching a feed in this channel"
+        pass
+
+    @commands.group()
+    async def unwatch(self, ctx):
+        "Stop watching a feed in this channel"
+        pass
+
+    @commands.command()
+    async def watching(self, ctx):
+        "Display feeds currently being watched"
+        embed = discord.Embed(title="Watching:")
+
+        desc = []
+        for packed in \
+                self.redis.smembers(f"watching:publishers:{ctx.channel.id}"):
+            pub_name, params = packed.split(":", 1)
+            desc.append(f"{pub_name} {params}")
+
+        embed.description = "\n".join(desc)
+        await ctx.send(embed=embed)
+
+    @tasks.loop(seconds=30)
+    async def scan(self):
+        await self.bot.wait_until_ready()
+
+        for packed in self.redis.smembers("watching:publishers"):
+            pub_name, parameters = packed.split(":", 1)
+            params = json.loads(parameters)
+            oldhash = self.redis.get(
+                f"watching:publishers:{pub_name}:{parameters}")
+            newhash = await self.publishers[pub_name].get_hash(*params)
+            if oldhash != newhash:
+                self.redis.set(
+                    f"watching:publishers:{pub_name}:{parameters}", newhash)
+
+                for channel_id in self.redis.smembers(
+                        f"watching:channels:{pub_name}:{parameters}"):
+                    channel = self.bot.get_channel(int(channel_id))
+                    embed = await self.publishers[pub_name].get_update(*params)
+                    await channel.send(f"Update from {pub_name}:", embed=embed)
+
+
+def setup(bot):
+    bot.add_cog(Watch(bot))
