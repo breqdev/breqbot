@@ -51,22 +51,56 @@ class Watch(BaseCog):
         @self.watch.command(name=publisher.qualified_name)
         async def _watch_command(ctx, *parameters):
             await self.add_watch(ctx.channel.id, publisher, parameters)
-            await ctx.send(f"Watch: {publisher.qualified_name} / {parameters}")
+            await ctx.send(f"{ctx.channel.mention} is now watching: "
+                           f"{publisher.qualified_name} "
+                           f"{' '.join(parameters)}")
 
         @self.unwatch.command(name=publisher.qualified_name)
         async def _unwatch_command(ctx, *parameters):
             await self.rem_watch(ctx.channel.id, publisher, parameters)
-            await ctx.send(f"RM-W: {publisher.qualified_name} / {parameters}")
+            await ctx.send(f"{ctx.channel.mention} has stopped watching: "
+                           f"{publisher.qualified_name} "
+                           f"{' '.join(parameters)}")
 
     @commands.group()
     async def watch(self, ctx):
         "Begin watching a feed in this channel"
-        pass
+        if ctx.invoked_subcommand:
+            return
+
+        embed = discord.Embed(title="Available publishers")
+
+        desc = []
+        for name, pub in self.publishers.items():
+            clean_params = "".join(f" <{param}>" for param in pub.watch_params)
+            desc.append(f"`{self.bot.command_prefix}watch {name}"
+                        f"{clean_params}`")
+
+        embed.description = "\n".join(desc)
+        await ctx.send(embed=embed)
 
     @commands.group()
     async def unwatch(self, ctx):
         "Stop watching a feed in this channel"
-        pass
+        if ctx.invoked_subcommand:
+            return
+
+        embed = discord.Embed(
+            title="Invalid publisher. Valid options include:")
+
+        desc = []
+        for packed in \
+                self.redis.smembers(f"watching:publishers:{ctx.channel.id}"):
+            pub_name, params = packed.split(":", 1)
+            params = json.loads(params)
+            params = " ".join(param for param in params)
+            desc.append(f"{pub_name} {params}")
+
+        if desc:
+            embed.description = "\n".join(desc)
+        else:
+            embed.description = ("This channel is not watching anything. ")
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def watching(self, ctx):
@@ -77,9 +111,15 @@ class Watch(BaseCog):
         for packed in \
                 self.redis.smembers(f"watching:publishers:{ctx.channel.id}"):
             pub_name, params = packed.split(":", 1)
+            params = json.loads(params)
+            params = " ".join(param for param in params)
             desc.append(f"{pub_name} {params}")
 
-        embed.description = "\n".join(desc)
+        if desc:
+            embed.description = "\n".join(desc)
+        else:
+            embed.description = ("This channel is not watching anything. "
+                                 f"Try a `{self.bot.command_prefix}watch`?")
         await ctx.send(embed=embed)
 
     @tasks.loop(seconds=30)

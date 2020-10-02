@@ -6,10 +6,10 @@ from discord.ext import commands
 from mcstatus import MinecraftServer
 
 from ..base import UserError, run_in_executor
-from ..publisher import PublisherCog
+from .. import publisher
 
 
-class Minecraft(PublisherCog):
+class Minecraft(publisher.PublisherCog):
     "Tools for Minecraft servers"
     watch_params = ("ip",)
 

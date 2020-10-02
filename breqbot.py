@@ -40,6 +40,7 @@ breqbot.load_extension("extensions.reddit.reddit")
 # Lookups
 breqbot.load_extension("extensions.lookup.minecraft")
 breqbot.load_extension("extensions.lookup.vex")
+breqbot.load_extension("extensions.lookup.scraper")
 
 # Comics
 breqbot.load_extension("extensions.comics.xkcd")

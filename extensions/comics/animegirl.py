@@ -79,7 +79,7 @@ class AnimeGirl(publisher.PublisherCog):
                             "/i-want-to-be-a-cute-anime-girl"
                             "/list?title_no=349416&page=1")
         soup = bs4.BeautifulSoup(page.content, "html.parser")
-        return soup.find(id="_listUl").find("li").attrs["data-episode-no"]
+        return str(soup.find(id="_listUl").find("li").attrs["data-episode-no"])
 
     async def get_update(self):
         return await self.get_post("latest")
