@@ -43,6 +43,7 @@ breqbot.load_extension("extensions.lookup.vex")
 
 # Comics
 breqbot.load_extension("extensions.comics.xkcd")
+breqbot.load_extension("extensions.comics.animegirl")
 
 # Utility
 breqbot.load_extension("extensions.utility.help_command")
