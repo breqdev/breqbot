@@ -130,11 +130,11 @@ class Watch(BaseCog):
             pub_name, parameters = packed.split(":", 1)
             params = json.loads(parameters)
             oldhash = self.redis.get(
-                f"watching:publishers:{pub_name}:{parameters}")
+                f"watching:hash:{pub_name}:{parameters}")
             newhash = await self.publishers[pub_name].get_hash(*params)
             if oldhash != newhash:
                 self.redis.set(
-                    f"watching:publishers:{pub_name}:{parameters}", newhash)
+                    f"watching:hash:{pub_name}:{parameters}", newhash)
 
                 for channel_id in self.redis.smembers(
                         f"watching:channels:{pub_name}:{parameters}"):
