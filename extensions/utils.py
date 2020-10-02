@@ -12,13 +12,6 @@ __all__ = ["BaseCog", "Fail", "NoReact", "passfail", "config_only",
            "shopkeeper_only", "run_in_executor", "text_to_emoji", "Item",
            "MissingItem"]
 
-def run_in_executor(f):
-    @functools.wraps(f)
-    def inner(*args, **kwargs):
-        loop = asyncio.get_running_loop()
-        return loop.run_in_executor(None, lambda: f(*args, **kwargs))
-    return inner
-
 
 class Fail(Exception):
     def __init__(self, message, debug=None):

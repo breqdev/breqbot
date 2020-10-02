@@ -35,6 +35,7 @@ breqbot.load_extension("extensions.apps.rolemenu")
 breqbot.load_extension("extensions.apps.portal")
 
 # Feeds
+breqbot.load_extension("extensions.feeds.feeds")
 # breqbot.load_extension("extensions.reddit")
 # breqbot.load_extension("extensions.minecraft")
 # breqbot.load_extension("extensions.vex")
