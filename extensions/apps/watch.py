@@ -126,7 +126,6 @@ class Watch(BaseCog):
     @tasks.loop(seconds=30)
     async def scan(self):
         await self.bot.wait_until_ready()
-        self.scan_number += 1
 
         for packed in self.redis.smembers("watching:publishers"):
             pub_name, parameters = packed.split(":", 1)
@@ -148,6 +147,8 @@ class Watch(BaseCog):
                                           .get_update(*params))
                     await channel.send(f"Update from {pub_name}:",
                                        embed=embed, files=files)
+
+        self.scan_number += 1
 
 
 def setup(bot):
