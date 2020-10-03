@@ -12,6 +12,7 @@ from .. import publisher
 class Scraper(publisher.PublisherCog):
     "Scrape a website or watch it for changes"
     watch_params = ("url",)
+    scan_interval = 1
 
     @run_in_executor
     def _get_content(self, url):

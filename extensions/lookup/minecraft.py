@@ -12,6 +12,7 @@ from .. import publisher
 class Minecraft(publisher.PublisherCog):
     "Tools for Minecraft servers"
     watch_params = ("ip",)
+    scan_interval = 1
 
     @run_in_executor
     def _get_state(self, ip):

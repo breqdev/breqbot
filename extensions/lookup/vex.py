@@ -1,9 +1,11 @@
+import typing
 import requests
 
 import discord
 from discord.ext import commands
 
 from ..base import BaseCog
+# from .. import publisher
 
 
 class Vex(BaseCog):
@@ -11,10 +13,7 @@ class Vex(BaseCog):
 
     SEASON = "Tower Takeover"
 
-    @commands.command()
-    async def vex(self, ctx, team: str):
-        ":mag: :robot: Get info about a Vex team :video_game:"
-
+    async def send_team_overview(self, ctx, team):
         async with ctx.channel.typing():
             team = requests.get("https://api.vexdb.io/v1/get_teams",
                                 params={"team": team}).json()["result"][0]
@@ -75,6 +74,119 @@ class Vex(BaseCog):
 
             embed.description = awards + "\n" + rankings
         await ctx.send(embed=embed)
+
+    def matchnum(self, match):
+        if match["round"] == 1:  # Practice
+            return f"P{match['matchnum']}"
+        if match["round"] == 2:  # Qualification
+            return f"Q{match['matchnum']}"
+        if match["round"] == 3:  # QuarterFinals
+            return f"QF{match['matchnum']}-{match['instance']}"
+        if match["round"] == 4:  # SemiFinals
+            return f"SF{match['matchnum']}-{match['instance']}"
+        if match["round"] == 5:  # Finals
+            return f"Final {match['instance']}"
+
+    def matchstr(self, match, team=None):
+        team = team["number"]
+        num = self.matchnum(match)
+
+        teams = [match[key] for key in ("red1", "red2", "blue1", "blue2")]
+
+        redteams = " ".join((f"**{t}**" if t == team else t)
+                            for t in teams[:2])
+        blueteams = " ".join((f"**{t}**" if t == team else t)
+                             for t in teams[2:])
+
+        if team in teams[:2]:  # Team On Red
+            score = f" **{match['redscore']}** - *{match['bluescore']}* "
+        else:  # Team On Blue
+            score = f" *{match['redscore']}* - **{match['bluescore']}** "
+
+        if match["redscore"] > match["bluescore"]:
+            # Red win
+            score = f"🟥{score}⬛"
+            if team in teams[:2]:
+                result = "✅"
+            else:
+                result = "❌"
+
+        elif match["bluescore"] > match["redscore"]:
+            # Blue win
+            score = f"⬛{score}🟦"
+            if team in teams[2:]:
+                result = "✅"
+            else:
+                result = "❌"
+        else:
+            # Tie
+            score = f"🟪{score}🟪"
+            result = "🔸"
+
+        return f"{num}\t-\t{redteams}\t{score}\t{blueteams}\t-\t{result}"
+
+    async def send_meet_overview(self, ctx, team, sku):
+        async with ctx.channel.typing():
+            team = requests.get(
+                "https://api.vexdb.io/v1/get_teams",
+                params={"team": team}
+            ).json()["result"][0]
+
+            event = requests.get(
+                "https://api.vexdb.io/v1/get_events",
+                params={"sku": sku}
+            ).json()["result"][0]
+
+            matches = requests.get(
+                "https://api.vexdb.io/v1/get_matches",
+                params={"sku": sku, "team": team["number"],
+                        "scored": 1}
+            ).json()["result"]
+
+            driver_skills = requests.get(
+                "https://api.vexdb.io/v1/get_skills",
+                params={"sku": sku, "team": team["number"], "type": 0}
+            ).json()["result"][0]
+
+            programming_skills = requests.get(
+                "https://api.vexdb.io/v1/get_skills",
+                params={"sku": sku, "team": team["number"], "type": 1}
+            ).json()["result"][0]
+
+            ranking = requests.get(
+                "https://api.vexdb.io/v1/get_rankings",
+                params={"sku": sku, "team": team["number"]}
+            ).json()["result"][0]
+
+        embed = discord.Embed(
+            title=f"**{team['number']}**: *{team['team_name']}* at"
+            f"*{event['name']}*")
+
+        matches_str = "\n".join(f"{self.matchstr(match, team)}"
+                                for match in matches)
+
+        skills_str = (f"Driver: {driver_skills['score']} "
+                      f"*({driver_skills['attempts']} attempts)*\n"
+                      f"Programming: {programming_skills['score']} "
+                      f"*({programming_skills['attempts']} attempts)*")
+
+        rankings_str = (f"**{ranking['rank']}** "
+                        f"({ranking['wins']}-{ranking['losses']}-"
+                        f"{ranking['ties']})")
+
+        embed.add_field(name="Matches", value=matches_str, inline=False)
+        embed.add_field(name="Skills", value=skills_str, inline=False)
+        embed.add_field(name="Rankings", value=rankings_str, inline=False)
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def vex(self, ctx, team: str, sku: typing.Optional[str] = None):
+        ":mag: :robot: Get info about a Vex team :video_game:"
+        if sku:
+            await self.send_meet_overview(ctx, team, sku)
+        else:
+            await self.send_team_overview(ctx, team)
 
 
 def setup(bot):

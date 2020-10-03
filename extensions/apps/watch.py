@@ -20,6 +20,7 @@ class Watch(BaseCog):
                 self.publishers[name] = cog
                 self.make_watch_subcommand(cog)
 
+        self.scan_number = 0
         self.scan.start()
 
     async def add_watch(self, channel, publisher, params):
@@ -125,9 +126,13 @@ class Watch(BaseCog):
     @tasks.loop(seconds=30)
     async def scan(self):
         await self.bot.wait_until_ready()
+        self.scan_number += 1
 
         for packed in self.redis.smembers("watching:publishers"):
             pub_name, parameters = packed.split(":", 1)
+            if self.scan_number % self.publishers[pub_name].scan_interval != 0:
+                continue
+
             params = json.loads(parameters)
             oldhash = self.redis.get(
                 f"watching:hash:{pub_name}:{parameters}")
