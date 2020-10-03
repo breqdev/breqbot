@@ -4,76 +4,113 @@ import requests
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog
-# from .. import publisher
+from ..base import run_in_executor
+from .. import publisher
 
 
-class Vex(BaseCog):
+class Vex(publisher.PublisherCog):
     "Information about the VEX Robotics Competition"
+    watch_params = ("team", "sku")
+    scan_interval = 1
 
     SEASON = "Tower Takeover"
 
-    async def send_team_overview(self, ctx, team):
-        async with ctx.channel.typing():
-            team = requests.get("https://api.vexdb.io/v1/get_teams",
-                                params={"team": team}).json()["result"][0]
+    async def get_team_overview(self, team):
+        team = requests.get("https://api.vexdb.io/v1/get_teams",
+                            params={"team": team}).json()["result"][0]
 
-            embed = discord.Embed(
-                title=f"{team['program']} team {team['number']}: "
-                f"{team['team_name']}")
+        embed = discord.Embed(
+            title=f"{team['program']} team {team['number']}: "
+            f"{team['team_name']}")
 
-            awards_raw = requests.get(
-                "https://api.vexdb.io/v1/get_awards",
-                params={"team": team["number"], "season": self.SEASON}
-            ).json()["result"]
+        awards_raw = requests.get(
+            "https://api.vexdb.io/v1/get_awards",
+            params={"team": team["number"], "season": self.SEASON}
+        ).json()["result"]
 
-            awards = []
-            for award_raw in awards_raw:
-                award_name = award_raw["name"]
+        awards = []
+        for award_raw in awards_raw:
+            award_name = award_raw["name"]
 
-                event_raw = requests.get(
-                    "https://api.vexdb.io/v1/get_events",
-                    params={"sku": award_raw["sku"]}).json()["result"][0]
-                event_name = event_raw["name"]
-                awards.append((award_name, event_name))
+            event_raw = requests.get(
+                "https://api.vexdb.io/v1/get_events",
+                params={"sku": award_raw["sku"]}).json()["result"][0]
+            event_name = event_raw["name"]
+            awards.append((award_name, event_name))
 
-            awards = "\n".join(f"• **{award}** | {event}"
-                               for award, event in awards)
-            if not awards:
-                awards = "This team has not won any awards."
+        awards = "\n".join(f"• **{award}** | {event}"
+                           for award, event in awards)
+        if not awards:
+            awards = "This team has not won any awards."
 
-            awards = "**Awards:**\n" + awards
+        awards = "**Awards:**\n" + awards
 
-            rankings_raw = requests.get(
-                "https://api.vexdb.io/v1/get_rankings",
-                params={"team": team["number"], "season": self.SEASON}
-            ).json()["result"]
+        rankings_raw = requests.get(
+            "https://api.vexdb.io/v1/get_rankings",
+            params={"team": team["number"], "season": self.SEASON}
+        ).json()["result"]
 
-            rankings = []
-            for ranking_raw in rankings_raw:
-                ranking = ranking_raw["rank"]
+        rankings = []
+        for ranking_raw in rankings_raw:
+            ranking = ranking_raw["rank"]
 
-                teams_count = requests.get(
-                    "https://api.vexdb.io/v1/get_teams",
-                    params={"sku": ranking_raw["sku"], "nodata": "true"}
-                ).json()["size"]
+            teams_count = requests.get(
+                "https://api.vexdb.io/v1/get_teams",
+                params={"sku": ranking_raw["sku"], "nodata": "true"}
+            ).json()["size"]
 
-                event_raw = requests.get(
-                    "https://api.vexdb.io/v1/get_events",
-                    params={"sku": ranking_raw["sku"]}).json()["result"][0]
-                event_name = event_raw["name"]
+            event_raw = requests.get(
+                "https://api.vexdb.io/v1/get_events",
+                params={"sku": ranking_raw["sku"]}).json()["result"][0]
+            event_name = event_raw["name"]
 
-                rankings.append((ranking, teams_count, event_name))
+            rankings.append((ranking, teams_count, event_name))
 
-            rankings = "\n".join(f"• **{rank}**/{teams} | {event}"
-                                 for rank, teams, event in rankings)
-            if not rankings:
-                rankings = "This team has not competed."
+        rankings = "\n".join(f"• **{rank}**/{teams} | {event}"
+                             for rank, teams, event in rankings)
+        if not rankings:
+            rankings = "This team has not competed."
 
-            rankings = "**Rankings:**\n" + rankings
+        rankings = "**Rankings:**\n" + rankings
 
-            embed.description = awards + "\n" + rankings
-        await ctx.send(embed=embed)
+        embed.description = awards + "\n" + rankings
+
+        return embed, []
+
+    @run_in_executor
+    def get_meet_data(self, team, sku):
+        team = requests.get(
+            "https://api.vexdb.io/v1/get_teams",
+            params={"team": team}
+        ).json()["result"][0]
+
+        event = requests.get(
+            "https://api.vexdb.io/v1/get_events",
+            params={"sku": sku}
+        ).json()["result"][0]
+
+        matches = requests.get(
+            "https://api.vexdb.io/v1/get_matches",
+            params={"sku": sku, "team": team["number"],
+                    "scored": 1}
+        ).json()["result"]
+
+        driver_skills = requests.get(
+            "https://api.vexdb.io/v1/get_skills",
+            params={"sku": sku, "team": team["number"], "type": 0}
+        ).json()["result"][0]
+
+        programming_skills = requests.get(
+            "https://api.vexdb.io/v1/get_skills",
+            params={"sku": sku, "team": team["number"], "type": 1}
+        ).json()["result"][0]
+
+        ranking = requests.get(
+            "https://api.vexdb.io/v1/get_rankings",
+            params={"sku": sku, "team": team["number"]}
+        ).json()["result"][0]
+
+        return team, event, matches, driver_skills, programming_skills, ranking
 
     def matchnum(self, match):
         if match["round"] == 1:  # Practice
@@ -125,38 +162,9 @@ class Vex(BaseCog):
 
         return f"{num}\t-\t{redteams}\t{score}\t{blueteams}\t-\t{result}"
 
-    async def send_meet_overview(self, ctx, team, sku):
-        async with ctx.channel.typing():
-            team = requests.get(
-                "https://api.vexdb.io/v1/get_teams",
-                params={"team": team}
-            ).json()["result"][0]
-
-            event = requests.get(
-                "https://api.vexdb.io/v1/get_events",
-                params={"sku": sku}
-            ).json()["result"][0]
-
-            matches = requests.get(
-                "https://api.vexdb.io/v1/get_matches",
-                params={"sku": sku, "team": team["number"],
-                        "scored": 1}
-            ).json()["result"]
-
-            driver_skills = requests.get(
-                "https://api.vexdb.io/v1/get_skills",
-                params={"sku": sku, "team": team["number"], "type": 0}
-            ).json()["result"][0]
-
-            programming_skills = requests.get(
-                "https://api.vexdb.io/v1/get_skills",
-                params={"sku": sku, "team": team["number"], "type": 1}
-            ).json()["result"][0]
-
-            ranking = requests.get(
-                "https://api.vexdb.io/v1/get_rankings",
-                params={"sku": sku, "team": team["number"]}
-            ).json()["result"][0]
+    async def get_meet_overview(self, team, sku):
+        team, event, matches, driver_skills, programming_skills, ranking \
+            = await self.get_meet_data(team, sku)
 
         embed = discord.Embed(
             title=f"**{team['number']}**: *{team['team_name']}* at"
@@ -178,15 +186,27 @@ class Vex(BaseCog):
         embed.add_field(name="Skills", value=skills_str, inline=False)
         embed.add_field(name="Rankings", value=rankings_str, inline=False)
 
-        await ctx.send(embed=embed)
+        return embed, []
 
     @commands.command()
     async def vex(self, ctx, team: str, sku: typing.Optional[str] = None):
         ":mag: :robot: Get info about a Vex team :video_game:"
         if sku:
-            await self.send_meet_overview(ctx, team, sku)
+            embed, files = await self.get_meet_overview(team, sku)
         else:
-            await self.send_team_overview(ctx, team)
+            embed, files = await self.get_team_overview(team)
+
+        await ctx.send(embed=embed)
+
+    async def get_hash(self, team, sku):
+        team, event, matches, driver_skills, programming_skills, ranking \
+            = await self.get_meet_data(team, sku)
+
+        return (f"{len(matches)}:{driver_skills['attempts']}:"
+                f"{programming_skills['attempts']}")
+
+    async def get_update(self, team, sku):
+        return await self.get_meet_overview(team, sku)
 
 
 def setup(bot):
