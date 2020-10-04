@@ -4,11 +4,10 @@ import requests
 import discord
 from discord.ext import commands
 
-from ..base import run_in_executor
-from .. import publisher
+from ..base import BaseCog, run_in_executor
 
 
-class Vex(publisher.PublisherCog):
+class Vex(BaseCog):
     "Information about the VEX Robotics Competition"
     watch_params = ("team", "sku")
     scan_interval = 1

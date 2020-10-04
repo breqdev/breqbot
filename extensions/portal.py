@@ -6,7 +6,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog, UserError
+from .base import BaseCog, UserError
 
 
 class Portal(BaseCog):

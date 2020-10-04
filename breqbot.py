@@ -35,7 +35,7 @@ breqbot.load_extension("extensions.comics.comics")
 breqbot.load_extension("extensions.fun.fun")
 
 # - Portal
-breqbot.load_extension("extensions.apps.portal")
+breqbot.load_extension("extensions.portal")
 
 # - Lookup
 breqbot.load_extension("extensions.lookup.minecraft")
@@ -45,9 +45,6 @@ breqbot.load_extension("extensions.lookup.scraper")
 # - Configuration
 breqbot.load_extension("extensions.config.config")
 breqbot.load_extension("extensions.config.rolemenu")
-
-# - Watch
-# breqbot.load_extension("extensions.apps.watch")
 
 # - Utility
 breqbot.load_extension("extensions.utility.help_command")

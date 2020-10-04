@@ -23,7 +23,7 @@ class BaseComics(BaseCog):
     async def is_watching(self, series, channel_id):
         return self.redis.sismember(f"comic:watching:{series}", channel_id)
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=15)
     async def watch_task(self):
         for name, comic in self.comics.items():
             new_hash = await comic.get_hash()

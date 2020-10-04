@@ -5,11 +5,10 @@ import requests
 import discord
 from discord.ext import commands
 
-from ..base import run_in_executor
-from .. import publisher
+from ..base import BaseCog, run_in_executor
 
 
-class Scraper(publisher.PublisherCog):
+class Scraper(BaseCog):
     "Scrape a website or watch it for changes"
     watch_params = ("url",)
     scan_interval = 1

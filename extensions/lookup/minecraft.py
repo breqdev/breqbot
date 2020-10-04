@@ -5,11 +5,10 @@ from discord.ext import commands
 
 from mcstatus import MinecraftServer
 
-from ..base import UserError, run_in_executor
-from .. import publisher
+from ..base import BaseCog, UserError, run_in_executor
 
 
-class Minecraft(publisher.PublisherCog):
+class Minecraft(BaseCog):
     "Tools for Minecraft servers"
     watch_params = ("ip",)
     scan_interval = 1
