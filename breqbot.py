@@ -43,7 +43,7 @@ breqbot.load_extension("extensions.lookup.vex")
 breqbot.load_extension("extensions.lookup.scraper")
 
 # - Configuration
-breqbot.load_extension("extensions.config.allowlist")
+breqbot.load_extension("extensions.config.config")
 breqbot.load_extension("extensions.config.rolemenu")
 
 # - Watch

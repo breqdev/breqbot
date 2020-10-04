@@ -137,7 +137,7 @@ class Info(BaseCog):
         else:
             embed.title = f"{ctx.guild.name}'s website is disabled."
             embed.description = (f"Shopkeepers can enable it with "
-                                 f"`{self.bot.main_prefix}enwebsite 1`")
+                                 f"`{self.bot.main_prefix}enable website`")
         await ctx.send(embed=embed)
 
 
