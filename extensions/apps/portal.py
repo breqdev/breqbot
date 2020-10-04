@@ -12,7 +12,7 @@ from ..base import BaseCog, UserError
 class Portal(BaseCog):
     "Interface with real-world things"
 
-    async def get_portal(self, id, user_id=None):
+    def get_portal(self, id, user_id=None):
         portal = self.redis.hgetall(f"portal:{id}")
         if not portal:
             raise UserError(f"Portal {id} does not exist.")
@@ -22,7 +22,7 @@ class Portal(BaseCog):
 
         return portal
 
-    async def set_portal(self, portal):
+    def set_portal(self, portal):
         id = portal["id"]
         self.redis.hset(f"portal:{id}", mapping=portal)
 
@@ -46,7 +46,7 @@ class Portal(BaseCog):
             "token": token,
             "status": "0",
         }
-        await self.set_portal(portal)
+        self.set_portal(portal)
 
         embed = discord.Embed(title="Portal")
         embed.description = "Thank you for registering a Breqbot portal!"
@@ -62,7 +62,7 @@ class Portal(BaseCog):
     async def modifyportal(self, ctx, id: str, field: str, *, value: str):
         "Modify an existing Portal"
 
-        portal = await self.get_portal(id, ctx.author.id)
+        portal = self.get_portal(id, ctx.author.id)
 
         if field == "name":
             portal["name"] = value
@@ -71,14 +71,14 @@ class Portal(BaseCog):
         else:
             raise UserError(f"Invalid field {field}")
 
-        await self.set_portal(portal)
+        self.set_portal(portal)
         await ctx.message.add_reaction("✅")
 
     @commands.command()
     async def delportal(self, ctx, id: str):
         "Delete an existing Portal"
 
-        await self.get_portal(id, ctx.author.id)
+        self.get_portal(id, ctx.author.id)
 
         self.redis.srem("portal:list", id)
         self.redis.srem(f"portal:from_owner:{ctx.author.id}", id)
@@ -100,7 +100,7 @@ class Portal(BaseCog):
 
         portals = []
         for id in portal_ids:
-            portal = await self.get_portal(id)
+            portal = self.get_portal(id)
             portals.append(portal)
 
         embed.description = "\n".join(
@@ -116,7 +116,7 @@ class Portal(BaseCog):
     async def portalguilds(self, ctx, id: str):
         "List the servers that a Portal is connected to"
 
-        await self.get_portal(id, ctx.author.id)
+        self.get_portal(id, ctx.author.id)
 
         guild_ids = self.redis.smembers(f"portal:guilds:{id}")
 
@@ -147,7 +147,7 @@ class Portal(BaseCog):
     async def addportal(self, ctx, id: str, name: str):
         "Add a portal to a server"
 
-        portal = await self.get_portal(id, ctx.author.id)
+        portal = self.get_portal(id, ctx.author.id)
 
         if not self.check_name(name, ctx.guild.id):
             raise UserError(f"A portal with the name {name} already exists.")
@@ -170,7 +170,7 @@ class Portal(BaseCog):
         if not portal_id:
             raise UserError(f"The portal {name} does not exist.")
 
-        portal = await self.get_portal(portal_id, ctx.author.id)
+        portal = self.get_portal(portal_id, ctx.author.id)
 
         await self.remove_portal(portal["id"], ctx.guild.id)
         await ctx.message.add_reaction("✅")
@@ -193,6 +193,15 @@ class Portal(BaseCog):
         elif status == 2:
             return ":green_circle:"  # Connected, Ready
 
+    def custom_bot_help(self, ctx):
+        portal_ids = self.redis.smembers(f"portal:list:{ctx.guild.id}")
+
+        desc = []
+        for id in portal_ids:
+            alias = self.redis.get(f"portal:from_id:{ctx.guild.id}:{id}")
+            desc.append(f"`{self.bot.command_prefix}portal {alias}`")
+        return " ".join(desc) + "\n"
+
     @commands.command()
     async def portals(self, ctx):
         "List connected portals"
@@ -202,7 +211,7 @@ class Portal(BaseCog):
 
         portals = []
         for id in portal_ids:
-            portal = await self.get_portal(id)
+            portal = self.get_portal(id)
             portal["alias"] = self.redis.get(
                 f"portal:from_id:{ctx.guild.id}:{id}")
             portals.append(portal)

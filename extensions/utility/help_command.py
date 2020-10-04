@@ -43,8 +43,12 @@ class HelpCommand(commands.HelpCommand):
             else:
                 name = "**General** - "
 
-            value = " ".join(f"`{self.clean_prefix}{command.qualified_name}`"
-                             for command in commands_filtered) + "\n"
+            if hasattr(cog, "custom_bot_help"):
+                value = cog.custom_bot_help(self.context)
+            else:
+                value = " ".join(
+                    f"`{self.clean_prefix}{command.qualified_name}`"
+                    for command in commands_filtered) + "\n"
             description += (name + value)
 
         embed.description = description

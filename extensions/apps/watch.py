@@ -63,6 +63,10 @@ class Watch(BaseCog):
                            f"{publisher.qualified_name} "
                            f"{' '.join(parameters)}")
 
+    def custom_bot_help(self, ctx):
+        return " ".join(f"`{self.bot.command_prefix}watch {name}`"
+                        for name in self.publishers) + "\n"
+
     @commands.group()
     async def watch(self, ctx):
         "Begin watching a feed in this channel"
