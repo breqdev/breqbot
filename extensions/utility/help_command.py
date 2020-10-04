@@ -41,7 +41,7 @@ class HelpCommand(commands.HelpCommand):
             if cog:
                 name = f"**{cog.qualified_name}** - "
             else:
-                name = "**General** - "
+                continue
 
             if hasattr(cog, "custom_bot_help"):
                 value = cog.custom_bot_help(self.context)
