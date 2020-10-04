@@ -94,11 +94,25 @@ class Info(BaseCog):
 
     @commands.command()
     @commands.check(BaseCog.config_only)
-    async def activity(self, ctx, *, activity: str):
+    async def activity(self, ctx, type: str, *, desc: str):
         "Change Breqbot's status in Discord"
-        game = discord.Game(activity)
+        if type.lower().strip() == "playing":
+            activity = discord.Game(desc)
+        elif type.lower().strip() == "watching":
+            activity = discord.Activity(
+                name=desc, type=discord.ActivityType.watching)
+        elif type.lower().strip() == "streaming":
+            activity = discord.Streaming(url="https://bot.breq.dev/")
+        elif type.lower().strip() == "listening":
+            activity = discord.Activity(
+                name=desc, type=discord.ActivityType.listening)
+        elif type.lower().strip() == "competing":
+            activity = discord.Activity(
+                name=desc, type=discord.ActivityType.competing)
+        else:
+            activity = discord.Game(f"{type} {desc}")
         await self.bot.change_presence(status=discord.Status.online,
-                                       activity=game)
+                                       activity=activity)
 
     @commands.command()
     async def awsnap(self, ctx):
