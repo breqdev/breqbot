@@ -75,7 +75,7 @@ class Vex(publisher.PublisherCog):
 
         embed.description = awards + "\n" + rankings
 
-        return embed, []
+        return None, [], embed
 
     @run_in_executor
     def get_meet_data(self, team, sku):
@@ -186,15 +186,15 @@ class Vex(publisher.PublisherCog):
         embed.add_field(name="Skills", value=skills_str, inline=False)
         embed.add_field(name="Rankings", value=rankings_str, inline=False)
 
-        return embed, []
+        return None, [], embed
 
     @commands.command()
     async def vex(self, ctx, team: str, sku: typing.Optional[str] = None):
         ":mag: :robot: Get info about a Vex team :video_game:"
         if sku:
-            embed, files = await self.get_meet_overview(team, sku)
+            content, files, embed = await self.get_meet_overview(team, sku)
         else:
-            embed, files = await self.get_team_overview(team)
+            content, files, embed = await self.get_team_overview(team)
 
         await ctx.send(embed=embed)
 

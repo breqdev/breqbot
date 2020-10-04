@@ -42,7 +42,7 @@ class Scraper(publisher.PublisherCog):
         if len(embed.description) > 2000:
             embed.description = "Source too big!"
 
-        return embed, []
+        return None, [], embed
 
 
 def setup(bot):

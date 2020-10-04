@@ -30,6 +30,8 @@ class AnimeGirl(publisher.PublisherCog):
 
                 if int(episode_id) <= 50:
                     episode_no = episode_id
+                elif int(episode_id) == 101:
+                    episode_no = "100"  # Ep. 100 is listed as "Page 100!"
                 else:
                     episode_no = title.split(" ")[0]
 
@@ -66,12 +68,11 @@ class AnimeGirl(publisher.PublisherCog):
         caption = f"**{title}** | *I Want To Be a Cute Anime Girl!*"
 
         embed = discord.Embed(title=caption)
-        return embed, files
+        return None, files, embed
 
     @commands.command()
     async def animegirl(self, ctx, number: typing.Optional[str] = "random"):
-        embed, files = await self.get_post(number)
-        await ctx.send(embed=embed, files=files)
+        await self.pack_send(ctx, *(await self.get_post(number)))
 
     @run_in_executor
     def get_hash(self):

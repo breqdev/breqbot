@@ -143,10 +143,9 @@ class Watch(BaseCog):
                 for channel_id in self.redis.smembers(
                         f"watching:channels:{pub_name}:{parameters}"):
                     channel = self.bot.get_channel(int(channel_id))
-                    embed, files = await (self.publishers[pub_name]
-                                          .get_update(*params))
-                    await channel.send(f"Update from {pub_name}:",
-                                       embed=embed, files=files)
+                    content, files, embed = \
+                        await (self.publishers[pub_name].get_update(*params))
+                    await self.pack_send(channel, content, files, embed)
 
         self.scan_number += 1
 

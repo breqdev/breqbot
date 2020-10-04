@@ -53,7 +53,7 @@ class Minecraft(publisher.PublisherCog):
     async def mc(self, ctx, ip: str):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
-        embed, files = await self.get_update(ip)
+        content, files, embed = await self.get_update(ip)
         await ctx.send(embed=embed)
 
     async def get_hash(self, ip):
@@ -72,7 +72,7 @@ class Minecraft(publisher.PublisherCog):
         else:
             online = ""
         embed.description = description + "\n" + playerstr + online
-        return embed, []
+        return None, [], embed
 
 
 def setup(bot):

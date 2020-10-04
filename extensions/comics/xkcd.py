@@ -39,11 +39,11 @@ class XKCD(publisher.PublisherCog):
         image = requests.get(comic["img"]).content
         image_file = discord.File(io.BytesIO(image), filename="xkcd.jpg")
 
-        return embed, [image_file]
+        return None, [image_file], embed
 
     @commands.command()
     async def xkcd(self, ctx, number: typing.Optional[str] = "random"):
-        embed, files = await self.get_post(number)
+        content, files, embed = await self.get_post(number)
         await ctx.send(embed=embed, files=files)
 
     @run_in_executor
