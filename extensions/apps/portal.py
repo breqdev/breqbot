@@ -59,6 +59,24 @@ class Portal(BaseCog):
         await ctx.message.add_reaction("✅")
 
     @commands.command()
+    async def retokenportal(self, ctx, id: str):
+        "Regenerate the API token for a portal"
+
+        portal = self.get_portal(id, ctx.author.id)
+        portal["token"] = str(uuid.uuid4())
+        self.set_portal(portal)
+
+        embed = discord.Embed(title="New Portal Token")
+        embed.description = "You requested a new token for your portal."
+
+        embed.add_field(name="Portal ID", value=id, inline=False)
+        embed.add_field(name="Portal Token (keep this secret!)",
+                        value=f"||{portal['token']}||", inline=False)
+
+        await ctx.author.send(embed=embed)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
     async def modifyportal(self, ctx, id: str, field: str, *, value: str):
         "Modify an existing Portal"
 
