@@ -1,5 +1,3 @@
-import hashlib
-
 import discord
 from discord.ext import commands
 
@@ -52,16 +50,6 @@ class Minecraft(BaseCog):
     async def mc(self, ctx, ip: str):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
-        content, files, embed = await self.get_update(ip)
-        await ctx.send(embed=embed)
-
-    async def get_hash(self, ip):
-        description, players, sample = await self._get_state(ip)
-        hashstr = f"{description} {players} {sample}"
-        hash = hashlib.sha1(hashstr.encode("utf-8")).hexdigest()
-        return hash
-
-    async def get_update(self, ip):
         description, players, sample = await self._get_state(ip)
         embed = discord.Embed(title=ip)
         description = "**Description**\n" + description
@@ -71,7 +59,8 @@ class Minecraft(BaseCog):
         else:
             online = ""
         embed.description = description + "\n" + playerstr + online
-        return None, [], embed
+
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

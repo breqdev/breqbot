@@ -38,9 +38,7 @@ breqbot.load_extension("extensions.fun.fun")
 breqbot.load_extension("extensions.portal")
 
 # - Lookup
-breqbot.load_extension("extensions.lookup.minecraft")
-breqbot.load_extension("extensions.lookup.vex")
-breqbot.load_extension("extensions.lookup.scraper")
+breqbot.load_extension("extensions.lookup.lookup")
 
 # - Configuration
 breqbot.load_extension("extensions.config.config")

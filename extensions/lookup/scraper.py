@@ -1,5 +1,3 @@
-import hashlib
-
 import requests
 
 import discord
@@ -10,8 +8,6 @@ from ..base import BaseCog, run_in_executor
 
 class Scraper(BaseCog):
     "Scrape a website or watch it for changes"
-    watch_params = ("url",)
-    scan_interval = 1
 
     @run_in_executor
     def _get_content(self, url):
@@ -28,20 +24,6 @@ class Scraper(BaseCog):
             embed.description = "Source too big!"
 
         await ctx.send(embed=embed)
-
-    async def get_hash(self, url):
-        content = await self._get_content(url)
-        hash = hashlib.sha1(content.encode("utf-8")).hexdigest()
-        return hash
-
-    async def get_update(self, url):
-        embed = discord.Embed(title=url)
-        embed.description = await self._get_content(url)
-
-        if len(embed.description) > 2000:
-            embed.description = "Source too big!"
-
-        return None, [], embed
 
 
 def setup(bot):

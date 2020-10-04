@@ -9,8 +9,6 @@ from ..base import BaseCog, run_in_executor
 
 class Vex(BaseCog):
     "Information about the VEX Robotics Competition"
-    watch_params = ("team", "sku")
-    scan_interval = 1
 
     SEASON = "Tower Takeover"
 
@@ -196,16 +194,6 @@ class Vex(BaseCog):
             content, files, embed = await self.get_team_overview(team)
 
         await ctx.send(embed=embed)
-
-    async def get_hash(self, team, sku):
-        team, event, matches, driver_skills, programming_skills, ranking \
-            = await self.get_meet_data(team, sku)
-
-        return (f"{len(matches)}:{driver_skills['attempts']}:"
-                f"{programming_skills['attempts']}")
-
-    async def get_update(self, team, sku):
-        return await self.get_meet_overview(team, sku)
 
 
 def setup(bot):
