@@ -62,10 +62,7 @@ class Soundboard(BaseCog):
         super().__init__(bot)
         self.clients = {}
 
-    @commands.command()
-    @commands.guild_only()
     async def join(self, ctx):
-        "Enter a voice channel :loud_sound:"
         user = ctx.author
         voice_state = user.voice
 
@@ -74,25 +71,16 @@ class Soundboard(BaseCog):
 
         channel = voice_state.channel
 
-        self.clients[ctx.guild.id] = client = await channel.connect()
+        self.clients[ctx.guild.id] = await channel.connect()
 
-        # Public API doesn't expose deafen function, do something hacky
-        await client.main_ws.voice_state(ctx.guild.id, channel.id,
-                                         self_deaf=True)
+        await ctx.me.edit(deafen=True)
 
-        await ctx.message.add_reaction("✅")
-
-    @commands.command()
-    @commands.guild_only()
     async def leave(self, ctx):
-        "Leave a voice channel :mute:"
         if self.clients.get(ctx.guild.id) is None:
-            raise UserError("Not connected to a channel!")
+            return
 
         await self.clients[ctx.guild.id].disconnect()
         del self.clients[ctx.guild.id]
-
-        await ctx.message.add_reaction("✅")
 
     def extract_id(self, url):
         "Extract the video ID from a YouTube URL"
@@ -176,7 +164,7 @@ class Soundboard(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    async def listsounds(self, ctx):
+    async def sounds(self, ctx):
         "List enabled sounds :dividers:"
         embed = discord.Embed(title=f"Soundboard on {ctx.guild.name}")
 
@@ -209,31 +197,33 @@ class Soundboard(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    async def play(self, ctx, name: str):
-        "Play a sound :arrow_forward:"
-        if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
-            raise UserError("Sound not found")
-        sound = self.redis.hgetall(f"soundboard:sounds:{ctx.guild.id}:{name}")
+    async def sound(self, ctx, name: str):
+        "Play a sound"
+        sound = self.redis.hgetall(
+            f"soundboard:sounds:{ctx.guild.id}:{name}")
 
+        if not sound:
+            raise UserError(f"Invalid sound {name}")
+
+        await self.join(ctx)
         await self.play_sound(ctx.guild.id, sound["youtube-id"])
-        await ctx.message.add_reaction("✅")
+        while self.clients[ctx.guild.id].is_playing():
+            await asyncio.sleep(0.5)
+        await self.leave(ctx)
 
     @commands.command()
     @commands.guild_only()
     async def soundboard(self, ctx):
         "React to the soundboard to play sounds :control_knobs:"
-
-        client = self.clients.get(ctx.guild.id)
-        if client is None:
-            raise UserError("Not connected to voice.")
+        await self.join(ctx)
 
         message = await ctx.send(emoji_utils.text_to_emoji("Soundboard"))
-        # await message.add_reaction("➡️")
 
         sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
         for name in sound_names:
             if name in emoji.UNICODE_EMOJI:
                 await message.add_reaction(name)
+        await message.add_reaction("❌")
 
         def check(reaction, user):
             return (reaction.message.id == message.id
@@ -247,6 +237,10 @@ class Soundboard(BaseCog):
             except asyncio.TimeoutError:
                 return
             else:
+                if reaction.emoji == "❌":
+                    await message.clear_reactions()
+                    await self.leave(ctx)
+                    return
                 if (self.clients.get(ctx.guild.id)
                         and self.redis.sismember(
                             f"soundboard:sounds:{ctx.guild.id}",
@@ -254,6 +248,9 @@ class Soundboard(BaseCog):
                     sound = self.redis.hgetall(
                         f"soundboard:sounds:{ctx.guild.id}:{reaction.emoji}")
                     await self.play_sound(ctx.guild.id, sound["youtube-id"])
+
+        await message.clear_reactions()
+        await self.leave(ctx)
 
 
 def setup(bot):
