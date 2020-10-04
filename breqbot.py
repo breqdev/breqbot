@@ -47,7 +47,7 @@ breqbot.load_extension("extensions.config.config")
 breqbot.load_extension("extensions.config.rolemenu")
 
 # - Watch
-breqbot.load_extension("extensions.apps.watch")
+# breqbot.load_extension("extensions.apps.watch")
 
 # - Utility
 breqbot.load_extension("extensions.utility.help_command")

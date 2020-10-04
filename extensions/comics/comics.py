@@ -6,41 +6,41 @@ from ..base import BaseCog
 
 from . import animegirl
 from . import xkcd
+from . import testcomic
 
 
 class BaseComics(BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
-        self.watching = {comic: [] for comic in self.comics}
-
-    async def init_hashes(self):
-        self.hashes = {comic: await comic.get_hash() for comic in self.comics}
         self.watch_task.start()
 
     async def add_watch(self, series, channel_id):
-        self.watching[series].append(channel_id)
+        self.redis.sadd(f"comic:watching:{series}", channel_id)
 
     async def rem_watch(self, series, channel_id):
-        self.watching[series].remove(channel_id)
+        self.redis.srem(f"comic:watching:{series}", channel_id)
 
     async def is_watching(self, series, channel_id):
-        return channel_id in self.watching[series]
+        return self.redis.sismember(f"comic:watching:{series}", channel_id)
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=1)
     async def watch_task(self):
-        for comic in self.watching:
+        for name, comic in self.comics.items():
             new_hash = await comic.get_hash()
-            if self.hashes[comic] != new_hash:
-                self.hashes[comic] = new_hash
-                for channel_id in self.watching[comic]:
-                    channel = self.bot.get_channel(channel_id)
-                    await self.pack_send(channel,
-                                         *(await comic.get_post("latest")))
+            old_hash = self.redis.get(f"comic:hash:{name}")
+            if old_hash != new_hash:
+                self.redis.set(f"comic:hash:{name}", new_hash)
+                for channel_id in \
+                        self.redis.smembers(f"comic:watching:{name}"):
+                    channel = self.bot.get_channel(int(channel_id))
+                    await self.pack_send(
+                        channel, *(await comic.get_post("latest")))
 
 
 comics = {
     "animegirl": animegirl.AnimeGirl(),
     "xkcd": xkcd.XKCD(),
+    "testcomic": testcomic.TestComic()
 }
 
 
