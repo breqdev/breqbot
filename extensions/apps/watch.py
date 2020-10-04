@@ -51,6 +51,10 @@ class Watch(BaseCog):
     def make_watch_subcommand(self, publisher):
         @self.watch.command(name=publisher.qualified_name)
         async def _watch_command(ctx, *parameters):
+            if len(parameters) != len(publisher.watch_params):
+                await self.send_usage(ctx, publisher)
+                return
+
             await self.add_watch(ctx.channel.id, publisher, parameters)
             await ctx.send(f"{ctx.channel.mention} is now watching: "
                            f"{publisher.qualified_name} "
@@ -66,6 +70,18 @@ class Watch(BaseCog):
     def custom_bot_help(self, ctx):
         return " ".join(f"`{self.bot.command_prefix}watch {name}`"
                         for name in self.publishers) + "\n"
+
+    async def send_usage(self, ctx, publisher):
+        embed = discord.Embed(title=f"Usage: {publisher.qualified_name}")
+        embed.description = (f"{self.bot.command_prefix}watch "
+                             f"{publisher.qualified_name}")
+
+        embed.description += "".join(
+            f" <{param}>" for param in publisher.watch_params)
+
+        embed.description = f"`{embed.description}`"
+
+        await ctx.send(embed=embed)
 
     @commands.group()
     async def watch(self, ctx):
