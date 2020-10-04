@@ -1,12 +1,11 @@
 import typing
 
+import discord
 from discord.ext import commands, tasks
 
 from ..base import BaseCog
 
-from . import animegirl
-from . import xkcd
-from . import testcomic
+from . import animegirl, xkcd, testcomic
 
 
 class BaseComics(BaseCog):
@@ -22,6 +21,20 @@ class BaseComics(BaseCog):
 
     async def is_watching(self, series, channel_id):
         return self.redis.sismember(f"comic:watching:{series}", channel_id)
+
+    @commands.command()
+    async def watching(self, ctx):
+        "List the Comics currently being watched!"
+        watching = []
+
+        for name in self.comics:
+            if self.redis.sismember(f"comic:watching:{name}", ctx.channel.id):
+                watching.append(name)
+
+        embed = discord.Embed(title=f"#{ctx.channel.name} is watching...")
+        embed.description = ", ".join(name for name in watching)
+
+        await ctx.send(embed=embed)
 
     @tasks.loop(minutes=15)
     async def watch_task(self):
