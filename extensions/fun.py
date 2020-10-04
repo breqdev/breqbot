@@ -4,7 +4,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .base import BaseCog
+from .base import BaseCog, UserError
 
 
 class Fun(BaseCog):
@@ -14,6 +14,12 @@ class Fun(BaseCog):
     @commands.guild_only()
     async def poll(self, ctx, question: str, *answers: str):
         "Run a poll to vote for your favorite answers!"
+
+        if len(answers) > 10:
+            raise UserError('Polls are limited to 10 options. '
+                            'Did you remember to use quotes? e.g.\n'
+                            f'`{self.bot.command_prefix}poll '
+                            '"my question" "option 1" "option 2"...`')
 
         embed = discord.Embed(title=f"Poll: **{question}**")
 
