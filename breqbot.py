@@ -28,8 +28,7 @@ breqbot.load_extension("extensions.economy.items")
 breqbot.load_extension("extensions.reddit.reddit")
 
 # - Comics
-breqbot.load_extension("extensions.comics.xkcd")
-breqbot.load_extension("extensions.comics.animegirl")
+breqbot.load_extension("extensions.comics.comics")
 
 # - Fun
 breqbot.load_extension("extensions.fun.fun")

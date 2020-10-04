@@ -1,19 +1,15 @@
 import random
 import io
-import typing
 
 import requests
 import bs4
 import discord
-from discord.ext import commands
 
 from ..base import UserError, run_in_executor
-from .. import publisher
 
 
-class AnimeGirl(publisher.PublisherCog):
+class AnimeGirl():
     "View a post from 'I Want To Be A Cute Anime Girl' :transgender_flag:"
-    watch_params = tuple()
 
     def _get_id(self, number):
         for pageno in range(1, 13):
@@ -70,10 +66,6 @@ class AnimeGirl(publisher.PublisherCog):
         embed = discord.Embed(title=caption)
         return None, files, embed
 
-    @commands.command()
-    async def animegirl(self, ctx, number: typing.Optional[str] = "random"):
-        await self.pack_send(ctx, *(await self.get_post(number)))
-
     @run_in_executor
     def get_hash(self):
         page = requests.get("https://www.webtoons.com/en/challenge"
@@ -81,10 +73,3 @@ class AnimeGirl(publisher.PublisherCog):
                             "/list?title_no=349416&page=1")
         soup = bs4.BeautifulSoup(page.content, "html.parser")
         return str(soup.find(id="_listUl").find("li").attrs["data-episode-no"])
-
-    async def get_update(self):
-        return await self.get_post("latest")
-
-
-def setup(bot):
-    bot.add_cog(AnimeGirl(bot))
