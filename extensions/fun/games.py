@@ -362,7 +362,3 @@ for name, game in games.items():
 
 Games = type("Games", (BaseGames,), new_commands)
 Games.description = "Play a few simple games right in Discord"
-
-
-def setup(bot):
-    bot.add_cog(Games(bot))

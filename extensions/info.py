@@ -1,5 +1,6 @@
 import os
 import time
+import typing
 
 import discord
 from discord.ext import commands
@@ -104,6 +105,26 @@ class Info(BaseCog):
         """Intentionally crash the bot :skull:
         in order to test its error handling"""
         raise ValueError("Test Exception")
+
+    @commands.command()
+    @commands.guild_only()
+    async def website(self, ctx, user: typing.Optional[discord.User]):
+        "Link to the bot's website :computer:"
+        embed = discord.Embed()
+
+        if int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
+            if user:
+                embed.title = (f"Website: **{user.display_name}** "
+                               f"on {ctx.guild.name}")
+                embed.url = f"{os.getenv('WEBSITE')}{ctx.guild.id}/{user.id}"
+            else:
+                embed.title = f"Website: **{ctx.guild.name}**"
+                embed.url = f"{os.getenv('WEBSITE')}{ctx.guild.id}"
+        else:
+            embed.title = f"{ctx.guild.name}'s website is disabled."
+            embed.description = (f"Shopkeepers can enable it with "
+                                 f"`{self.bot.command_prefix}enwebsite 1`")
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

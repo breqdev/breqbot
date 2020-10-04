@@ -4,11 +4,13 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .base import BaseCog, UserError
+from ..base import UserError
+
+from . import games, soundboard
 
 
-class Fun(BaseCog):
-    "Miscellaneous fun commands"
+class Fun(games.Games, soundboard.Soundboard):
+    "Miscellaneous fun commands and games"
 
     @commands.command()
     @commands.guild_only()

@@ -139,7 +139,7 @@ class MissingItem(Item):
         redis.delete(f"items:{self.uuid}")
 
 
-class ItemBaseCog(BaseCog):
+class EconomyCog(BaseCog):
     @staticmethod
     async def shopkeeper_only(ctx):
         if not ctx.guild:
