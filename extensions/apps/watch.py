@@ -68,12 +68,12 @@ class Watch(BaseCog):
                            f"{' '.join(parameters)}")
 
     def custom_bot_help(self, ctx):
-        return " ".join(f"`{self.bot.command_prefix}watch {name}`"
+        return " ".join(f"`{self.bot.main_prefix}watch {name}`"
                         for name in self.publishers) + "\n"
 
     async def send_usage(self, ctx, publisher):
         embed = discord.Embed(title=f"Usage: {publisher.qualified_name}")
-        embed.description = (f"{self.bot.command_prefix}watch "
+        embed.description = (f"{self.bot.main_prefix}watch "
                              f"{publisher.qualified_name}")
 
         embed.description += "".join(
@@ -94,7 +94,7 @@ class Watch(BaseCog):
         desc = []
         for name, pub in self.publishers.items():
             clean_params = "".join(f" <{param}>" for param in pub.watch_params)
-            desc.append(f"`{self.bot.command_prefix}watch {name}"
+            desc.append(f"`{self.bot.main_prefix}watch {name}"
                         f"{clean_params}`")
 
         embed.description = "\n".join(desc)
@@ -140,7 +140,7 @@ class Watch(BaseCog):
             embed.description = "\n".join(desc)
         else:
             embed.description = ("This channel is not watching anything. "
-                                 f"Try a `{self.bot.command_prefix}watch`?")
+                                 f"Try a `{self.bot.main_prefix}watch`?")
         await ctx.send(embed=embed)
 
     @tasks.loop(seconds=30)

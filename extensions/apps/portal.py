@@ -199,7 +199,7 @@ class Portal(BaseCog):
         desc = []
         for id in portal_ids:
             alias = self.redis.get(f"portal:from_id:{ctx.guild.id}:{id}")
-            desc.append(f"`{self.bot.command_prefix}portal {alias}`")
+            desc.append(f"`{self.bot.main_prefix}portal {alias}`")
         return " ".join(desc) + "\n"
 
     @commands.command()

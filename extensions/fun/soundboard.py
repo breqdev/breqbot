@@ -194,7 +194,7 @@ class Soundboard(BaseCog):
                 for name, sound in sounds.items())
         else:
             embed.description = ("The soundboard is currently empty. Try a "
-                                 f"`{self.bot.command_prefix}newsound` ?")
+                                 f"`{self.bot.main_prefix}newsound` ?")
         await ctx.send(embed=embed)
 
     async def play_sound(self, guild_id, id):

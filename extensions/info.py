@@ -25,7 +25,7 @@ class Info(BaseCog):
         embed = discord.Embed(title="Hi, I'm Breqbot! Beep boop :robot:")
 
         embed.description = ("A bot built by the one and only Breq#8296. "
-                             f"See {self.bot.command_prefix}help for "
+                             f"See {self.bot.main_prefix}help for "
                              "features!")
 
         embed.add_field(name="Invite Breqbot to your server!",
@@ -123,7 +123,7 @@ class Info(BaseCog):
         else:
             embed.title = f"{ctx.guild.name}'s website is disabled."
             embed.description = (f"Shopkeepers can enable it with "
-                                 f"`{self.bot.command_prefix}enwebsite 1`")
+                                 f"`{self.bot.main_prefix}enwebsite 1`")
         await ctx.send(embed=embed)
 
 

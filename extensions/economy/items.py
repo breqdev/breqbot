@@ -227,7 +227,7 @@ class Items(EconomyCog):
                                           for item in items)
         else:
             embed.description = (f"{user.display_name} does not have any swag."
-                                 f"`{self.bot.command_prefix}give` them some?")
+                                 f"`{self.bot.main_prefix}give` them some?")
 
         await ctx.send(embed=embed)
 

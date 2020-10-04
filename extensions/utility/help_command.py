@@ -9,7 +9,7 @@ class HelpCommand(commands.HelpCommand):
         })
 
     def get_command_description(self, command):
-        sig = f"• `{self.clean_prefix}{command.qualified_name}"
+        sig = f"• `{self.context.bot.main_prefix}{command.qualified_name}"
         if command.signature:
             sig += f" {command.signature}` "
         else:
@@ -23,7 +23,7 @@ class HelpCommand(commands.HelpCommand):
         return sig
 
     def get_command_signature(self, command):
-        sig = f"{self.clean_prefix}{command.qualified_name}"
+        sig = f"{self.context.bot.main_prefix}{command.qualified_name}"
         if command.signature:
             sig += f" {command.signature}"
         return sig
@@ -47,7 +47,7 @@ class HelpCommand(commands.HelpCommand):
                 value = cog.custom_bot_help(self.context)
             else:
                 value = " ".join(
-                    f"`{self.clean_prefix}{command.qualified_name}`"
+                    f"`{self.context.bot.main_prefix}{command.qualified_name}`"
                     for command in commands_filtered) + "\n"
             description += (name + value)
 

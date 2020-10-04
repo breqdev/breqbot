@@ -22,10 +22,10 @@ def setup(bot):
             embed = discord.Embed()
             embed.title = "Usage:"
             if ctx.command.signature:
-                embed.description = (f"`{bot.command_prefix}{ctx.command.name}"
+                embed.description = (f"`{bot.main_prefix}{ctx.command.name}"
                                      f" {ctx.command.signature}`")
             else:
-                embed.description = f"`{bot.command_prefix}{ctx.command.name}`"
+                embed.description = f"`{bot.main_prefix}{ctx.command.name}`"
             embed.set_footer(
                 text=ctx.command.brief or ctx.command.help.split("\n")[0])
             await ctx.send(embed=embed)

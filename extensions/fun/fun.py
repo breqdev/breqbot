@@ -20,7 +20,7 @@ class Fun(games.Games, soundboard.Soundboard):
         if len(answers) > 10:
             raise UserError('Polls are limited to 10 options. '
                             'Did you remember to use quotes? e.g.\n'
-                            f'`{self.bot.command_prefix}poll '
+                            f'`{self.bot.main_prefix}poll '
                             '"my question" "option 1" "option 2"...`')
 
         embed = discord.Embed(title=f"Poll: **{question}**")

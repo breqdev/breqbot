@@ -8,10 +8,11 @@ prefix = os.getenv("BOT_PREFIX") or ";"
 
 activity = discord.Game(f"{prefix}help | bot.breq.dev")
 breqbot = commands.Bot(
-    prefix,
+    (prefix, "breq ", "b! ", "b!"),
     description="Hi, I'm Breqbot! Beep boop :robot:",
     activity=activity
 )
+breqbot.main_prefix = prefix
 
 breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
                                      decode_responses=True)
