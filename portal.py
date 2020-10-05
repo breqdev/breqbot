@@ -79,7 +79,7 @@ portal = Portal(os.getenv("PORTAL_URL"), os.getenv("PORTAL_ID"), os.getenv("PORT
 @portal.on_request()
 def on_request(data):
     print(data)
-    time.sleep(20)
+    # time.sleep(20)
     return {"title": data,
             "description": "Echo portal, made with <3 by breq!"}
 
