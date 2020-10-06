@@ -159,7 +159,7 @@ class BaseReddit(BaseCog):
 
     @tasks.loop(hours=3)
     async def build_cache(self):
-        for alias in self.aliases:
+        for alias in reversed(self.aliases):
             await build_post_cache(alias, self.redis)
 
     @tasks.loop(minutes=1)

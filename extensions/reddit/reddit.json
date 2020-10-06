@@ -68,5 +68,33 @@
         "sub": "tifu",
         "desc": "Today I Fr*cked Up",
         "text": true
+    },
+    {
+        "command": "wholesomeyaoi",
+        "sub": "wholesomeyaoi",
+        "desc": "Wholesome anime bois :)"
+    },
+    {
+        "command": "wholesomeyuri",
+        "sub": "wholesomeyuri",
+        "desc": "Wholesome anime girls :)"
+    },
+    {
+        "command": "yaoi",
+        "sub": "yaoi",
+        "desc": "Lewd anime bois :flushed:",
+        "nsfw": true
+    },
+    {
+        "command": "yuri",
+        "sub": "yuri",
+        "desc": "Lewd anime girls :flushed:",
+        "nsfw": true
+    },
+    {
+        "command": "handholding",
+        "sub": "handholding",
+        "desc": "h...holding...hands? :flushed:",
+        "nsfw": true
     }
 ]
