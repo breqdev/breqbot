@@ -14,5 +14,21 @@
         "large": "{choice} went to the moon! Collect **{coins} coins.**",
         "medium": "{choice} held steady. Collect **{coins} coins.**",
         "small": "{choice} crashed. Collect **{coins} coins.**"
+    },
+    {
+        "name": "Mine for diamonds",
+        "prompt": "You got a diamond picaxe with Efficiency V! Where do you want to mine?",
+        "choices": ["in your strip mine", "in a cave", "chunk by chunk", "randomly"],
+        "large": "You found lots of diamonds mining {choice}! Collect **{coins} coins.**",
+        "medium": "You found a few diamonds mining {choice}. Collect **{coins} coins.**",
+        "small": "All you found mining {choice} was some coal. Collect **{coins} coins.**"
+    },
+    {
+        "name": "Post a meme",
+        "prompt": "What kind of meme do you want to post?",
+        "choices": ["wholesome meme", "normie meme", "Instagram meme", "dank meme"],
+        "large": "Your {choice} reached Top! Collect **{coins} coins.**",
+        "medium": "Your {choice} hit Hot. Collect **{coins} coins.**",
+        "small": "Your {choice} died in new. Collect **{coins} coins.**"
     }
 ]
