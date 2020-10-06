@@ -3,7 +3,7 @@ import typing
 import discord
 from discord.ext import commands, tasks
 
-from ..base import BaseCog
+from ..base import BaseCog, UserError
 
 from . import animegirl, xkcd, testcomic
 
@@ -61,9 +61,17 @@ def make_command(name, comic):
     @commands.command(name=name, brief=comic.__doc__)
     async def _command(self, ctx, *, number: typing.Optional[str] = "random"):
         if number == "watch":
+            if ctx.guild:
+                if not ctx.channel.permissions_for(ctx.author).administrator:
+                    raise UserError("To prevent spam, "
+                                    "only administrators can watch comics.")
             await self.add_watch(name, ctx.channel.id)
             await ctx.message.add_reaction("✅")
         elif number == "unwatch":
+            if ctx.guild:
+                if not ctx.channel.permissions_for(ctx.author).administrator:
+                    raise UserError("To prevent spam, "
+                                    "only administrators can watch comics.")
             await self.rem_watch(name, ctx.channel.id)
             await ctx.message.add_reaction("✅")
         elif number == "watching":
