@@ -1,4 +1,5 @@
 import typing
+import json
 
 import discord
 from discord.ext import commands
@@ -101,6 +102,29 @@ class Items(EconomyCog):
         item.to_redis(self.redis)
 
         await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.guild_only()
+    async def exportitem(self, ctx, *, item: str):
+        "Export an item to import it on another server"
+        item = Item.from_name(self.redis, ctx.guild.id, item)
+
+        await ctx.send(f"```{json.dumps(item.dict)}```")
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.check(EconomyCog.shopkeeper_only)
+    async def importitem(self, ctx, *, blob: str):
+        "Import an item from another server to use it here"
+        try:
+            dict = json.loads(blob)
+            item = Item.from_dict(dict, ctx)
+        except (json.JSONDecodeError, KeyError):
+            raise UserError("Invalid item import! Did you use "
+                            f"`{self.bot.main_prefix}exportitem` ?")
+        else:
+            item.to_redis(self.redis)
+            await ctx.message.add_reaction("✅")
 
     @commands.command()
     @commands.guild_only()

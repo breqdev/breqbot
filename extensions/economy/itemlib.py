@@ -30,6 +30,12 @@ class Item():
         return f"items:{self.uuid}"
 
     @staticmethod
+    def from_dict(dict, ctx):
+        item = Item(dict["name"], ctx.guild.id, ctx.author.id, dict["desc"],
+                    dict["wearable"])
+        return item
+
+    @staticmethod
     def from_redis(redis, uuid):
         exists = redis.sismember("items:list", uuid)
         if not exists:
