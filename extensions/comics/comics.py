@@ -31,7 +31,11 @@ class BaseComics(BaseCog):
             if self.redis.sismember(f"comic:watching:{name}", ctx.channel.id):
                 watching.append(name)
 
-        embed = discord.Embed(title=f"#{ctx.channel.name} is watching...")
+        if ctx.guild:
+            name = f"#{ctx.channel.name}"
+        else:
+            name = f"@{ctx.author.display_name}"
+        embed = discord.Embed(title=f"{name} is watching...")
         embed.description = ", ".join(name for name in watching)
 
         await ctx.send(embed=embed)
