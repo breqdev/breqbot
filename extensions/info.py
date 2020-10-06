@@ -96,6 +96,15 @@ class Info(BaseCog):
     @commands.check(BaseCog.config_only)
     async def activity(self, ctx, type: str, *, desc: str):
         "Change Breqbot's status in Discord"
+
+        self.redis.set("activity:type", type)
+        self.redis.set("activity:name", desc)
+        await self.load_activity()
+
+    async def load_activity(self):
+        type = self.redis.get("activity:type")
+        desc = self.redis.get("activity:name")
+
         if type.lower().strip() == "playing":
             activity = discord.Game(desc)
         elif type.lower().strip() == "watching":
@@ -109,8 +118,7 @@ class Info(BaseCog):
         elif type.lower().strip() == "competing":
             activity = discord.Activity(
                 name=desc, type=discord.ActivityType.competing)
-        else:
-            activity = discord.Game(f"{type} {desc}")
+
         await self.bot.change_presence(status=discord.Status.online,
                                        activity=activity)
 
@@ -121,12 +129,14 @@ class Info(BaseCog):
         raise ValueError("Test Exception")
 
     @commands.command()
-    @commands.guild_only()
     async def website(self, ctx, user: typing.Optional[discord.User]):
         "Link to the bot's website :computer:"
         embed = discord.Embed()
 
-        if int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
+        if not ctx.guild:
+            embed.title = "Breqbot Website"
+            embed.url = os.getenv("WEBSITE")
+        elif int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
             if user:
                 embed.title = (f"Website: **{user.display_name}** "
                                f"on {ctx.guild.name}")
@@ -140,11 +150,11 @@ class Info(BaseCog):
                                  f"`{self.bot.main_prefix}enable website`")
         await ctx.send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.load_activity()
 
-def setup(bot):
-    @bot.listen()
-    async def on_ready():
-        channel = bot.get_channel(int(os.getenv("UPDATE_CHANNEL")))
+        channel = self.bot.get_channel(int(os.getenv("UPDATE_CHANNEL")))
         embed = discord.Embed(title="Breqbot Connected! :blush: Hello World!")
 
         start_time = time.strftime("%Y-%m-%d %H:%M:%S",
@@ -154,4 +164,6 @@ def setup(bot):
                              f"Latest commit **{git_hash[:7]}**")
         await channel.send(embed=embed)
 
+
+def setup(bot):
     bot.add_cog(Info(bot))
