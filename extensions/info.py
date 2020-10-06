@@ -39,9 +39,12 @@ class Info(BaseCog):
     @commands.command()
     async def ping(self, ctx):
         "Pong! :ping_pong: Test system latency."
+        ts = time.time()
         await ctx.send(":ping_pong:")
-        latency = round(self.bot.latency*1000, 1)
-        await ctx.send(f"`{latency}ms`")
+        full_latency = time.time() - ts
+        ws_latency = round(self.bot.latency*1000, 1)
+        full_latency = round(full_latency*1000, 1)
+        await ctx.send(f"`WS: {ws_latency}ms  FULL: {full_latency}ms`")
 
     @commands.command()
     async def stats(self, ctx):
