@@ -22,6 +22,7 @@ breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
 
 # - General
 breqbot.load_extension("extensions.info")
+breqbot.load_extension("extensions.profile")
 
 # Economy
 breqbot.load_extension("extensions.economy.currency")
