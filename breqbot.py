@@ -1,13 +1,18 @@
 import os
 
 import redis
+import discord
 from discord.ext import commands
 
 prefix = os.getenv("BOT_PREFIX") or ";"
 
+intents = discord.Intents.default()
+intents.members = True
+
 breqbot = commands.Bot(
     (prefix, "breq ", "b! ", "b!"),
-    description="Hi, I'm Breqbot! Beep boop :robot:"
+    description="Hi, I'm Breqbot! Beep boop :robot:",
+    intents=intents
 )
 breqbot.main_prefix = prefix
 
