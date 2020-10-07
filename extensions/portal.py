@@ -212,6 +212,8 @@ class Portal(BaseCog):
             return ":green_circle:"  # Connected, Ready
 
     def custom_bot_help(self, ctx):
+        if not ctx.guild:
+            return f"`{self.bot.main_prefix}makeportal`\n"
         portal_ids = self.redis.smembers(f"portal:list:{ctx.guild.id}")
 
         desc = []
