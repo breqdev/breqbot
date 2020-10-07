@@ -12,10 +12,10 @@ from discord.ext import commands
 from .base import BaseCog, UserError
 
 bigfont = ImageFont.truetype(
-    "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 72, encoding="unic")
+    "fonts/UbuntuMono-R.ttf", 72, encoding="unic")
 
 smallfont = ImageFont.truetype(
-    "/usr/share/fonts/truetype/ubuntu/UbuntuMono-R.ttf", 36, encoding="unic")
+    "fonts/UbuntuMono-R.ttf", 36, encoding="unic")
 
 size = (256, 256)
 mask = Image.new('L', size, 0)
