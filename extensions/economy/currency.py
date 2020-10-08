@@ -41,6 +41,30 @@ class Currency(EconomyCog):
 
     @commands.command()
     @commands.guild_only()
+    async def richest(self, ctx):
+        "Display the richest members on the server :moneybag:"
+        richest = []
+
+        for member_id in self.redis.smembers(f"guild:member:{ctx.guild.id}"):
+            richest.append((
+                ctx.guild.get_member(int(member_id)),
+                int(self.redis.get(
+                    f"currency:balance:{ctx.guild.id}:{member_id}")
+                    or "0")
+            ))
+
+        richest = sorted(richest, key=lambda item: item[1], reverse=True)[:5]
+
+        embed = discord.Embed(title=f"Richest members on {ctx.guild.name}")
+
+        embed.description = "\n".join(
+            f"{member.display_name}: {balance}"
+            for member, balance in richest if member)
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.guild_only()
     async def pay(self, ctx, user: discord.User, amount: int):
         "Give coins to another user :incoming_envelope:"
         balance = self.redis.get(
