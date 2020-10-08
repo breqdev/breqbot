@@ -37,6 +37,22 @@ class Info(BaseCog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    async def report(self, ctx):
+        "Get a link to the Discord server where you can help us patch bugs!"
+        await ctx.send(f"Help us patch bugs! {os.getenv('BUG_REPORT')}")
+
+    @commands.command()
+    async def invite(self, ctx):
+        "Get a link to invite the bot to your server!"
+        await ctx.send("Invite Breqbot to your server! "
+                       f"{os.getenv('WEBSITE')}invite")
+
+    @commands.command()
+    async def suggest(self, ctx):
+        "Get a link to the Discord server where you can make suggestions!"
+        await ctx.send(f"Help us patch bugs! {os.getenv('TESTING_DISCORD')}")
+
+    @commands.command()
     async def ping(self, ctx):
         "Pong! :ping_pong: Test system latency."
         ts = time.time()
