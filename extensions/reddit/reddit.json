@@ -96,5 +96,15 @@
         "sub": "handholding",
         "desc": "h...holding...hands? :flushed:",
         "nsfw": true
+    },
+    {
+        "command": "foreverbox",
+        "sub": "foreverbox",
+        "desc": "me_irl but with style"
+    },
+    {
+        "command": "perfectfit",
+        "sub": "perfectfit",
+        "desc": "fits perfectly, man"
     }
 ]
