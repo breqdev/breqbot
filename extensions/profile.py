@@ -27,13 +27,14 @@ class Profile(BaseCog):
     "Customize your user profile!"
 
     @commands.command()
+    @commands.guild_only()
     async def profile(self, ctx, user: typing.Optional[discord.User] = None):
         "Display the profile of a user!"
         if not user:
             user = ctx.author
 
         # Add user background
-        url = (self.redis.hget(f"profile:{user.id}", "bg")
+        url = (self.redis.hget(f"profile:{ctx.guild.id}:{user.id}", "bg")
                or "https://breq.dev/assets/images/logo/white_wireframe.jpg")
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -64,7 +65,8 @@ class Profile(BaseCog):
                             spacing=8, font=bigfont, fill=(255, 255, 255))
 
         # Add user desc
-        desc = self.redis.hget(f"profile:{user.id}", "desc") or ""
+        desc = self.redis.hget(
+            f"profile:{ctx.guild.id}:{user.id}", "desc") or ""
         # wrap_desc = "\n".join(textwrap.wrap(desc, 20))
         wrap_desc = desc[:30]
         width, height = draw.textsize(wrap_desc, font=smallfont)
@@ -86,7 +88,8 @@ class Profile(BaseCog):
         if field not in fields:
             raise UserError(f"Invalid field {field}!")
 
-        self.redis.hset(f"profile:{ctx.author.id}", field, value)
+        self.redis.hset(
+            f"profile:{ctx.guild.id}:{ctx.author.id}", field, value)
 
         await ctx.message.add_reaction("✅")
 
