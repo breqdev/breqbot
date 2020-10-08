@@ -88,6 +88,21 @@ body {
     font-size: 48px;
 }
 
+.profile-pfp {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.profile-crop {
+    width: 100%;
+    padding-top: 100%;
+    overflow: hidden;
+    position: relative;
+    border-radius: 50%;
+}
+
 .center-text {
     text-align: center;
     padding: 15px;

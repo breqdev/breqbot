@@ -2,12 +2,21 @@
 
 {% block content %}
 <br>
-<div class="jumbotron profile-bg" style="background: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url('{{ profile_img }}'); background-size: cover; background-position: center;">
-    <h1 class="username">{{ user }}</h1>
-    <p class="lead">is on</p>
-    <h1 class="server"><a href="/{{ server_id }}">{{ server }}</a></h1>
-    <p>({{ server_size }} members)</p>
-    <h1 class="server">{{ profile_desc }}</h1>
+<div class="jumbotron profile-bg" style="background: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url('{{ profile_bg }}'); background-size: cover; background-position: center;">
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="profile-crop">
+                <img class="profile-pfp" src="{{ profile_pfp }}"></img>
+            </div>
+        </div>
+        <div class="col-sm-8">
+            <h1 class="username">{{ user }}</h1>
+            <p class="lead">is on</p>
+            <h1 class="server"><a href="/{{ server_id }}">{{ server }}</a></h1>
+            <p>({{ server_size }} members)</p>
+            <h1 class="server">{{ profile_desc }}</h1>
+        </div>
+    </div>
 </div>
 
 <div class="balance-parent">

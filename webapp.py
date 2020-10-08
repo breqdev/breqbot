@@ -86,15 +86,18 @@ def user(guild_id, user_id):
 
     profile_desc = redis_client.hget(
         f"profile:{guild_id}:{user_id}", "desc") or ""
-    profile_img = (
+    profile_bg = (
         redis_client.hget(f"profile:{guild_id}:{user_id}", "bg")
+        or "https://breq.dev/assets/images/logo/white_wireframe.jpg")
+    profile_pfp = (
+        redis_client.hget(f"profile:{guild_id}:{user_id}", "pfp")
         or "https://breq.dev/assets/images/logo/white_wireframe.jpg")
 
     return render_template("user.html", server=guild_name, server_id=guild_id,
                            server_size=guild_size, user=user_name,
                            balance=balance, inventory=amounts.items(),
                            wearing=wearing, profile_desc=profile_desc,
-                           profile_img=profile_img)
+                           profile_bg=profile_bg, profile_pfp=profile_pfp)
 
 
 @app.route("/guild")
