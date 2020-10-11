@@ -1,5 +1,6 @@
 import random
 import io
+import itertools
 
 import requests
 import bs4
@@ -12,7 +13,7 @@ class AnimeGirl():
     "View a post from 'I Want To Be A Cute Anime Girl' :transgender_flag:"
 
     def _get_id(self, number):
-        for pageno in range(1, 13):
+        for pageno in itertools.count(1):
             page = requests.get("https://www.webtoons.com/en/challenge"
                                 "/i-want-to-be-a-cute-anime-girl"
                                 f"/list?title_no=349416&page={pageno}")
@@ -36,8 +37,8 @@ class AnimeGirl():
                 if number == "random":
                     return self._get_id(
                         str(random.randint(1, int(episode_id))))
-
-        raise UserError(f"Episode {number} not found")
+                if episode_no == "1":
+                    raise UserError(f"Episode {number} not found")
 
     @run_in_executor
     def get_post(self, number):
