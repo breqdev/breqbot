@@ -10,7 +10,9 @@ from ..base import UserError, run_in_executor
 
 
 class AnimeGirl():
-    "View a post from 'I Want To Be A Cute Anime Girl' :transgender_flag:"
+    """:transgender_flag: Charon's sister dressed him up as a girl, and
+    he liked it. This is their story, learning about who they are, and their
+    friends and family around them. """
 
     def _get_id(self, number):
         for pageno in itertools.count(1):

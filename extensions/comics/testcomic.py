@@ -8,7 +8,7 @@ from ..base import UserError, run_in_executor
 
 
 class TestComic():
-    "you shouldn't be seeing this"
+    "this is a test"
 
     @run_in_executor
     def get_post(self, number):

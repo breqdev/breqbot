@@ -22,8 +22,21 @@ class BaseComics(BaseCog):
     async def is_watching(self, series, channel_id):
         return self.redis.sismember(f"comic:watching:{series}", channel_id)
 
+    @commands.command(name="comics")
+    async def comics_list(self, ctx):
+        "List the comics available"
+        embed = discord.Embed(title="Comics available")
+
+        embed.description = "\n".join(
+            # ugly hack to get around no \n in f-string
+            f"""{name}: {self.comics[name].__doc__.replace('''
+''', ' ')}""" for name in self.comics
+        )
+
+        await ctx.send(embed=embed)
+
     @commands.command()
-    async def watching(self, ctx):
+    async def comicswatching(self, ctx):
         "List the Comics currently being watched!"
         watching = []
 

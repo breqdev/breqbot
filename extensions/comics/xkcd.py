@@ -9,7 +9,7 @@ from ..base import UserError, run_in_executor
 
 
 class XKCD():
-    "View a comic from XKCD :nerd:"
+    ":nerd: A webcomic of romance, sarcasm, math, and language."
 
     @run_in_executor
     def get_post(self, number):
