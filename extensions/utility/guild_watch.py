@@ -41,7 +41,7 @@ def setup(bot):
                        str(member.avatar_url))
 
     @bot.event
-    async def on_user_update(user):
+    async def on_user_update(old, user):
         # TODO: try and detect username changes?
         pass
 
