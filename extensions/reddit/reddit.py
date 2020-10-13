@@ -31,9 +31,6 @@ def build_post_cache(alias, redis):
 
     now = time.time()
 
-    total_posts = redis.zcard(f"reddit:cache:list:{alias['command']}")
-    print(f"    TOTAL {total_posts} posts")
-
     for submission in sub.top("week", limit=100):
         if alias.get("text"):
             if not submission.is_self:
@@ -78,23 +75,15 @@ def build_post_cache(alias, redis):
             "text": submission.selftext
         })
 
-    total_posts = redis.zcard(f"reddit:cache:list:{alias['command']}")
-
     # Remove old posts
     old_posts = redis.zrangebyscore(
         f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
-
-    print(f"    TOTAL {total_posts} posts")
-    print(f"    DELETING {len(old_posts)} posts")
 
     redis.zremrangebyscore(
         f"reddit:cache:list:{alias['command']}", "-inf", (now-1))
 
     for post_id in old_posts:
         redis.delete(f"reddit:cache:{post_id}")
-
-    total_posts = redis.zcard(f"reddit:cache:list:{alias['command']}")
-    print(f"    TOTAL {total_posts} posts")
 
 
 @run_in_executor
@@ -169,10 +158,9 @@ class BaseReddit(BaseCog):
         self.build_cache.start()
         self.prune_history.start()
 
-    @tasks.loop(seconds=0)
+    @tasks.loop(minutes=60*3)
     async def build_cache(self):
         for alias in reversed(self.aliases):
-            print(f"====> Building cache for {alias['sub']}:")
             await build_post_cache(alias, self.redis)
 
     @tasks.loop(minutes=1)
