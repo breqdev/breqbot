@@ -71,6 +71,9 @@ class Soundboard(BaseCog):
 
         channel = voice_state.channel
 
+        # In case there's a lingering connection
+        await self.leave(ctx)
+
         self.clients[ctx.guild.id] = await channel.connect()
 
         await ctx.me.edit(deafen=True)
