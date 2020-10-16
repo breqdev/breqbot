@@ -56,34 +56,54 @@ class YTDLSource(discord.PCMVolumeTransformer):
                    data=data)
 
 
+class SoundClient():
+    def __init__(self, ctx):
+        voice_state = ctx.author.voice
+        if not voice_state or not voice_state.channel:
+            raise UserError("You are not connected to a voice channel!")
+
+        self.channel = voice_state.channel
+        self.playing = False
+
+    @property
+    def guild_id(self):
+        return self.channel.guild.id
+
+    async def __aenter__(self):
+        try:
+            self.device = await self.channel.connect()
+        except discord.ClientException:
+            raise UserError(
+                "Breqbot is already connected to a voice channel!")
+        else:
+            return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.device.disconnect()
+
+    async def play_sound(self, id):
+        while self.playing:
+            await asyncio.sleep(0.5)
+        self.playing = True
+
+        player = await YTDLSource.from_url(
+            id, stream=True)
+
+        def on_sound_finish(error):
+            self.playing = False
+            if error:
+                raise error
+
+        self.device.play(player, after=on_sound_finish)
+
+        while self.playing:
+            await asyncio.sleep(0.1)
+
+        await asyncio.sleep(1)
+
+
 class Soundboard(BaseCog):
     "Play sounds in the voice channel!"
-    def __init__(self, bot):
-        super().__init__(bot)
-        self.clients = {}
-
-    async def join(self, ctx):
-        user = ctx.author
-        voice_state = user.voice
-
-        if not voice_state or not voice_state.channel:
-            raise UserError(f"{user.mention} is not in a voice channel!")
-
-        channel = voice_state.channel
-
-        # In case there's a lingering connection
-        await self.leave(ctx)
-
-        self.clients[ctx.guild.id] = await channel.connect()
-
-        await ctx.me.edit(deafen=True)
-
-    async def leave(self, ctx):
-        if self.clients.get(ctx.guild.id) is None:
-            return
-
-        await self.clients[ctx.guild.id].disconnect()
-        del self.clients[ctx.guild.id]
 
     def extract_id(self, url):
         "Extract the video ID from a YouTube URL"
@@ -188,16 +208,6 @@ class Soundboard(BaseCog):
                                  f"`{self.bot.main_prefix}newsound` ?")
         await ctx.send(embed=embed)
 
-    async def play_sound(self, guild_id, id):
-        if not self.clients.get(guild_id):
-            raise UserError("Not connected to voice.")
-
-        while self.clients[guild_id].is_playing():
-            await asyncio.sleep(0.5)
-        player = await YTDLSource.from_url(id, loop=self.bot.loop, stream=True)
-        self.clients[guild_id].play(
-            player, after=lambda e: print(f"Player error: {e}") if e else None)
-
     @commands.command()
     @commands.guild_only()
     async def sound(self, ctx, name: str):
@@ -208,17 +218,13 @@ class Soundboard(BaseCog):
         if not sound:
             raise UserError(f"Invalid sound {name}")
 
-        await self.join(ctx)
-        await self.play_sound(ctx.guild.id, sound["youtube-id"])
-        while self.clients[ctx.guild.id].is_playing():
-            await asyncio.sleep(0.5)
-        await self.leave(ctx)
+        async with SoundClient(ctx) as client:
+            await client.play_sound(sound["youtube-id"])
 
     @commands.command()
     @commands.guild_only()
     async def soundboard(self, ctx):
         "React to the soundboard to play sounds :control_knobs:"
-        await self.join(ctx)
 
         message = await ctx.send(emoji_utils.text_to_emoji("Soundboard"))
 
@@ -232,28 +238,28 @@ class Soundboard(BaseCog):
             return (reaction.message.id == message.id
                     and user.id != self.bot.user.id)
 
-        while True:
-            try:
-                reaction, user = await self.bot.wait_for(
-                    "reaction_add", timeout=120, check=check)
-                await reaction.remove(user)
-            except asyncio.TimeoutError:
-                return
-            else:
-                if reaction.emoji == "❌":
-                    await message.clear_reactions()
-                    await self.leave(ctx)
+        async with SoundClient(ctx) as client:
+            while True:
+                try:
+                    reaction, user = await self.bot.wait_for(
+                        "reaction_add", timeout=120, check=check)
+                    await reaction.remove(user)
+                except asyncio.TimeoutError:
                     return
-                if (self.clients.get(ctx.guild.id)
-                        and self.redis.sismember(
+                else:
+                    if reaction.emoji == "❌":
+                        await message.clear_reactions()
+                        return
+                    if self.redis.sismember(
                             f"soundboard:sounds:{ctx.guild.id}",
-                            reaction.emoji)):
-                    sound = self.redis.hgetall(
-                        f"soundboard:sounds:{ctx.guild.id}:{reaction.emoji}")
-                    await self.play_sound(ctx.guild.id, sound["youtube-id"])
+                            reaction.emoji):
+
+                        sound = self.redis.hgetall(
+                            "soundboard:sounds:"
+                            f"{ctx.guild.id}:{reaction.emoji}")
+                        await client.play_sound(sound["youtube-id"])
 
         await message.clear_reactions()
-        await self.leave(ctx)
 
 
 def setup(bot):
