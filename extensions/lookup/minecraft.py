@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from mcstatus import MinecraftServer
+import requests
 
 from ..base import BaseCog, UserError, run_in_executor
 
@@ -13,27 +13,28 @@ class Minecraft(BaseCog):
 
     @run_in_executor
     def _get_state(self, ip):
-        try:
-            server = MinecraftServer.lookup(ip)
-            status = server.status().raw
-        except OSError:
+        status = requests.get(f"https://mcstatus.breq.dev/status?server={ip}")
+
+        if status.status_code != 200:
             raise UserError("Could not connect to Minecraft server")
+
+        status = status.json()
 
         description = []
 
-        if isinstance(status["description"], dict):
-            for token in status["description"]["extra"]:
-                text = token["text"]
-                if token.get("bold") and token.get("italic"):
-                    description.append(f"***{text}***")
-                elif token.get("bold"):
-                    description.append(f"**{text}**")
-                elif token.get("italic"):
-                    description.append(f"*{text}*")
-                else:
-                    description.append(text)
-        else:
-            description.append(status["description"])
+        # Use a zero width space to ensure proper Markdown rendering
+        zwsp = "\u200b"
+
+        for token in status["description"]:
+            text = token["text"]
+            if token.get("bold") and token.get("italic"):
+                description.append(f"{zwsp}***{text}***{zwsp}")
+            elif token.get("bold"):
+                description.append(f"{zwsp}**{text}**{zwsp}")
+            elif token.get("italic"):
+                description.append(f"{zwsp}*{text}*{zwsp}")
+            else:
+                description.append(text)
 
         description = "".join(description)
 
