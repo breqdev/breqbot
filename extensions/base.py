@@ -1,6 +1,7 @@
 import functools
 import asyncio
 import os
+import traceback
 
 from discord.ext import commands
 
@@ -44,4 +45,21 @@ def run_in_executor(f):
     def inner(*args, **kwargs):
         loop = asyncio.get_running_loop()
         return loop.run_in_executor(None, lambda: f(*args, **kwargs))
+    return inner
+
+
+def graceful_task(f):
+    """
+    Workaround to handle discord.ext.tasks.Task exceptions gracefully.
+    Necessary due to this design decision:
+    https://github.com/Rapptz/discord.py/issues/2151
+    """
+    @functools.wraps(f)
+    async def inner(*args, **kwargs):
+        try:
+            await f(*args, **kwargs)
+        except Exception:
+            print("="*20)
+            print(f"Task exception raised in task {f.__name__}")
+            traceback.print_exc()
     return inner

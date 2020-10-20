@@ -3,7 +3,7 @@ import typing
 import discord
 from discord.ext import commands, tasks
 
-from ..base import BaseCog, UserError
+from ..base import BaseCog, UserError, graceful_task
 
 from . import animegirl, xkcd, testcomic
 
@@ -54,6 +54,7 @@ class BaseComics(BaseCog):
         await ctx.send(embed=embed)
 
     @tasks.loop(minutes=15)
+    @graceful_task
     async def watch_task(self):
         for name, comic in self.comics.items():
             new_hash = await comic.get_hash()

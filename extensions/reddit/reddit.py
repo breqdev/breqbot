@@ -10,7 +10,7 @@ import prawcore
 import discord
 from discord.ext import commands, tasks
 
-from ..base import BaseCog, UserError, run_in_executor
+from ..base import BaseCog, UserError, run_in_executor, graceful_task
 
 reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
                      client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
@@ -158,12 +158,14 @@ class BaseReddit(BaseCog):
         self.build_cache.start()
         self.prune_history.start()
 
-    @tasks.loop(minutes=60*3)
+    @tasks.loop(hours=3)
+    @graceful_task
     async def build_cache(self):
         for alias in reversed(self.aliases):
             await build_post_cache(alias, self.redis)
 
     @tasks.loop(minutes=1)
+    @graceful_task
     async def prune_history(self):
         channels = self.redis.keys("reddit:history:*")
         for channel in channels:
