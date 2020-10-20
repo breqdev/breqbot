@@ -106,5 +106,10 @@
         "command": "perfectfit",
         "sub": "perfectfit",
         "desc": "fits perfectly, man"
+    },
+    {
+        "command": "furry",
+        "sub": "furry_irl",
+        "desc": "for the fur in u ( ͡° ͜ʖ ͡°)"
     }
 ]
