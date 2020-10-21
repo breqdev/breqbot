@@ -9,6 +9,7 @@ from ..base import UserError, run_in_executor
 
 class TestComic():
     "this is a test"
+    watchable = 1
 
     @run_in_executor
     def get_post(self, number):

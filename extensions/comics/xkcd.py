@@ -10,6 +10,7 @@ from ..base import UserError, run_in_executor
 
 class XKCD():
     ":nerd: A webcomic of romance, sarcasm, math, and language."
+    watchable = 1
 
     @run_in_executor
     def get_post(self, number):

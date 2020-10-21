@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 
 from ..base import BaseCog, UserError, graceful_task
 
-from . import animegirl, xkcd, testcomic
+from . import animegirl, xkcd, testcomic, homestuck
 
 
 class BaseComics(BaseCog):
@@ -57,6 +57,8 @@ class BaseComics(BaseCog):
     @graceful_task
     async def watch_task(self):
         for name, comic in self.comics.items():
+            if not comic.watchable:
+                continue
             new_hash = await comic.get_hash()
             old_hash = self.redis.get(f"comic:hash:{name}")
             if old_hash != new_hash:
@@ -71,36 +73,46 @@ class BaseComics(BaseCog):
 comics = {
     "animegirl": animegirl.AnimeGirl(),
     "xkcd": xkcd.XKCD(),
-    "testcomic": testcomic.TestComic()
+    "testcomic": testcomic.TestComic(),
+    "homestuck": homestuck.Homestuck()
 }
 
 
 def make_command(name, comic):
     @commands.command(name=name, brief=comic.__doc__)
     async def _command(self, ctx, *, number: typing.Optional[str] = "random"):
-        if number == "watch":
-            if ctx.guild:
-                if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise UserError("To prevent spam, "
-                                    "only administrators can watch comics.")
-            await self.add_watch(name, ctx.channel.id)
-            await ctx.message.add_reaction("✅")
-        elif number == "unwatch":
-            if ctx.guild:
-                if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise UserError("To prevent spam, "
-                                    "only administrators can watch comics.")
-            await self.rem_watch(name, ctx.channel.id)
-            await ctx.message.add_reaction("✅")
-        elif number == "watching":
-            if await self.is_watching(name, ctx.channel.id):
-                await ctx.send(
-                    f"{ctx.channel.mention} is currently watching {name}.")
-            else:
-                await ctx.send(
-                    f"{ctx.channel.mention} is not currently watching {name}.")
-        else:
-            await self.pack_send(ctx, *(await comic.get_post(number)))
+        if comic.watchable:
+            if number == "watch":
+                if ctx.guild:
+                    if not ctx.channel.permissions_for(
+                            ctx.author).administrator:
+                        raise UserError("To prevent spam, "
+                                        "only administrators can "
+                                        "watch comics.")
+                await self.add_watch(name, ctx.channel.id)
+                await ctx.message.add_reaction("✅")
+                return
+            if number == "unwatch":
+                if ctx.guild:
+                    if not ctx.channel.permissions_for(
+                            ctx.author).administrator:
+                        raise UserError("To prevent spam, "
+                                        "only administrators can "
+                                        "watch comics.")
+                await self.rem_watch(name, ctx.channel.id)
+                await ctx.message.add_reaction("✅")
+                return
+            if number == "watching":
+                if await self.is_watching(name, ctx.channel.id):
+                    await ctx.send(
+                        f"{ctx.channel.mention} is currently watching {name}.")
+                else:
+                    await ctx.send(
+                        f"{ctx.channel.mention} is not currently watching "
+                        f"{name}.")
+                return
+
+        await self.pack_send(ctx, *(await comic.get_post(number)))
 
     return _command
 
