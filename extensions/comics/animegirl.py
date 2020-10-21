@@ -25,21 +25,36 @@ class AnimeGirl():
             for episode in episodes.find_all("li", recursive=False):
                 episode_id = episode.attrs["data-episode-no"]
 
-                title = episode.find("span", class_="subj").find("span").text
-
-                if int(episode_id) <= 50:
-                    episode_no = episode_id
-                elif int(episode_id) == 101:
-                    episode_no = "100"  # Ep. 100 is listed as "Page 100!"
-                else:
-                    episode_no = title.split(" ")[0]
-
-                if number == episode_no or number == "latest":
-                    return title, episode_id
                 if number == "random":
                     return self._get_id(
                         str(random.randint(1, int(episode_id))))
+
+                title = episode.find("span", class_="subj").find("span").text
+
+                if number == "latest":
+                    return title, episode_id
+
+                # The first 50 episodes are numbered according to their ID's
+                if int(episode_id) <= 50:
+                    episode_no = episode_id
+
+                # After that, episode numbering diverges from ID numbering
+                # but episode numbers are present in the title
+                # although the format is inconsistent
+
+                else:
+                    title_tokens = title.split(" ")
+
+                    if title_tokens[0].strip().lower() == "page":
+                        title_tokens = title_tokens[1:]
+
+                    episode_no = title_tokens[0].strip().rstrip("!")
+
+                if number == episode_no:
+                    return title, episode_id
+
                 if episode_no == "1":
+                    # We have reached the first comic without any matches
                     raise UserError(f"Episode {number} not found")
 
     @run_in_executor
