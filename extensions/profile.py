@@ -9,7 +9,7 @@ from resizeimage import resizeimage
 import discord
 from discord.ext import commands
 
-from .base import BaseCog, UserError
+from .base import BaseCog
 
 bigfont = ImageFont.truetype(
     "fonts/UbuntuMono-R.ttf", 72, encoding="unic")
@@ -25,6 +25,11 @@ draw.ellipse((0, 0) + size, fill=255)
 
 class Profile(BaseCog):
     "Customize your user profile!"
+
+    fields = {
+        "desc": "Set your profile description!",
+        "bg": "Set the URL for your background image!"
+    }
 
     @commands.command()
     @commands.guild_only()
@@ -81,17 +86,34 @@ class Profile(BaseCog):
         await ctx.send(file=file)
 
     @commands.command()
-    async def setprofile(self, ctx, field: str, *, value: str):
+    async def setprofile(self, ctx,
+                         field: typing.Optional[str] = None,
+                         *, value: typing.Optional[str] = None):
         "Set your profile!"
-        fields = ("desc", "bg")
 
-        if field not in fields:
-            raise UserError(f"Invalid field {field}!")
+        if field not in self.fields:
+            embed = discord.Embed(title="Profile options")
+            embed.description = "\n".join(
+                f"`{key}`: {value}" for key, value in self.fields.items()
+            )
+            await ctx.send(embed=embed)
 
-        self.redis.hset(
-            f"profile:{ctx.guild.id}:{ctx.author.id}", field, value)
+        elif value is None:
+            current = self.redis.hget(
+                f"profile:{ctx.guild.id}:{ctx.author.id}", field)
 
-        await ctx.message.add_reaction("✅")
+            embed = discord.Embed(title=f"Profile: {field}")
+            embed.description = (
+                f"`{field}`: {self.fields[field]}\n"
+                f"Current value: `{current}`"
+            )
+            await ctx.send(embed=embed)
+
+        else:
+            self.redis.hset(
+                f"profile:{ctx.guild.id}:{ctx.author.id}", field, value)
+
+            await ctx.message.add_reaction("✅")
 
 
 def setup(bot):
