@@ -237,7 +237,8 @@ def conditional_decorator(dec, condition):
 
 def make_command(alias):
     @commands.command(name=alias["command"], brief=alias["desc"])
-    @conditional_decorator(commands.is_nsfw(), alias.get("nsfw"))
+    @conditional_decorator(commands.is_nsfw(),
+                           (alias.get("nsfw") or alias.get("some_nsfw")))
     async def _command(self, ctx):
         ret = await self.default(ctx, alias)
         if isinstance(ret, discord.Embed):
