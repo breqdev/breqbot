@@ -308,7 +308,7 @@ class Portal(BaseCog):
         if "description" in data:
             embed.description = data["description"]
         if "image" in data:
-            embed.set_image(data["image"])
+            embed.set_image(url=data["image"])
 
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
 

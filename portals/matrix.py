@@ -50,7 +50,8 @@ def on_request(data):
     filename = f"{str(uuid.uuid4())}.gif"
     shutil.move("matrix/output.gif", f"/keybase/public/breq/matrix/{filename}")
 
-    return {"title": f"https://breq.keybase.pub/matrix/{filename}",
+    return {"title": data,
+            "image": f"https://breq.keybase.pub/matrix/{filename}",
             "description": "Matrix portal | captured by Breq <3"}
 
 
