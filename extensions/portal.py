@@ -279,7 +279,7 @@ class Portal(BaseCog):
 
         while (message is None
                or json.loads(message["data"])["type"] != "response"):
-            if time.time() - ts > 30:
+            if time.time() - ts > 120:
                 # Connection timed out
                 embed.title = "Timed Out"
                 embed.description = (f"Portal {portal_name} "
