@@ -18,7 +18,10 @@ reddit = praw.Reddit(client_id=os.getenv("REDDIT_CLIENT_ID"),
 
 
 def content_type(url):
-    r = requests.head(url).headers.get("content-type")
+    try:
+        r = requests.head(url).headers.get("content-type")
+    except IOError:
+        return "invalid"
     if r:
         return r.split(";")[0].split("/")[0]
     else:
