@@ -42,6 +42,7 @@ breqbot.load_extension("extensions.portal")
 
 # - Lookup
 breqbot.load_extension("extensions.lookup.lookup")
+breqbot.load_extension("extensions.lookup.minecraft")
 
 # - Configuration
 breqbot.load_extension("extensions.config.config")

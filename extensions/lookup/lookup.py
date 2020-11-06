@@ -1,7 +1,7 @@
-from . import minecraft, scraper, vex
+from . import scraper, vex
 
 
-class Lookup(minecraft.Minecraft, scraper.Scraper, vex.Vex):
+class Lookup(scraper.Scraper, vex.Vex):
     pass
 
 

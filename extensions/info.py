@@ -121,8 +121,8 @@ class Info(BaseCog):
         await self.load_activity()
 
     async def load_activity(self):
-        type = self.redis.get("activity:type")
-        desc = self.redis.get("activity:name")
+        type = self.redis.get("activity:type") or "watching"
+        desc = self.redis.get("activity:name") or ";help | bot.breq.dev"
 
         if type.lower().strip() == "playing":
             activity = discord.Game(desc)
