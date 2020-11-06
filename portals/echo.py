@@ -5,8 +5,8 @@ from portal import Portal
 
 portal = Portal(
     os.getenv("PORTAL_URL"),
-    os.getenv("PORTAL_ID"),
-    os.getenv("PORTAL_TOKEN")
+    os.getenv("PORTAL_ID_ECHO"),
+    os.getenv("PORTAL_TOKEN_ECHO")
 )
 
 
