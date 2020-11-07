@@ -58,11 +58,11 @@ class BaseComics(BaseCog):
     async def watch_task(self):
         for name, comic in self.comics.items():
             new_hash = await comic.get_hash()
-            old_hash = self.redis.get(f"comic:hash:{name}")
+            old_hash = await self.redis.get(f"comic:hash:{name}")
             if old_hash != new_hash:
-                self.redis.set(f"comic:hash:{name}", new_hash)
+                await self.redis.set(f"comic:hash:{name}", new_hash)
                 for channel_id in \
-                        self.redis.smembers(f"comic:watching:{name}"):
+                        await self.redis.smembers(f"comic:watching:{name}"):
                     channel = self.bot.get_channel(int(channel_id))
                     await self.pack_send(
                         channel, *(await comic.get_post("latest")))

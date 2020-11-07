@@ -74,26 +74,28 @@ class RedditCache:
                 if content != "image":
                     continue
 
-            self.redis.zadd(
+            await self.redis.zadd(
                 f"reddit:cache:list:{sub_config['command']}",
-                {submission.id: now}
+                now, submission.id
             )
 
-            self.redis.hset(f"reddit:cache:{submission.id}", mapping={
+            await self.redis.hmset_dict(f"reddit:cache:{submission.id}", {
                 "title": submission.title,
                 "url": submission.url,
                 "text": submission.selftext
             })
 
         # Remove old posts
-        old_posts = self.redis.zrangebyscore(
-            f"reddit:cache:list:{sub_config['command']}", "-inf", (now-1))
+        old_posts = await self.redis.zrangebyscore(
+            f"reddit:cache:list:{sub_config['command']}",
+            float("-inf"), (now-1))
 
-        self.redis.zremrangebyscore(
-            f"reddit:cache:list:{sub_config['command']}", "-inf", (now-1))
+        await self.redis.zremrangebyscore(
+            f"reddit:cache:list:{sub_config['command']}",
+            float("-inf"), (now-1))
 
         for post_id in old_posts:
-            self.redis.delete(f"reddit:cache:{post_id}")
+            await self.redis.delete(f"reddit:cache:{post_id}")
 
     async def build(self):
         "Build all caches!"
@@ -102,18 +104,18 @@ class RedditCache:
 
     async def prune_history(self):
         "Trim the history of recently sent posts"
-        channels = self.redis.keys("reddit:history:*")
+        channels = await self.redis.keys("reddit:history:*")
         for channel in channels:
             now = time.time()
             long_ago = now - 7200  # 2 hrs ago
 
-            self.redis.zremrangebyscore(channel, 0, long_ago)
-            self.redis.zremrangebyrank(channel, 0, -20)
+            await self.redis.zremrangebyscore(channel, 0, long_ago)
+            await self.redis.zremrangebyrank(channel, 0, -20)
 
     async def get(self, sub_config, channel_id):
         "Return a post from the cache"
 
-        cache_size = self.redis.zcard(
+        cache_size = await self.redis.zcard(
             f"reddit:cache:list:{sub_config['command']}")
 
         if cache_size < 1:
@@ -121,21 +123,21 @@ class RedditCache:
 
         post_idx = random.randint(0, cache_size-1)
 
-        post_id = self.redis.zrange(
+        post_id = (await self.redis.zrange(
             f"reddit:cache:list:{sub_config['command']}",
-            post_idx, post_idx)[0]
+            post_idx, post_idx))[0]
 
-        while self.redis.zscore(f"reddit:history:{channel_id}", post_id):
+        while await self.redis.zscore(f"reddit:history:{channel_id}", post_id):
             # Submission has been posted recently, fetch a new one
             post_idx = random.randint(0, cache_size-1)
-            post_id = self.redis.zrange(
+            post_id = (await self.redis.zrange(
                 f"reddit:cache:list:{sub_config['command']}",
-                post_idx, post_idx)[0]
+                post_idx, post_idx))[0]
 
-        self.redis.zadd(f"reddit:history:{channel_id}",
-                        {post_id: time.time()})
+        await self.redis.zadd(f"reddit:history:{channel_id}",
+                              time.time(), post_id)
 
-        post = self.redis.hgetall(f"reddit:cache:{post_id}")
+        post = await self.redis.hgetall(f"reddit:cache:{post_id}")
 
         if sub_config.get("text"):
             ret = discord.Embed()
@@ -172,12 +174,12 @@ class RedditCache:
                     continue
 
             if channel_id:
-                if self.redis.zscore(
+                if await self.redis.zscore(
                         f"reddit:history:{channel_id}", submission.id):
                     continue  # Submission posted recently
 
-            self.redis.zadd(
-                f"reddit:history:{channel_id}", {submission.id: now})
+            await self.redis.zadd(
+                f"reddit:history:{channel_id}", now, submission.id)
 
             if submission.is_self:
                 embed = discord.Embed(

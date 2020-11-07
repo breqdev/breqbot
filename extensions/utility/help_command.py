@@ -44,7 +44,7 @@ class HelpCommand(commands.HelpCommand):
                 continue
 
             if hasattr(cog, "custom_bot_help"):
-                value = cog.custom_bot_help(self.context)
+                value = await cog.custom_bot_help(self.context)
             else:
                 value = " ".join(
                     f"`{self.context.bot.main_prefix}{command.qualified_name}`"

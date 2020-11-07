@@ -1,6 +1,7 @@
 import os
+import asyncio
 
-import redis
+import aioredis
 import discord
 from discord.ext import commands
 
@@ -16,8 +17,9 @@ breqbot = commands.Bot(
 )
 breqbot.main_prefix = prefix
 
-breqbot.redis = redis.Redis.from_url(os.getenv("REDIS_URL"),
-                                     decode_responses=True)
+loop = asyncio.get_event_loop()
+breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
+    os.getenv("REDIS_URL"), encoding="utf-8"))
 
 
 # - General

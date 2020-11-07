@@ -116,13 +116,13 @@ class Info(BaseCog):
     async def activity(self, ctx, type: str, *, desc: str):
         "Change Breqbot's status in Discord"
 
-        self.redis.set("activity:type", type)
-        self.redis.set("activity:name", desc)
+        await self.redis.set("activity:type", type)
+        await self.redis.set("activity:name", desc)
         await self.load_activity()
 
     async def load_activity(self):
-        type = self.redis.get("activity:type") or "watching"
-        desc = self.redis.get("activity:name") or ";help | bot.breq.dev"
+        type = await self.redis.get("activity:type") or "watching"
+        desc = await self.redis.get("activity:name") or ";help | bot.breq.dev"
 
         if type.lower().strip() == "playing":
             activity = discord.Game(desc)

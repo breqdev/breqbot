@@ -17,8 +17,8 @@ class Menu:
         self.message_id = message_id
 
     @staticmethod
-    def from_redis(redis, channel_id, message_id):
-        hash = redis.hgetall(f"rolemenu:{channel_id}:{message_id}")
+    async def from_redis(redis, channel_id, message_id):
+        hash = await redis.hgetall(f"rolemenu:{channel_id}:{message_id}")
         if not hash:
             raise UserError(f"Role Menu with ID {channel_id}:{message_id} "
                             "does not exist")
@@ -34,7 +34,7 @@ class Menu:
 
         return Menu(name, desc, mapping, channel_id, message_id)
 
-    def to_redis(self, redis):
+    async def to_redis(self, redis):
         hash = {
             "name": self.name,
             "desc": self.desc,
@@ -45,13 +45,15 @@ class Menu:
         for key, val in self.mapping.items():
             hash[f"emoji:{key}"] = val
 
-        redis.hset(
+        await redis.hset(
             f"rolemenu:{self.channel_id}:{self.message_id}", mapping=hash)
-        redis.sadd("rolemenu:list", f"{self.channel_id}:{self.message_id}")
+        await redis.sadd(
+            "rolemenu:list", f"{self.channel_id}:{self.message_id}")
 
-    def delete(self, redis):
-        redis.srem("rolemenu:list", f"{self.channel_id}{self.message_id}")
-        redis.delete(f"rolemenu:{self.channel_id}:{self.message_id}")
+    async def delete(self, redis):
+        await redis.srem(
+            "rolemenu:list", f"{self.channel_id}{self.message_id}")
+        await redis.delete(f"rolemenu:{self.channel_id}:{self.message_id}")
 
     async def post(self, bot, channel=None):
         text = []
@@ -151,7 +153,7 @@ class Menu:
 class RoleMenu(BaseCog):
     "Create and manage menus for users to choose their roles"
 
-    def get_menu_from_link(self, ctx, link):
+    async def get_menu_from_link(self, ctx, link):
         # Grab the guild, channel, message out of the message link
         # https://discordapp.com/channels/747905649303748678/747921216186220654/748237781519827114
         _, guild_id, channel_id, message_id = \
@@ -160,7 +162,7 @@ class RoleMenu(BaseCog):
         if int(guild_id) != ctx.guild.id:
             raise UserError("That role menu belongs to a different guild!")
 
-        return Menu.from_redis(self.redis, channel_id, message_id)
+        return await Menu.from_redis(self.redis, channel_id, message_id)
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
@@ -170,7 +172,7 @@ class RoleMenu(BaseCog):
 
         menu = Menu()
         await menu.post(self.bot, ctx.channel)
-        menu.to_redis(self.redis)
+        await menu.to_redis(self.redis)
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
@@ -185,7 +187,7 @@ class RoleMenu(BaseCog):
             menu.desc = value
 
         await menu.post(self.bot)
-        menu.to_redis(self.redis)
+        await menu.to_redis(self.redis)
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
@@ -198,20 +200,20 @@ class RoleMenu(BaseCog):
         else:
             raise UserError(f"Role {role} does not exist")
 
-        menu = self.get_menu_from_link(ctx, message_link)
+        menu = await self.get_menu_from_link(ctx, message_link)
         menu.mapping[emoji] = irole.id
         await menu.post(self.bot)
-        menu.to_redis(self.redis)
+        await menu.to_redis(self.redis)
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
     async def remrole(self, ctx, message_link: str, emoji: str):
         "Remove a role from an existing role menu"
 
-        menu = self.get_menu_from_link(ctx, message_link)
+        menu = await self.get_menu_from_link(ctx, message_link)
         del menu.mapping[emoji]
         await menu.post(self.bot)
-        menu.to_redis(self.redis)
+        await menu.to_redis(self.redis)
 
 
 def setup(bot):
@@ -219,27 +221,27 @@ def setup(bot):
 
     @bot.listen()
     async def on_raw_message_delete(payload):
-        if bot.redis.sismember("rolemenu:list",
-                               f"{payload.channel_id}:{payload.message_id}"):
+        if await bot.redis.sismember(
+                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
             await bot.wait_until_ready()
-            menu = Menu.from_redis(
+            menu = await Menu.from_redis(
                 bot.redis, payload.channel_id, payload.message_id)
-            menu.delete(bot.redis)
+            await menu.delete(bot.redis)
 
     @bot.listen()
     async def on_raw_reaction_add(payload):
-        if bot.redis.sismember("rolemenu:list",
-                               f"{payload.channel_id}:{payload.message_id}"):
+        if await bot.redis.sismember(
+                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
             await bot.wait_until_ready()
-            menu = Menu.from_redis(
+            menu = await Menu.from_redis(
                 bot.redis, payload.channel_id, payload.message_id)
             await menu.handle_reaction_add(bot, payload)
 
     @bot.listen()
     async def on_raw_reaction_remove(payload):
-        if bot.redis.sismember("rolemenu:list",
-                               f"{payload.channel_id}:{payload.message_id}"):
+        if await bot.redis.sismember(
+                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
             await bot.wait_until_ready()
-            menu = Menu.from_redis(
+            menu = await Menu.from_redis(
                 bot.redis, payload.channel_id, payload.message_id)
             await menu.handle_reaction_remove(bot, payload)

@@ -51,7 +51,12 @@ class Minecraft(BaseCog):
         return description, players, sample
 
     async def get_hash(self, ip):
-        return json.dumps(await self._get_state(ip))
+        try:
+            result = await self._get_state(ip)
+        except UserError:
+            return "disconnected"
+        else:
+            return json.dumps(result)
 
     async def get_embed(self, ip):
         description, players, sample = await self._get_state(ip)
@@ -76,18 +81,18 @@ class Minecraft(BaseCog):
     @commands.command()
     async def mcwatch(self, ctx, ip: str):
         """Watch a Minecraft server and announce when players join or leave"""
-        self.redis.sadd("mc:watching:ips", ip)
-        self.redis.sadd(f"mc:watching:ip:{ip}", ctx.channel.id)
-        self.redis.sadd(f"mc:watching:channel:{ctx.channel.id}", ip)
+        await self.redis.sadd("mc:watching:ips", ip)
+        await self.redis.sadd(f"mc:watching:ip:{ip}", ctx.channel.id)
+        await self.redis.sadd(f"mc:watching:channel:{ctx.channel.id}", ip)
         await ctx.message.add_reaction("✅")
 
     @commands.command()
     async def mcunwatch(self, ctx, ip: str):
         """Unwatch a Minecraft server"""
-        self.redis.srem(f"mc:watching:ip:{ip}", ctx.channel.id)
-        self.redis.srem(f"mc:watching:channel:{ctx.channel.id}", ip)
-        if not self.redis.scard(f"mc:watching:ip{ip}"):
-            self.redis.srem("mc:watching:ips", ip)
+        await self.redis.srem(f"mc:watching:ip:{ip}", ctx.channel.id)
+        await self.redis.srem(f"mc:watching:channel:{ctx.channel.id}", ip)
+        if not await self.redis.scard(f"mc:watching:ip{ip}"):
+            await self.redis.srem("mc:watching:ips", ip)
         await ctx.message.add_reaction("✅")
 
     @commands.command()
@@ -100,7 +105,7 @@ class Minecraft(BaseCog):
             name = f"@{ctx.author.display_name}"
         embed = discord.Embed(title=f"{name} is watching...")
         embed.description = ", ".join(
-            ip for ip in self.redis.smembers(
+            ip for ip in await self.redis.smembers(
                 f"mc:watching:channel:{ctx.channel.id}"))
 
         await ctx.send(embed=embed)
@@ -108,12 +113,13 @@ class Minecraft(BaseCog):
     @tasks.loop(minutes=1)
     @graceful_task
     async def watch_task(self):
-        for ip in self.redis.smembers("mc:watching:ips"):
+        for ip in await self.redis.smembers("mc:watching:ips"):
             new_hash = await self.get_hash(ip)
-            old_hash = self.redis.get(f"mc:hash:{ip}")
+            old_hash = await self.redis.get(f"mc:hash:{ip}")
             if old_hash != new_hash:
-                self.redis.set(f"mc:hash:{ip}", new_hash)
-                for channel_id in self.redis.smembers(f"mc:watching:ip:{ip}"):
+                await self.redis.set(f"mc:hash:{ip}", new_hash)
+                for channel_id in \
+                        await self.redis.smembers(f"mc:watching:ip:{ip}"):
                     channel = self.bot.get_channel(int(channel_id))
                     await channel.send(embed=await self.get_embed(ip))
 
