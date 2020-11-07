@@ -1,5 +1,6 @@
 import typing
 
+import aiohttp
 import discord
 from discord.ext import commands, tasks
 
@@ -11,7 +12,11 @@ from . import animegirl, xkcd, testcomic
 class BaseComics(BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
+        self.session = aiohttp.ClientSession()
         self.watch_task.start()
+
+        for comic in self.comics.values():
+            comic.session = self.session
 
     async def add_watch(self, series, channel_id):
         await self.redis.sadd(f"comic:watching:{series}", channel_id)

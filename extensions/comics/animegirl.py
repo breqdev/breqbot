@@ -2,11 +2,10 @@ import random
 import io
 import itertools
 
-import requests
 import bs4
 import discord
 
-from ..base import UserError, run_in_executor
+from ..base import UserError
 
 
 class AnimeGirl():
@@ -14,19 +13,24 @@ class AnimeGirl():
     he liked it. This is their story, learning about who they are, and their
     friends and family around them. """
 
-    def _get_id(self, number):
+    async def _get_id(self, number):
         for pageno in itertools.count(1):
-            page = requests.get("https://www.webtoons.com/en/challenge"
-                                "/i-want-to-be-a-cute-anime-girl"
-                                f"/list?title_no=349416&page={pageno}")
-            soup = bs4.BeautifulSoup(page.content, "html.parser")
+            url = (
+                "https://www.webtoons.com/en/challenge"
+                "/i-want-to-be-a-cute-anime-girl"
+                f"/list?title_no=349416&page={pageno}")
+
+            async with self.session.get(url) as response:
+                page = await response.text()
+
+            soup = bs4.BeautifulSoup(page, "html.parser")
 
             episodes = soup.find(id="_listUl")
             for episode in episodes.find_all("li", recursive=False):
                 episode_id = episode.attrs["data-episode-no"]
 
                 if number == "random":
-                    return self._get_id(
+                    return await self._get_id(
                         str(random.randint(1, int(episode_id))))
 
                 title = episode.find("span", class_="subj").find("span").text
@@ -57,23 +61,26 @@ class AnimeGirl():
                     # We have reached the first comic without any matches
                     raise UserError(f"Episode {number} not found")
 
-    @run_in_executor
-    def get_post(self, number):
-        title, episode_id = self._get_id(number)
+    async def get_post(self, number):
+        title, episode_id = await self._get_id(number)
 
-        page = requests.get("https://www.webtoons.com/en/challenge"
-                            "/i-want-to-be-a-cute-anime-girl/image-change/"
-                            f"viewer?title_no=349416&episode_no={episode_id}")
-        soup = bs4.BeautifulSoup(page.content, "html.parser")
+        url = ("https://www.webtoons.com/en/challenge"
+               "/i-want-to-be-a-cute-anime-girl/image-change/"
+               f"viewer?title_no=349416&episode_no={episode_id}")
+
+        async with self.session.get(url) as response:
+            page = await response.text()
+
+        soup = bs4.BeautifulSoup(page, "html.parser")
 
         files = []
 
         images = soup.find(id="_imageList")
         for idx, image in enumerate(images.find_all("img")):
-            image_file = requests.get(
-                image.attrs["data-url"],
-                headers={"Referer": "http://www.webtoons.com"}
-            ).content
+            url = image.attrs["data-url"]
+            headers = {"Referer": "http://www.webtoons.com"}
+            async with self.session.get(url, headers=headers) as response:
+                image_file = await response.read()
 
             image_file = discord.File(
                 io.BytesIO(image_file), filename=f"{idx}.jpg")
@@ -84,10 +91,13 @@ class AnimeGirl():
         embed = discord.Embed(title=caption)
         return None, files, embed
 
-    @run_in_executor
-    def get_hash(self):
-        page = requests.get("https://www.webtoons.com/en/challenge"
-                            "/i-want-to-be-a-cute-anime-girl"
-                            "/list?title_no=349416&page=1")
-        soup = bs4.BeautifulSoup(page.content, "html.parser")
+    async def get_hash(self):
+        url = ("https://www.webtoons.com/en/challenge"
+               "/i-want-to-be-a-cute-anime-girl"
+               "/list?title_no=349416&page=1")
+
+        async with self.session.get(url) as response:
+            page = await response.text()
+
+        soup = bs4.BeautifulSoup(page, "html.parser")
         return str(soup.find(id="_listUl").find("li").attrs["data-episode-no"])
