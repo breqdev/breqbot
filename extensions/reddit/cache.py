@@ -3,11 +3,10 @@ import time
 import random
 
 import requests
-import praw
-import prawcore
+import asyncpraw
 import discord
 
-from ..base import run_in_executor, UserError
+from ..base import UserError
 
 
 class RedditCache:
@@ -16,7 +15,7 @@ class RedditCache:
         self.redis = redis
         self.config = config
 
-        self.reddit = praw.Reddit(
+        self.reddit = asyncpraw.Reddit(
             client_id=os.getenv("REDDIT_CLIENT_ID"),
             client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
             user_agent="Breqbot! https://breq.dev/ or bot@breq.dev"
@@ -33,14 +32,13 @@ class RedditCache:
         else:
             return "none"
 
-    @run_in_executor
-    def build_sub(self, sub_config):
+    async def build_sub(self, sub_config):
         "Build the cache of posts for a specific subreddit"
-        sub = self.reddit.subreddit(sub_config["sub"])
+        sub = await self.reddit.subreddit(sub_config["sub"])
 
         now = time.time()
 
-        for submission in sub.top("week", limit=100):
+        async for submission in sub.top("week", limit=100):
             if sub_config.get("text"):
                 if not submission.is_self:
                     continue
@@ -154,11 +152,12 @@ class RedditCache:
     async def get_custom(self, sub_name, channel_id=None, nsfw=False):
         "Return a post from a non-cached subreddit"
 
-        sub = self.reddit.subreddit(sub_name)
+        sub = await self.reddit.subreddit(sub_name)
+        await sub.load()
 
         try:
             sub.id
-        except (prawcore.Redirect, prawcore.NotFound, prawcore.Forbidden):
+        except asyncpraw.exceptions.ClientException:
             raise UserError("Subreddit not found.")
 
         if nsfw is False and sub.over18:
@@ -167,7 +166,7 @@ class RedditCache:
         now = time.time()
 
         frontpage = sub.top("month", limit=1000)
-        for submission in frontpage:
+        async for submission in frontpage:
             if nsfw is not None:
                 if submission.over_18 != nsfw:
                     continue
