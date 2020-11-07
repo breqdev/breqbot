@@ -1,5 +1,4 @@
 import uuid
-import json
 import time
 import asyncio
 
@@ -222,7 +221,7 @@ class Portal(BaseCog):
             return f"`{self.bot.main_prefix}makeportal`\n"
         portal_ids = await self.redis.smembers(f"portal:list:{ctx.guild.id}")
 
-        desc = []
+        desc = [f"`{self.bot.main_prefix}makeportal` | "]
         for id in portal_ids:
             alias = await self.redis.get(f"portal:from_id:{ctx.guild.id}:{id}")
             desc.append(f"`{self.bot.main_prefix}portal {alias}`")
@@ -262,15 +261,14 @@ class Portal(BaseCog):
 
         portal_name = await self.redis.hget(f"portal:{portal_id}", "name")
 
-        pubsub = await self.redis.pubsub()
-        pubsub.subscribe(f"portal:{portal_id}:{job_id}")
+        pubsub = await self.redis.subscribe(f"portal:{portal_id}:{job_id}")
 
-        message = json.dumps({
+        message = {
             "type": "query",
             "job": job_id,
             "portal": portal_id,
             "data": command
-        })
+        }
 
         clocks = "🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛"
 
@@ -278,14 +276,13 @@ class Portal(BaseCog):
 
         dismsg = await ctx.send(embed=embed)
 
-        await self.redis.publish(f"portal:{portal_id}:{job_id}", message)
+        await self.redis.publish_json(f"portal:{portal_id}:{job_id}", message)
 
         message = None
         ts = time.time()
         frame = 0
 
-        while (message is None
-               or json.loads(message["data"])["type"] != "response"):
+        while True:
             if time.time() - ts > 120:
                 # Connection timed out
                 embed.title = "Timed Out"
@@ -300,14 +297,16 @@ class Portal(BaseCog):
                 embed.description = clock
                 await dismsg.edit(embed=embed)
 
-            message = await pubsub.get_message(
-                ignore_subscribe_messages=True, timeout=0)
+            if pubsub[0].is_active:
+                message = await pubsub[0].get_json()
+                if message["type"] == "response":
+                    break
 
             frame += 1
 
             await asyncio.sleep(0.2)
 
-        data = json.loads(message["data"])["data"]
+        data = message["data"]
 
         embed = discord.Embed()
         if "title" in data:

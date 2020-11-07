@@ -12,7 +12,7 @@ class Config(BaseCog):
     async def enable(self, ctx, feature: str):
         "Enable a Breqbot feature in this guild."
         if feature == "website":
-            self.redis.hset(f"guild:{ctx.guild.id}", "website", "1")
+            await self.redis.hset(f"guild:{ctx.guild.id}", "website", "1")
         else:
             raise UserError(f"Unsupported feature: {feature}")
 
@@ -24,7 +24,7 @@ class Config(BaseCog):
     async def disable(self, ctx, feature: str):
         "Disable a Breqbot feature in this guild."
         if feature == "website":
-            self.redis.hset(f"guild:{ctx.guild.id}", "website", "0")
+            await self.redis.hset(f"guild:{ctx.guild.id}", "website", "0")
         else:
             raise UserError(f"Unsupported feature: {feature}")
 

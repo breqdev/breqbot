@@ -14,13 +14,14 @@ class BaseComics(BaseCog):
         self.watch_task.start()
 
     async def add_watch(self, series, channel_id):
-        self.redis.sadd(f"comic:watching:{series}", channel_id)
+        await self.redis.sadd(f"comic:watching:{series}", channel_id)
 
     async def rem_watch(self, series, channel_id):
-        self.redis.srem(f"comic:watching:{series}", channel_id)
+        await self.redis.srem(f"comic:watching:{series}", channel_id)
 
     async def is_watching(self, series, channel_id):
-        return self.redis.sismember(f"comic:watching:{series}", channel_id)
+        return await self.redis.sismember(
+            f"comic:watching:{series}", channel_id)
 
     @commands.command(name="comics")
     async def comics_list(self, ctx):
@@ -41,7 +42,8 @@ class BaseComics(BaseCog):
         watching = []
 
         for name in self.comics:
-            if self.redis.sismember(f"comic:watching:{name}", ctx.channel.id):
+            if await self.redis.sismember(
+                    f"comic:watching:{name}", ctx.channel.id):
                 watching.append(name)
 
         if ctx.guild:

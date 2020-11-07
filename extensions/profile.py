@@ -39,7 +39,7 @@ class Profile(BaseCog):
             user = ctx.author
 
         # Add user background
-        url = (self.redis.hget(f"profile:{ctx.guild.id}:{user.id}", "bg")
+        url = (await self.redis.hget(f"profile:{ctx.guild.id}:{user.id}", "bg")
                or "https://breq.dev/assets/images/logo/white_wireframe.jpg")
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -70,7 +70,7 @@ class Profile(BaseCog):
                             spacing=8, font=bigfont, fill=(255, 255, 255))
 
         # Add user desc
-        desc = self.redis.hget(
+        desc = await self.redis.hget(
             f"profile:{ctx.guild.id}:{user.id}", "desc") or ""
         # wrap_desc = "\n".join(textwrap.wrap(desc, 20))
         wrap_desc = desc[:30]
@@ -99,7 +99,7 @@ class Profile(BaseCog):
             await ctx.send(embed=embed)
 
         elif value is None:
-            current = self.redis.hget(
+            current = await self.redis.hget(
                 f"profile:{ctx.guild.id}:{ctx.author.id}", field)
 
             embed = discord.Embed(title=f"Profile: {field}")
@@ -110,7 +110,7 @@ class Profile(BaseCog):
             await ctx.send(embed=embed)
 
         else:
-            self.redis.hset(
+            await self.redis.hset(
                 f"profile:{ctx.guild.id}:{ctx.author.id}", field, value)
 
             await ctx.message.add_reaction("✅")

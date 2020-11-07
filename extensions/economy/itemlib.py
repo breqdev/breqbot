@@ -36,7 +36,7 @@ class Item():
         return item
 
     @staticmethod
-    def from_redis(redis, uuid):
+    async def from_redis(redis, uuid):
         exists = redis.sismember("items:list", uuid)
         if not exists:
             item = MissingItem(uuid)
@@ -46,73 +46,73 @@ class Item():
         item = Item()
         item.uuid = uuid
 
-        item.name = redis.hget(item.redis_key, "name")
-        item.guild = int(redis.hget(item.redis_key, "guild") or "0")
-        item.owner = int(redis.hget(item.redis_key, "owner") or "0")
-        item.desc = redis.hget(item.redis_key, "desc")
-        item.wearable = redis.hget(item.redis_key, "wearable") or "0"
+        item.name = await redis.hget(item.redis_key, "name")
+        item.guild = int(await redis.hget(item.redis_key, "guild") or "0")
+        item.owner = int(await redis.hget(item.redis_key, "owner") or "0")
+        item.desc = await redis.hget(item.redis_key, "desc")
+        item.wearable = await redis.hget(item.redis_key, "wearable") or "0"
         return item
 
     @staticmethod
-    def from_name(redis, guild_id, name):
-        uuid = redis.get(f"items:from_name:{guild_id}:{name.lower()}")
+    async def from_name(redis, guild_id, name):
+        uuid = await redis.get(f"items:from_name:{guild_id}:{name.lower()}")
         if not uuid:
             raise ItemError("Item does not exist")
 
         item = Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
-            redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
+            await redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
             raise ItemError("Item does not exist")
 
         return item
 
     @staticmethod
-    def check_name(redis, guild_id, name):
+    async def check_name(redis, guild_id, name):
         "Ensure the name is not in use."
-        uuid = redis.get(f"items:from_name:{guild_id}:{name.lower()}")
+        uuid = await redis.get(f"items:from_name:{guild_id}:{name.lower()}")
 
         if uuid is None:
             return True
 
-        item = Item.from_redis(redis, uuid)
+        item = await Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
-            redis.srem(f"items:list:{guild_id}", item.uuid)
-            redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
+            await redis.srem(f"items:list:{guild_id}", item.uuid)
+            await redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
             return True
 
         return False
 
-    def to_redis(self, redis):
-        redis.sadd("items:list", self.uuid)
-        redis.sadd(f"items:list:{self.guild}", self.uuid)
-        redis.sadd(f"items:list:{self.guild}:{self.owner}", self.uuid)
+    async def to_redis(self, redis):
+        await redis.sadd("items:list", self.uuid)
+        await redis.sadd(f"items:list:{self.guild}", self.uuid)
+        await redis.sadd(f"items:list:{self.guild}:{self.owner}", self.uuid)
 
-        redis.hset(self.redis_key, "name", self.name)
-        redis.hset(self.redis_key, "guild", self.guild)
-        redis.hset(self.redis_key, "owner", self.owner)
-        redis.hset(self.redis_key, "desc", self.desc)
-        redis.hset(self.redis_key, "wearable", self.wearable)
+        await redis.hset(self.redis_key, "name", self.name)
+        await redis.hset(self.redis_key, "guild", self.guild)
+        await redis.hset(self.redis_key, "owner", self.owner)
+        await redis.hset(self.redis_key, "desc", self.desc)
+        await redis.hset(self.redis_key, "wearable", self.wearable)
 
-        redis.set(
+        await redis.set(
             f"items:from_name:{self.guild}:{self.name.lower()}", self.uuid)
 
-    def rename(self, redis, newname):
+    async def rename(self, redis, newname):
         if not self.check_name(redis, self.guild, newname):
             raise ItemError("Item name in use")
 
-        redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
+        await redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
         self.name = newname
-        redis.hset(self.redis_key, "name", self.name)
-        redis.set(
+        await redis.hset(self.redis_key, "name", self.name)
+        await redis.set(
             f"items:from_name:{self.guild}:{self.name.lower()}", self.uuid)
 
-    def delete(self, redis):
-        redis.srem("items:list", self.uuid)
-        redis.srem(f"items:list:{self.guild}", self.uuid)
-        redis.srem(f"items:list:{self.guild}:{self.owner}", self.uuid)
+    async def delete(self, redis):
+        await redis.srem("items:list", self.uuid)
+        await redis.srem(f"items:list:{self.guild}", self.uuid)
+        await redis.srem(f"items:list:{self.guild}:{self.owner}", self.uuid)
 
-        redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
-        redis.delete(self.redis_key)
+        await redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
+        await redis.delete(self.redis_key)
 
     def is_owner(self, user):
         return (user.id == self.owner)
@@ -141,8 +141,8 @@ class MissingItem(Item):
         self.wearable = "0"
         self.author = "0"
 
-    def cleanup(self, redis):
-        redis.delete(f"items:{self.uuid}")
+    async def cleanup(self, redis):
+        await redis.delete(f"items:{self.uuid}")
 
 
 class EconomyCog(BaseCog):
@@ -159,11 +159,11 @@ class EconomyCog(BaseCog):
                 return True
         return False
 
-    def ensure_item(self, ctx, user, item, qty=1):
+    async def ensure_item(self, ctx, user, item, qty=1):
         if qty < 0:
             raise ItemError("Negative numbers are not allowed.")
-        has = int(self.redis.hget(f"inventory:{ctx.guild.id}:{user.id}",
-                                  item.uuid) or "0")
+        has = int(await self.redis.hget(
+            f"inventory:{ctx.guild.id}:{user.id}", item.uuid) or "0")
         if has < qty:
             raise ItemError(f"You need at least {qty} of {item.name}, "
                             f"you only have {has}")

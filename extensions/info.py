@@ -103,9 +103,9 @@ class Info(BaseCog):
         embed = discord.Embed(title="Breqbot is in...")
 
         guilds = []
-        for guild_id in self.redis.smembers("guild:list"):
-            guilds.append((self.redis.hget(f"guild:{guild_id}", "name"),
-                          self.redis.scard(f"guild:member:{guild_id}")))
+        for guild_id in await self.redis.smembers("guild:list"):
+            guilds.append((await self.redis.hget(f"guild:{guild_id}", "name"),
+                          await self.redis.scard(f"guild:member:{guild_id}")))
 
         embed.description = "\n".join(f"{name}: {size}"
                                       for name, size in guilds)
@@ -155,7 +155,8 @@ class Info(BaseCog):
         if not ctx.guild:
             embed.title = "Breqbot Website"
             embed.url = os.getenv("WEBSITE")
-        elif int(self.redis.hget(f"guild:{ctx.guild.id}", "website") or "0"):
+        elif int(await self.redis.hget(f"guild:{ctx.guild.id}", "website")
+                 or "0"):
             if user:
                 embed.title = (f"Website: **{user.display_name}** "
                                f"on {ctx.guild.name}")

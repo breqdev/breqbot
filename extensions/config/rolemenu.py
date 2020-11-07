@@ -45,8 +45,8 @@ class Menu:
         for key, val in self.mapping.items():
             hash[f"emoji:{key}"] = val
 
-        await redis.hset(
-            f"rolemenu:{self.channel_id}:{self.message_id}", mapping=hash)
+        await redis.hmset_dict(
+            f"rolemenu:{self.channel_id}:{self.message_id}", hash)
         await redis.sadd(
             "rolemenu:list", f"{self.channel_id}:{self.message_id}")
 
@@ -179,7 +179,7 @@ class RoleMenu(BaseCog):
     async def modifymenu(self, ctx, message_link: str,
                          field: str, *, value: str):
         "Modify the name or description of a role menu"
-        menu = self.get_menu_from_link(ctx, message_link)
+        menu = await self.get_menu_from_link(ctx, message_link)
 
         if field == "name":
             menu.name = value

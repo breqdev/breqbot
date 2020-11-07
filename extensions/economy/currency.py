@@ -33,9 +33,11 @@ class Currency(EconomyCog):
         "Check your current coin balance :moneybag:"
         if user is None:
             user = ctx.author
-        coins = self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}")
+        coins = await self.redis.get(
+            f"currency:balance:{ctx.guild.id}:{user.id}")
         if coins is None:
-            self.redis.set(f"currency:balance:{ctx.guild.id}:{user.id}", 0)
+            await self.redis.set(
+                f"currency:balance:{ctx.guild.id}:{user.id}", 0)
             coins = 0
         await ctx.send(f"{user.display_name} has **{coins}** Breqcoins.")
 
@@ -45,10 +47,11 @@ class Currency(EconomyCog):
         "Display the richest members on the server :moneybag:"
         richest = []
 
-        for member_id in self.redis.smembers(f"guild:member:{ctx.guild.id}"):
+        for member_id in \
+                await self.redis.smembers(f"guild:member:{ctx.guild.id}"):
             richest.append((
                 ctx.guild.get_member(int(member_id)),
-                int(self.redis.get(
+                int(await self.redis.get(
                     f"currency:balance:{ctx.guild.id}:{member_id}")
                     or "0")
             ))
@@ -67,7 +70,7 @@ class Currency(EconomyCog):
     @commands.guild_only()
     async def pay(self, ctx, user: discord.User, amount: int):
         "Give coins to another user :incoming_envelope:"
-        balance = self.redis.get(
+        balance = await self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
 
         if amount < 0:
@@ -78,9 +81,10 @@ class Currency(EconomyCog):
             raise UserError("Not enough coins!")
             return
 
-        self.redis.decr(
+        await self.redis.decr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
-        self.redis.incr(f"currency:balance:{ctx.guild.id}:{user.id}", amount)
+        await self.redis.incrby(
+            f"currency:balance:{ctx.guild.id}:{user.id}", amount)
 
         await ctx.message.add_reaction("✅")
 
@@ -89,8 +93,8 @@ class Currency(EconomyCog):
     async def shop(self, ctx):
         "List items in the shop :shopping_bags:"
 
-        item_uuids = self.redis.smembers(f"shop:items:{ctx.guild.id}")
-        shop_items = {uuid: Item.from_redis(self.redis, uuid)
+        item_uuids = await self.redis.smembers(f"shop:items:{ctx.guild.id}")
+        shop_items = {uuid: await Item.from_redis(self.redis, uuid)
                       for uuid in item_uuids}
         prices = {}
 
@@ -98,14 +102,14 @@ class Currency(EconomyCog):
         for uuid, item in shop_items.items():
             if isinstance(item, MissingItem):
                 missing.append(uuid)
-                self.redis.srem(f"shop:items:{ctx.guild.id}", uuid)
+                await self.redis.srem(f"shop:items:{ctx.guild.id}", uuid)
 
         for uuid in missing:
-            self.redis.delete(f"shop:prices:{ctx.guild.id}:{uuid}")
+            await self.redis.delete(f"shop:prices:{ctx.guild.id}:{uuid}")
             del shop_items[uuid]
 
         for item_uuid in item_uuids:
-            prices[item_uuid] = self.redis.get(
+            prices[item_uuid] = await self.redis.get(
                 f"shop:prices:{ctx.guild.id}:{item_uuid}")
 
         embed = discord.Embed(title=f"Items for sale on {ctx.guild.name}")
@@ -124,22 +128,23 @@ class Currency(EconomyCog):
     async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
         "Buy an item from the shop :coin:"
 
-        item = Item.from_name(self.redis, ctx.guild.id, item)
+        item = await Item.from_name(self.redis, ctx.guild.id, item)
 
-        price_ea = self.redis.get(f"shop:prices:{ctx.guild.id}:{item.uuid}")
+        price_ea = await self.redis.get(
+            f"shop:prices:{ctx.guild.id}:{item.uuid}")
         if price_ea is None:
             raise UserError("Item is not for sale!")
 
         price = int(price_ea) * amount
-        balance = int(self.redis.get(
+        balance = int(await self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
             raise UserError("Not enough coins!")
 
-        self.redis.decr(
+        await self.redis.decr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
-        self.redis.hincrby(
+        await self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
 
         await ctx.message.add_reaction("✅")
@@ -149,9 +154,9 @@ class Currency(EconomyCog):
     @commands.check(EconomyCog.shopkeeper_only)
     async def list(self, ctx, item: str, price: int):
         "List an item in the shop :new:"
-        item = Item.from_name(self.redis, ctx.guild.id, item)
-        self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
-        self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
+        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        await self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
+        await self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
 
         await ctx.message.add_reaction("✅")
 
@@ -160,9 +165,9 @@ class Currency(EconomyCog):
     @commands.check(EconomyCog.shopkeeper_only)
     async def delist(self, ctx, item: str):
         "Remove an item from the shop :no_entry:"
-        item = Item.from_name(self.redis, ctx.guild.id, item)
-        self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
-        self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
+        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        await self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
+        await self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
 
         await ctx.message.add_reaction("✅")
 
@@ -235,7 +240,7 @@ class Currency(EconomyCog):
                     continue
 
                 balance = int(
-                    self.redis.get(
+                    await self.redis.get(
                         f"currency:balance:{ctx.guild.id}:{user.id}") or "0")
 
                 if balance < wager:
@@ -243,7 +248,7 @@ class Currency(EconomyCog):
                     continue
 
                 net_winnings = payout - wager
-                self.redis.incr(
+                await self.redis.incrby(
                     f"currency:balance:{ctx.guild.id}:{user.id}", net_winnings)
                 results.append(f"• {user.display_name} "
                                f"{'won' if net_winnings >= 0 else 'lost'} "
@@ -256,7 +261,7 @@ class Currency(EconomyCog):
     async def free_limit(self, ctx):
         # Calculate time to wait before collecting
         last_daily = float(
-            self.redis.get(
+            await self.redis.get(
                 f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}") or 0)
         current_time = time.time()
         time_until = (last_daily + self.GET_COINS_INTERVAL) - current_time
@@ -267,7 +272,7 @@ class Currency(EconomyCog):
                             f"**{ftime}** to claim more coins!")
 
         # Update latest collection
-        self.redis.set(
+        await self.redis.set(
             f"quests:free:latest:{ctx.guild.id}:{ctx.author.id}", current_time)
 
     @commands.command()
@@ -278,8 +283,9 @@ class Currency(EconomyCog):
         await self.free_limit(ctx)
 
         # Give free coins and items
-        self.redis.incr(f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
-                        self.GET_COINS_AMOUNT)
+        await self.redis.incrby(
+            f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
+            self.GET_COINS_AMOUNT)
 
         # Calculate time to wait until next free collection
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
@@ -334,7 +340,7 @@ class Currency(EconomyCog):
         coins = int(coin_multipliers[result] * self.GET_COINS_AMOUNT)
         result = scenario[result].format(coins=coins, choice=choice)
 
-        self.redis.incr(
+        await self.redis.incrby(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", coins)
 
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))

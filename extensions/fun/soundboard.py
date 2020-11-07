@@ -163,13 +163,14 @@ class Soundboard(BaseCog):
         id = self.extract_id(url)
         title = self.get_yt_title(id)
 
-        self.redis.hset(f"soundboard:sounds:{ctx.guild.id}:{name}",
-                        mapping={
-                            "name": name,
-                            "youtube-id": id,
-                            "title": title
-                        })
-        self.redis.sadd(f"soundboard:sounds:{ctx.guild.id}", name)
+        await self.redis.hset(
+            f"soundboard:sounds:{ctx.guild.id}:{name}",
+            mapping={
+                "name": name,
+                "youtube-id": id,
+                "title": title
+            })
+        await self.redis.sadd(f"soundboard:sounds:{ctx.guild.id}", name)
 
         await ctx.message.add_reaction("✅")
 
@@ -177,11 +178,12 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     async def delsound(self, ctx, name: str):
         "Remove a sound :wastebasket:"
-        if not self.redis.sismember(f"soundboard:sounds:{ctx.guild.id}", name):
+        if not await self.redis.sismember(
+                f"soundboard:sounds:{ctx.guild.id}", name):
             raise UserError("Sound not found")
 
-        self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", name)
-        self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{name}")
+        await self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", name)
+        await self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{name}")
 
         await ctx.message.add_reaction("✅")
 
@@ -191,10 +193,11 @@ class Soundboard(BaseCog):
         "List enabled sounds :dividers:"
         embed = discord.Embed(title=f"Soundboard on {ctx.guild.name}")
 
-        sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
+        sound_names = await self.redis.smembers(
+            f"soundboard:sounds:{ctx.guild.id}")
 
-        sounds = {name: self.redis.hgetall("soundboard:sounds:"
-                                           f"{ctx.guild.id}:{name}")
+        sounds = {name: await self.redis.hgetall(
+                    f"soundboard:sounds:{ctx.guild.id}:{name}")
                   for name in sound_names}
 
         if sounds:
@@ -212,7 +215,7 @@ class Soundboard(BaseCog):
     @commands.guild_only()
     async def sound(self, ctx, name: str):
         "Play a sound"
-        sound = self.redis.hgetall(
+        sound = await self.redis.hgetall(
             f"soundboard:sounds:{ctx.guild.id}:{name}")
 
         if not sound:
@@ -228,7 +231,8 @@ class Soundboard(BaseCog):
 
         message = await ctx.send(emoji_utils.text_to_emoji("Soundboard"))
 
-        sound_names = self.redis.smembers(f"soundboard:sounds:{ctx.guild.id}")
+        sound_names = await self.redis.smembers(
+            f"soundboard:sounds:{ctx.guild.id}")
         for name in sound_names:
             if name in emoji.UNICODE_EMOJI:
                 await message.add_reaction(name)
@@ -250,11 +254,11 @@ class Soundboard(BaseCog):
                     if reaction.emoji == "❌":
                         await message.clear_reactions()
                         return
-                    if self.redis.sismember(
+                    if await self.redis.sismember(
                             f"soundboard:sounds:{ctx.guild.id}",
                             reaction.emoji):
 
-                        sound = self.redis.hgetall(
+                        sound = await self.redis.hgetall(
                             "soundboard:sounds:"
                             f"{ctx.guild.id}:{reaction.emoji}")
                         await client.play_sound(sound["youtube-id"])
