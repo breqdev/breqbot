@@ -2,19 +2,19 @@ import json
 import io
 import random
 
-import requests
 import discord
 
-from ..base import UserError, run_in_executor
+from ..base import UserError
+from . import comiclib
 
 
-class XKCD():
+class XKCD(comiclib.Comic):
     ":nerd: A webcomic of romance, sarcasm, math, and language."
 
-    @run_in_executor
-    def get_post(self, number):
+    async def get_post(self, number):
         if number == "random":
-            max_no = requests.get("https://xkcd.com/info.0.json").json()["num"]
+            max_no = (await self.get_url(
+                "https://xkcd.com/info.0.json", type="json"))["num"]
             url = f"https://xkcd.com/{random.randint(1, max_no)}/info.0.json"
 
         elif number == "latest":
@@ -23,7 +23,7 @@ class XKCD():
             url = f"https://xkcd.com/{number}/info.0.json"
 
         try:
-            comic = requests.get(url).json()
+            comic = await self.get_url(url, type="json")
         except json.decoder.JSONDecodeError:
             raise UserError(f"Comic {number} not found!")
 
@@ -32,11 +32,11 @@ class XKCD():
         # embed.set_image(url=comic["img"])
         embed.set_footer(text=comic["alt"])
 
-        image = requests.get(comic["img"]).content
+        image = await self.get_url(comic["img"], type="bin")
         image_file = discord.File(io.BytesIO(image), filename="xkcd.jpg")
 
         return None, [image_file], embed
 
-    @run_in_executor
-    def get_hash(self):
-        return str(requests.get("https://xkcd.com/info.0.json").json()["num"])
+    async def get_hash(self):
+        return str((await self.get_url(
+            "https://xkcd.com/info.0.json", type="json"))["num"])

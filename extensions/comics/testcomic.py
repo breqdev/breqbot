@@ -1,19 +1,18 @@
 import json
 import random
 
-import requests
 import discord
 
-from ..base import UserError, run_in_executor
+from ..base import UserError
+from . import comiclib
 
 
-class TestComic():
+class TestComic(comiclib.Comic):
     "this is a test"
 
-    @run_in_executor
-    def get_post(self, number):
-        max_no = requests.get(
-            "https://k.breq.dev/testcomic/info.json").json()["num"]
+    async def get_post(self, number):
+        max_no = await self.get_url(
+            "https://k.breq.dev/testcomic/info.json", type="json")["num"]
 
         if number == "random":
             url = ("https://k.breq.dev/testcomic/"
@@ -25,7 +24,7 @@ class TestComic():
             url = f"https://k.breq.dev/testcomic/{number}.json"
 
         try:
-            comic = requests.get(url).json()
+            comic = await self.get_url(url, type="json")
         except json.decoder.JSONDecodeError:
             raise UserError(f"Comic {number} not found!")
 
@@ -34,7 +33,6 @@ class TestComic():
 
         return None, [], embed
 
-    @run_in_executor
-    def get_hash(self):
-        return str(requests.get(
-            "https://k.breq.dev/testcomic/info.json").json()["num"])
+    async def get_hash(self):
+        return str((await self.get_url(
+            "https://k.breq.dev/testcomic/info.json", type="json"))["num"])

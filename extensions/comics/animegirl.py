@@ -6,9 +6,10 @@ import bs4
 import discord
 
 from ..base import UserError
+from . import comiclib
 
 
-class AnimeGirl():
+class AnimeGirl(comiclib.Comic):
     """:transgender_flag: Charon's sister dressed him up as a girl, and
     he liked it. This is their story, learning about who they are, and their
     friends and family around them. """
@@ -20,8 +21,7 @@ class AnimeGirl():
                 "/i-want-to-be-a-cute-anime-girl"
                 f"/list?title_no=349416&page={pageno}")
 
-            async with self.session.get(url) as response:
-                page = await response.text()
+            page = await self.get_url(url)
 
             soup = bs4.BeautifulSoup(page, "html.parser")
 
@@ -68,8 +68,7 @@ class AnimeGirl():
                "/i-want-to-be-a-cute-anime-girl/image-change/"
                f"viewer?title_no=349416&episode_no={episode_id}")
 
-        async with self.session.get(url) as response:
-            page = await response.text()
+        page = await self.get_url(url)
 
         soup = bs4.BeautifulSoup(page, "html.parser")
 
@@ -79,8 +78,8 @@ class AnimeGirl():
         for idx, image in enumerate(images.find_all("img")):
             url = image.attrs["data-url"]
             headers = {"Referer": "http://www.webtoons.com"}
-            async with self.session.get(url, headers=headers) as response:
-                image_file = await response.read()
+
+            image_file = await self.get_url(url, headers=headers, type="bin")
 
             image_file = discord.File(
                 io.BytesIO(image_file), filename=f"{idx}.jpg")
@@ -96,8 +95,7 @@ class AnimeGirl():
                "/i-want-to-be-a-cute-anime-girl"
                "/list?title_no=349416&page=1")
 
-        async with self.session.get(url) as response:
-            page = await response.text()
+        page = await self.get_url(url)
 
         soup = bs4.BeautifulSoup(page, "html.parser")
         return str(soup.find(id="_listUl").find("li").attrs["data-episode-no"])
