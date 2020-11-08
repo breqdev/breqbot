@@ -85,7 +85,7 @@ class Info(BaseCog):
                     + time.strftime("%T", time.gmtime(uptime)))
         fields.append(f"Uptime is **{time_str}**")
 
-        guilds = self.redis.scard("guild:list")
+        guilds = await self.redis.scard("guild:list")
         fields.append(f"Member of **{guilds}** servers")
 
         latest_commit = git_hash[:7]
