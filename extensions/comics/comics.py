@@ -13,6 +13,13 @@ class BaseComics(BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
         self.session = aiohttp.ClientSession()
+        # Note: discord.py does not run coroutines on Cog unload
+        # see (https://discordpy.readthedocs.io/en/latest/ext/
+        #      commands/api.html#discord.ext.commands.Cog.cog_unload)
+        # and (https://github.com/Rapptz/discord.py/issues/561)
+        # thus it isn't possible to close the aiohttp ClientSession cleanly
+        # ...man, I'm getting fed up with some of these design decisions
+
         self.watch_task.start()
 
         for comic in self.comics.values():
