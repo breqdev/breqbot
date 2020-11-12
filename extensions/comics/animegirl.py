@@ -76,10 +76,11 @@ class AnimeGirl(comiclib.Comic):
 
         images = soup.find(id="_imageList")
         for idx, image in enumerate(images.find_all("img")):
-            url = image.attrs["data-url"]
+            image_url = image.attrs["data-url"]
             headers = {"Referer": "http://www.webtoons.com"}
 
-            image_file = await self.get_url(url, headers=headers, type="bin")
+            image_file = await self.get_url(
+                image_url, headers=headers, type="bin")
 
             image_file = discord.File(
                 io.BytesIO(image_file), filename=f"{idx}.jpg")
@@ -87,7 +88,7 @@ class AnimeGirl(comiclib.Comic):
 
         caption = f"**{title}** | *I Want To Be a Cute Anime Girl!*"
 
-        embed = discord.Embed(title=caption)
+        embed = discord.Embed(title=caption, url=url)
         return None, files, embed
 
     async def get_hash(self):

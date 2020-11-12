@@ -27,7 +27,7 @@ class XKCD(comiclib.Comic):
         except json.decoder.JSONDecodeError:
             raise UserError(f"Comic {number} not found!")
 
-        embed = discord.Embed()
+        embed = discord.Embed(url=f"https://xkcd.com/{comic['num']}/")
         embed.title = f"**#{comic['num']}** | {comic['title']} | *xkcd*"
         # embed.set_image(url=comic["img"])
         embed.set_footer(text=comic["alt"])
