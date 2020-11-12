@@ -9,6 +9,10 @@ from ..base import UserError
 
 def setup(bot):
     @bot.event
+    async def on_command_completion(ctx):
+        await bot.redis.incr("commands:total_run")
+
+    @bot.event
     async def on_command_error(ctx, exception):
         if (isinstance(exception, commands.CheckFailure)
                 or isinstance(exception, commands.DisabledCommand)):

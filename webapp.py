@@ -121,10 +121,10 @@ def invite():
 @app.route("/status")
 def status():
     server_count = redis_client.scard("guild:list")
-    user_count = "100+"
+    user_count = redis_client.scard("user:list")
     testing_server_size = redis_client.scard(
         f"guild:member:{os.getenv('CONFIG_GUILD')}")
-    commands_run = "100+"
+    commands_run = redis_client.get("commands:total_run")
 
     return render_template(
         "status.html",
