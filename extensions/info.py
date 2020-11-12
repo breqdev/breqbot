@@ -90,11 +90,17 @@ class Info(BaseCog):
                     + time.strftime("%T", time.gmtime(uptime)))
         fields.append(f"Uptime is **{time_str}**")
 
+        latest_commit = git_hash[:7]
+        fields.append(f"Latest commit: `{latest_commit}`")
+
         guilds = await self.redis.scard("guild:list")
         fields.append(f"Member of **{guilds}** servers")
 
-        latest_commit = git_hash[:7]
-        fields.append(f"Latest commit: `{latest_commit}`")
+        users = await self.redis.scard("user:list")
+        fields.append(f"Total of **{users}** users")
+
+        commands = await self.redis.get("commands:total_run")
+        fields.append(f"**{commands}** commands run")
 
         embed.description = "\n".join(fields)
 
