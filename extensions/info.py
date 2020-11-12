@@ -96,52 +96,6 @@ class Info(BaseCog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.check(BaseCog.config_only)
-    async def guilds(self, ctx):
-        "List guilds that the bot is in"
-
-        embed = discord.Embed(title="Breqbot is in...")
-
-        guilds = []
-        for guild_id in await self.redis.smembers("guild:list"):
-            guilds.append((await self.redis.hget(f"guild:{guild_id}", "name"),
-                          await self.redis.scard(f"guild:member:{guild_id}")))
-
-        embed.description = "\n".join(f"{name}: {size}"
-                                      for name, size in guilds)
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    @commands.check(BaseCog.config_only)
-    async def activity(self, ctx, type: str, *, desc: str):
-        "Change Breqbot's status in Discord"
-
-        await self.redis.set("activity:type", type)
-        await self.redis.set("activity:name", desc)
-        await self.load_activity()
-
-    async def load_activity(self):
-        type = await self.redis.get("activity:type") or "watching"
-        desc = await self.redis.get("activity:name") or ";help | bot.breq.dev"
-
-        if type.lower().strip() == "playing":
-            activity = discord.Game(desc)
-        elif type.lower().strip() == "watching":
-            activity = discord.Activity(
-                name=desc, type=discord.ActivityType.watching)
-        elif type.lower().strip() == "streaming":
-            activity = discord.Streaming(url="https://bot.breq.dev/")
-        elif type.lower().strip() == "listening":
-            activity = discord.Activity(
-                name=desc, type=discord.ActivityType.listening)
-        elif type.lower().strip() == "competing":
-            activity = discord.Activity(
-                name=desc, type=discord.ActivityType.competing)
-
-        await self.bot.change_presence(status=discord.Status.online,
-                                       activity=activity)
-
-    @commands.command()
     async def awsnap(self, ctx):
         """Intentionally crash the bot :skull:
         in order to test its error handling"""
@@ -172,8 +126,6 @@ class Info(BaseCog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.load_activity()
-
         channel = self.bot.get_channel(int(os.getenv("UPDATE_CHANNEL")))
         embed = discord.Embed(title="Breqbot Connected! :blush: Hello World!")
 
