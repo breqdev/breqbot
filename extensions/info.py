@@ -15,7 +15,7 @@ git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
 
 class Info(BaseCog):
-    "Information and debugging tools"
+    "Information about Breqbot"
 
     @commands.command()
     async def info(self, ctx):
@@ -35,6 +35,11 @@ class Info(BaseCog):
                         value=f"{os.getenv('TESTING_DISCORD')}", inline=False)
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def say(self, ctx, *, message: str):
+        "Repeat after me!"
+        await ctx.send(discord.utils.escape_mentions(message))
 
     @commands.command()
     async def report(self, ctx):
