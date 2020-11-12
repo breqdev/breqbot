@@ -68,6 +68,15 @@ body {
     color: #FFF;
 }
 
+.jumbotron.status-online {
+    background-color: #09E85E;
+    color: #000;
+}
+
+.big-number {
+    font-size: 72px;
+}
+
 .balance-parent {
     text-align: center;
 }
@@ -119,15 +128,19 @@ strong {
 
 
 @media only screen and (max-width: 1000px) {
-    .card-columns {
+    .card-columns.index-cards {
         column-count: 1;
     }
 }
 
 @media only screen and (min-width: 1000px) {
-    .card-columns {
+    .card-columns.index-cards {
         column-count: 2;
     }
+}
+
+.row .card {
+    margin-bottom: 20px;
 }
 
 .btn-xl {

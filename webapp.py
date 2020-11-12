@@ -7,8 +7,11 @@ from flask_sockets import Sockets
 import gevent
 import geventwebsocket
 import redis
+import git
 
 from extensions.economy.itemlib import Item
+
+git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -113,6 +116,24 @@ def bugs():
 @app.route("/invite")
 def invite():
     return redirect(os.getenv("BOT_INVITE"))
+
+
+@app.route("/status")
+def status():
+    server_count = redis_client.scard("guild:list")
+    user_count = "100+"
+    testing_server_size = redis_client.scard(
+        f"guild:member:{os.getenv('CONFIG_GUILD')}")
+    commands_run = "100+"
+
+    return render_template(
+        "status.html",
+        server_count=server_count,
+        user_count=user_count,
+        git_hash=git_hash[:7],
+        testing_server_size=testing_server_size,
+        commands_run=commands_run
+    )
 
 
 class PortalBackend():
