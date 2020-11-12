@@ -54,6 +54,30 @@ class Config(BaseCog):
                                        activity=activity)
 
     @commands.command()
+    @commands.check(BaseCog.config_only)
+    async def addfriend(self, ctx, bot_id: int):
+        "Add a friendly bot to Breqbot's list of friends!"
+
+        await self.redis.sadd("user:friend:list", bot_id)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(BaseCog.config_only)
+    async def remfriend(self, ctx, bot_id: int):
+        "Remove a friendly bot from Breqbot's list of friends"
+
+        await self.redis.srem("user:friend:list", bot_id)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(BaseCog.config_only)
+    async def friends(self, ctx):
+        "List Breqbot's friends!"
+
+        friends = await self.redis.smembers("user:friend:list")
+        await ctx.send(" ".join(f"<@!{id}>" for id in friends))
+
+    @commands.command()
     @commands.guild_only()
     @commands.has_guild_permissions(administrator=True)
     async def enable(self, ctx, feature: str):
