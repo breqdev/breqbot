@@ -5,7 +5,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .base import BaseCog
+from ..base import BaseCog
 
 
 class Portal(BaseCog):
@@ -18,6 +18,9 @@ class Portal(BaseCog):
 
         if user_id and int(portal["owner"]) != user_id:
             raise commands.UserInputError(f"You do not own the portal {id}.")
+
+        if "price" not in portal:
+            portal["price"] = 0
 
         return portal
 
@@ -41,6 +44,7 @@ class Portal(BaseCog):
             "id": id,
             "name": "A Breqbot Portal",
             "desc": "Example Description",
+            "price": 0,
             "owner": ctx.author.id,
             "token": token,
             "status": "0",
@@ -85,6 +89,8 @@ class Portal(BaseCog):
             portal["name"] = value
         elif field == "desc":
             portal["desc"] = value
+        elif field == "price":
+            portal["price"] = int(value)
         else:
             raise commands.UserInputError(f"Invalid field {field}")
 
@@ -243,10 +249,15 @@ class Portal(BaseCog):
                 f"portal:from_id:{ctx.guild.id}:{id}")
             portals.append(portal)
 
+        if int(portal["price"]) > 0:
+            price_str = f"*({portal['price']}  ¢)*"
+        else:
+            price_str = "*(free)*"
+
         embed.description = "\n".join(
             f"{self.portal_status_to_emoji(portal['status'])} "
             f"`{portal['alias']}`: {portal['name']}, "
-            f"{portal['desc']} ({portal['id']})"
+            f"{portal['desc']} {price_str} ({portal['id']})"
             for portal in portals)
 
         await ctx.send(embed=embed)
@@ -262,10 +273,50 @@ class Portal(BaseCog):
             raise commands.UserInputError(f"Portal {name} does not exist!")
 
         portal_name = await self.redis.hget(f"portal:{portal_id}", "name")
+        portal_price = await self.redis.hget(
+            f"portal:{portal_id}", "price") or 0
+
+        if int(portal_price) > 0:
+            author_coins = await self.redis.get(
+                f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
+
+            if int(author_coins) < int(portal_price):
+                raise commands.UserInputError(
+                    f"Portal {name} costs {portal_price} Breqcoins.")
+
+            message = await ctx.send(
+                f"Portal {name} costs **{portal_price} Breqcoins**. "
+                "Confirm purchase?")
+
+            await message.add_reaction("✅")
+            await message.add_reaction("❌")
+
+            def check(reaction, user):
+                return (reaction.message.id == message.id
+                        and user.id == ctx.author.id
+                        and reaction.emoji in ("✅", "❌"))
+
+            try:
+                reaction, user = await self.bot.wait_for(
+                    "reaction_add", timeout=120, check=check)
+            except asyncio.TimeoutError:
+                return
+
+            await message.clear_reactions()
+
+            if reaction.emoji != "✅":
+                await message.edit(content="Transaction cancelled")
+                return
+
+            await self.redis.incrby(
+                f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
+                -int(portal_price))
+        else:
+            message = None
 
         pubsub = await self.redis.subscribe(f"portal:{portal_id}:{job_id}")
 
-        message = {
+        query = {
             "type": "query",
             "job": job_id,
             "portal": portal_id,
@@ -276,11 +327,15 @@ class Portal(BaseCog):
 
         embed = discord.Embed(title="Waiting for response...")
 
-        dismsg = await ctx.send(embed=embed)
+        if message:
+            await message.edit(content="", embed=embed)
+        else:
+            message = await ctx.send(embed=embed)
 
-        await self.redis.publish_json(f"portal:{portal_id}:{job_id}", message)
+        await self.redis.publish_json(
+            f"portal:{portal_id}:{job_id}", query)
 
-        message = None
+        response = None
         ts = time.time()
         frame = 0
 
@@ -290,25 +345,25 @@ class Portal(BaseCog):
                 embed.title = "Timed Out"
                 embed.description = (f"Portal {portal_name} "
                                      "did not respond in time.")
-                await dismsg.edit(embed=embed)
+                await message.edit(embed=embed)
                 return
 
             if frame % 5 == 0:
                 clock_index = (frame // 5) % len(clocks)
                 clock = clocks[clock_index]
                 embed.description = clock
-                await dismsg.edit(embed=embed)
+                await message.edit(embed=embed)
 
             if pubsub[0].is_active:
-                message = await pubsub[0].get_json()
-                if message["type"] == "response":
+                response = await pubsub[0].get_json()
+                if response["type"] == "response":
                     break
 
             frame += 1
 
             await asyncio.sleep(0.2)
 
-        data = message["data"]
+        data = response["data"]
 
         embed = discord.Embed()
         if "title" in data:
@@ -320,7 +375,7 @@ class Portal(BaseCog):
 
         embed.set_footer(text=f"Connected to Portal: {portal_name}")
 
-        await dismsg.edit(embed=embed)
+        await message.edit(embed=embed)
 
 
 def setup(bot):

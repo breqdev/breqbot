@@ -29,6 +29,7 @@ breqbot.load_extension("extensions.profile")
 # Economy
 breqbot.load_extension("extensions.economy.currency")
 breqbot.load_extension("extensions.economy.items")
+breqbot.load_extension("extensions.economy.portal")
 
 # - Reddit
 breqbot.load_extension("extensions.reddit.reddit")
@@ -38,9 +39,6 @@ breqbot.load_extension("extensions.comics.comics")
 
 # - Fun
 breqbot.load_extension("extensions.fun.fun")
-
-# - Portal
-breqbot.load_extension("extensions.portal")
 
 # - Lookup
 breqbot.load_extension("extensions.lookup.lookup")
