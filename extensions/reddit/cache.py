@@ -2,7 +2,7 @@ import os
 import time
 import random
 
-import requests
+import aiohttp
 import asyncpraw
 import discord
 from discord.ext import commands
@@ -20,10 +20,13 @@ class RedditCache:
             user_agent="Breqbot! https://breq.dev/ or bot@breq.dev"
         )
 
-    def content_type(self, url):
+        self.session = aiohttp.ClientSession()
+
+    async def content_type(self, url):
         "Return the MIME type of a resource located at a URL"
         try:
-            r = requests.head(url).headers.get("content-type")
+            async with self.session.head(url) as response:
+                r = response.headers.get("content-type")
         except IOError:
             return "invalid"
         if r:
@@ -69,7 +72,7 @@ class RedditCache:
                     continue
 
             if not sub_config.get("text"):
-                content = self.content_type(submission.url)
+                content = await self.content_type(submission.url)
                 if content != "image":
                     continue
 

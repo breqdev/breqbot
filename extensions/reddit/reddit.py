@@ -21,6 +21,12 @@ class BaseReddit(BaseCog):
         async def prune_history():
             await self.cache.prune_history()
 
+    @commands.command()
+    @commands.check(BaseCog.config_only)
+    async def rebuild_cache(self, ctx):
+        await ctx.message.add_reaction("✅")
+        await self.cache.build()
+
     async def default(self, ctx, sub_config):
         return await self.cache.get(sub_config, ctx.channel.id)
 
