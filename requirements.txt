@@ -34,12 +34,14 @@ prawcore==1.5.0
 pycparser==2.20
 PyNaCl==1.3.0
 python-resize-image==1.1.19
+pytz==2020.4
 redis==3.5.3
 requests==2.24.0
 selenium==3.141.0
 six==1.15.0
 smmap==3.0.4
 soupsieve==2.0.1
+timestring==1.6.4
 update-checker==0.18.0
 urllib3==1.25.10
 websocket-client==0.57.0

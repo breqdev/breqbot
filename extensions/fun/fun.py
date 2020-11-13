@@ -6,10 +6,10 @@ from discord.ext import commands
 
 from ..base import UserError
 
-from . import games, soundboard
+from . import games, soundboard, birthdays
 
 
-class Fun(games.Games, soundboard.Soundboard):
+class Fun(games.Games, soundboard.Soundboard, birthdays.Birthdays):
     "Miscellaneous fun commands and games"
 
     @commands.command()
