@@ -4,8 +4,8 @@ import itertools
 
 import bs4
 import discord
+from discord.ext import commands
 
-from ..base import UserError
 from . import comiclib
 
 
@@ -59,7 +59,8 @@ class AnimeGirl(comiclib.Comic):
 
                 if episode_no == "1":
                     # We have reached the first comic without any matches
-                    raise UserError(f"Episode {number} not found")
+                    raise commands.UserInputError(
+                        f"Episode {number} not found")
 
     async def get_post(self, number):
         title, episode_id = await self._get_id(number)

@@ -4,8 +4,6 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from ..base import UserError
-
 from . import games, soundboard, birthdays
 
 
@@ -18,10 +16,11 @@ class Fun(games.Games, soundboard.Soundboard, birthdays.Birthdays):
         "Run a poll to vote for your favorite answers!"
 
         if len(answers) > 10:
-            raise UserError('Polls are limited to 10 options. '
-                            'Did you remember to use quotes? e.g.\n'
-                            f'`{self.bot.main_prefix}poll '
-                            '"my question" "option 1" "option 2"...`')
+            raise commands.UserInputError(
+                'Polls are limited to 10 options. '
+                'Did you remember to use quotes? e.g.\n'
+                f'`{self.bot.main_prefix}poll '
+                '"my question" "option 1" "option 2"...`')
 
         embed = discord.Embed(title=f"Poll: **{question}**")
 

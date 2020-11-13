@@ -5,7 +5,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .base import BaseCog, UserError
+from .base import BaseCog
 
 
 class Portal(BaseCog):
@@ -14,10 +14,10 @@ class Portal(BaseCog):
     async def get_portal(self, id, user_id=None):
         portal = await self.redis.hgetall(f"portal:{id}")
         if not portal:
-            raise UserError(f"Portal {id} does not exist.")
+            raise commands.UserInputError(f"Portal {id} does not exist.")
 
         if user_id and int(portal["owner"]) != user_id:
-            raise UserError(f"You do not own the portal {id}.")
+            raise commands.UserInputError(f"You do not own the portal {id}.")
 
         return portal
 
@@ -86,7 +86,7 @@ class Portal(BaseCog):
         elif field == "desc":
             portal["desc"] = value
         else:
-            raise UserError(f"Invalid field {field}")
+            raise commands.UserInputError(f"Invalid field {field}")
 
         await self.set_portal(portal)
         await ctx.message.add_reaction("✅")
@@ -169,11 +169,13 @@ class Portal(BaseCog):
         portal = await self.get_portal(id, ctx.author.id)
 
         if not await self.check_name(name, ctx.guild.id):
-            raise UserError(f"A portal with the name {name} already exists.")
+            raise commands.UserInputError(
+                f"A portal with the name {name} already exists.")
 
         if await self.redis.sismember(
                 f"portal:list:{ctx.guild.id}", portal["id"]):
-            raise UserError("That portal already exists in this server.")
+            raise commands.UserInputError(
+                "That portal already exists in this server.")
 
         await self.redis.sadd(f"portal:list:{ctx.guild.id}", portal["id"])
         await self.redis.sadd(f"portal:guilds:{portal['id']}", ctx.guild.id)
@@ -191,7 +193,7 @@ class Portal(BaseCog):
         portal_id = await self.redis.get(
             f"portal:from_name:{ctx.guild.id}:{name}")
         if not portal_id:
-            raise UserError(f"The portal {name} does not exist.")
+            raise commands.UserInputError(f"The portal {name} does not exist.")
 
         portal = await self.get_portal(portal_id, ctx.author.id)
 
@@ -257,7 +259,7 @@ class Portal(BaseCog):
         portal_id = await self.redis.get(
             f"portal:from_name:{ctx.guild.id}:{name}")
         if not portal_id:
-            raise UserError(f"Portal {name} does not exist!")
+            raise commands.UserInputError(f"Portal {name} does not exist!")
 
         portal_name = await self.redis.hget(f"portal:{portal_id}", "name")
 

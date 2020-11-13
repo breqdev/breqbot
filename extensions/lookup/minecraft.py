@@ -6,7 +6,7 @@ from discord.ext import commands
 
 import requests
 
-from ..base import BaseCog, UserError, run_in_executor
+from ..base import BaseCog, run_in_executor
 
 
 class Minecraft(BaseCog):
@@ -30,7 +30,8 @@ class Minecraft(BaseCog):
         status = requests.get(f"https://mcstatus.breq.dev/status?server={ip}")
 
         if status.status_code != 200:
-            raise UserError("Could not connect to Minecraft server")
+            raise commands.UserInputError(
+                "Could not connect to Minecraft server")
 
         status = status.json()
 
@@ -64,7 +65,7 @@ class Minecraft(BaseCog):
     async def get_hash(self, ip):
         try:
             result = await self._get_state(ip)
-        except UserError:
+        except commands.UserInputError:
             return "disconnected"
         else:
             return json.dumps(result)

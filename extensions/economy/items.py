@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 
 from .itemlib import Item, MissingItem, EconomyCog
-from ..base import UserError
 
 
 class Items(EconomyCog):
@@ -61,7 +60,7 @@ class Items(EconomyCog):
     async def makeitem(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
         if not await Item.check_name(self.redis, ctx.guild.id, item):
-            raise UserError("Name in use!")
+            raise commands.UserInputError("Name in use!")
 
         item = Item(item, ctx.guild.id, ctx.author.id, desc, wearable)
         await item.to_redis(self.redis)
@@ -99,7 +98,7 @@ class Items(EconomyCog):
         elif field == "wearable":
             item.wearable = value
         else:
-            raise UserError("Invalid field!")
+            raise commands.UserInputError("Invalid field!")
         await item.to_redis(self.redis)
 
         await ctx.message.add_reaction("✅")
@@ -121,8 +120,9 @@ class Items(EconomyCog):
             dict = json.loads(blob)
             item = Item.from_dict(dict, ctx)
         except (json.JSONDecodeError, KeyError):
-            raise UserError("Invalid item import! Did you use "
-                            f"`{self.bot.main_prefix}exportitem` ?")
+            raise commands.UserInputError(
+                "Invalid item import! Did you use "
+                f"`{self.bot.main_prefix}exportitem` ?")
         else:
             await item.to_redis(self.redis)
             await ctx.message.add_reaction("✅")
@@ -195,14 +195,15 @@ class Items(EconomyCog):
         item = await Item.from_name(self.redis, ctx.guild.id, item)
 
         if not int(item.wearable):
-            raise UserError("Item is not wearable!")
+            raise commands.UserInputError("Item is not wearable!")
         await self.ensure_item(ctx, ctx.author, item)
 
         wearing = await self.redis.sismember(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if wearing:
-            raise UserError(f"You are already wearing a {item.name}!")
+            raise commands.UserInputError(
+                f"You are already wearing a {item.name}!")
 
         await self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
@@ -221,7 +222,8 @@ class Items(EconomyCog):
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
         if not wearing:
-            raise UserError(f"You are not wearing a {item.name}!")
+            raise commands.UserInputError(
+                f"You are not wearing a {item.name}!")
 
         await self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, 1)

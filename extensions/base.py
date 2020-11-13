@@ -5,10 +5,6 @@ import os
 from discord.ext import commands
 
 
-class UserError(commands.UserInputError):
-    pass
-
-
 class BaseCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

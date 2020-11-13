@@ -9,7 +9,6 @@ import discord
 from discord.ext import commands
 
 from .itemlib import Item, MissingItem, EconomyCog
-from ..base import UserError
 
 
 class Currency(EconomyCog):
@@ -74,11 +73,11 @@ class Currency(EconomyCog):
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
 
         if amount < 0:
-            raise UserError(f"Nice try {ctx.author.mention}, "
-                            "you cannot steal coins.")
+            raise commands.UserInputError(
+                f"Nice try {ctx.author.mention}, you cannot steal coins.")
 
         if int(balance) < amount:
-            raise UserError("Not enough coins!")
+            raise commands.UserInputError("Not enough coins!")
             return
 
         await self.redis.decr(
@@ -133,14 +132,14 @@ class Currency(EconomyCog):
         price_ea = await self.redis.get(
             f"shop:prices:{ctx.guild.id}:{item.uuid}")
         if price_ea is None:
-            raise UserError("Item is not for sale!")
+            raise commands.UserInputError("Item is not for sale!")
 
         price = int(price_ea) * amount
         balance = int(await self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
-            raise UserError("Not enough coins!")
+            raise commands.UserInputError("Not enough coins!")
 
         await self.redis.decr(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
@@ -268,8 +267,9 @@ class Currency(EconomyCog):
 
         if time_until > 0:
             ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
-            raise UserError(f"{ctx.author.display_name}, you must wait "
-                            f"**{ftime}** to claim more coins!")
+            raise commands.UserInputError(
+                f"{ctx.author.display_name}, you must wait "
+                f"**{ftime}** to claim more coins!")
 
         # Update latest collection
         await self.redis.set(

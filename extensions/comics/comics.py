@@ -5,7 +5,7 @@ import aiocron
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog, UserError
+from ..base import BaseCog
 
 from . import animegirl, xkcd, testcomic
 
@@ -94,15 +94,17 @@ def make_command(name, comic):
         if number == "watch":
             if ctx.guild:
                 if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise UserError("To prevent spam, "
-                                    "only administrators can watch comics.")
+                    raise commands.UserInputError(
+                        "To prevent spam, "
+                        "only administrators can watch comics.")
             await self.add_watch(name, ctx.channel.id)
             await ctx.message.add_reaction("✅")
         elif number == "unwatch":
             if ctx.guild:
                 if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise UserError("To prevent spam, "
-                                    "only administrators can watch comics.")
+                    raise commands.UserInputError(
+                        "To prevent spam, "
+                        "only administrators can watch comics.")
             await self.rem_watch(name, ctx.channel.id)
             await ctx.message.add_reaction("✅")
         elif number == "watching":

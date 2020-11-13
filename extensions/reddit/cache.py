@@ -5,8 +5,7 @@ import random
 import requests
 import asyncpraw
 import discord
-
-from ..base import UserError
+from discord.ext import commands
 
 
 class RedditCache:
@@ -119,7 +118,7 @@ class RedditCache:
             f"reddit:cache:list:{sub_config['command']}")
 
         if cache_size < 1:
-            raise UserError("The cache is still being built!")
+            raise commands.UserInputError("The cache is still being built!")
 
         post_idx = random.randint(0, cache_size-1)
 
@@ -160,10 +159,11 @@ class RedditCache:
         try:
             sub.id
         except asyncpraw.exceptions.ClientException:
-            raise UserError("Subreddit not found.")
+            raise commands.UserInputError("Subreddit not found.")
 
         if nsfw is False and sub.over18:
-            raise UserError("NSFW content is limited to NSFW channels only.")
+            raise commands.UserInputError(
+                "NSFW content is limited to NSFW channels only.")
 
         now = time.time()
 

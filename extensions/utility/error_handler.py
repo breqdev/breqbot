@@ -4,8 +4,6 @@ import os
 import discord
 from discord.ext import commands
 
-from ..base import UserError
-
 
 def setup(bot):
     @bot.event
@@ -18,7 +16,7 @@ def setup(bot):
                 or isinstance(exception, commands.DisabledCommand)):
             await ctx.message.add_reaction("⛔")
 
-        elif isinstance(exception, UserError):
+        elif isinstance(exception, commands.UserInputError):
             await ctx.message.add_reaction("🚫")
             await ctx.send(exception)
 

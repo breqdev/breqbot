@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog, UserError
+from ..base import BaseCog
 
 
 class Config(BaseCog):
@@ -85,7 +85,7 @@ class Config(BaseCog):
         if feature == "website":
             await self.redis.hset(f"guild:{ctx.guild.id}", "website", "1")
         else:
-            raise UserError(f"Unsupported feature: {feature}")
+            raise commands.UserInputError(f"Unsupported feature: {feature}")
 
         await ctx.message.add_reaction("✅")
 
@@ -97,7 +97,7 @@ class Config(BaseCog):
         if feature == "website":
             await self.redis.hset(f"guild:{ctx.guild.id}", "website", "0")
         else:
-            raise UserError(f"Unsupported feature: {feature}")
+            raise commands.UserInputError(f"Unsupported feature: {feature}")
 
         await ctx.message.add_reaction("✅")
 

@@ -8,7 +8,7 @@ from discord.ext import commands
 import emoji
 import youtube_dl
 
-from ..base import BaseCog, UserError
+from ..base import BaseCog
 from .. import emoji_utils
 
 ytdl_format_options = {
@@ -60,7 +60,8 @@ class SoundClient():
     def __init__(self, ctx):
         voice_state = ctx.author.voice
         if not voice_state or not voice_state.channel:
-            raise UserError("You are not connected to a voice channel!")
+            raise commands.UserInputError(
+                "You are not connected to a voice channel!")
 
         self.channel = voice_state.channel
         self.playing = False
@@ -73,7 +74,7 @@ class SoundClient():
         try:
             self.device = await self.channel.connect()
         except discord.ClientException:
-            raise UserError(
+            raise commands.UserInputError(
                 "Breqbot is already connected to a voice channel!")
         else:
             return self
@@ -114,7 +115,8 @@ class Soundboard(BaseCog):
         parsed = urllib.parse.urlparse(url)
 
         if parsed.scheme not in ("http", "https"):
-            raise UserError(f"Invalid URL scheme: {parsed.scheme}")
+            raise commands.UserInputError(
+                f"Invalid URL scheme: {parsed.scheme}")
 
         if parsed.netloc not in ("www.youtube.com",
                                  "youtu.be",
@@ -122,7 +124,8 @@ class Soundboard(BaseCog):
                                  "www.youtu.be",
                                  "www.youtube-nocookie.com",
                                  "youtube-nocookie.com"):
-            raise UserError(f"Not a YouTube url: {parsed.netloc}")
+            raise commands.UserInputError(
+                f"Not a YouTube url: {parsed.netloc}")
 
         if parsed.netloc in ("youtu.be", "www.youtu.be"):
             # Shortened URL
@@ -133,18 +136,20 @@ class Soundboard(BaseCog):
                 # Video URL
                 qs = urllib.parse.parse_qs(parsed.query)
                 if qs.get("v") is None:
-                    raise UserError(f"Video ID not specified: {qs}")
+                    raise commands.UserInputError(
+                        f"Video ID not specified: {qs}")
                 id = qs["v"][0]
             elif parsed.path.startswith("/embed/"):
                 # Embed URL
                 id = parsed.path[len("/embed/"):]
             else:
                 # URL not recognised
-                raise UserError(f"Invalid video path: {parsed.path}")
+                raise commands.UserInputError(
+                    f"Invalid video path: {parsed.path}")
 
         # Verify that the parsed ID looks right
         if not bool(re.match(r"[A-Za-z0-9\-_]{11}", id)):
-            raise UserError(f"Invalid video ID: {id}")
+            raise commands.UserInputError(f"Invalid video ID: {id}")
 
         return id
 
@@ -152,7 +157,7 @@ class Soundboard(BaseCog):
         try:
             metadata = ytdl.extract_info(id, download=False)
         except youtube_dl.utils.DownloadError:
-            raise UserError(f"Invalid YouTube ID: {id}")
+            raise commands.UserInputError(f"Invalid YouTube ID: {id}")
         return metadata["title"]
 
     @commands.command()
@@ -180,7 +185,7 @@ class Soundboard(BaseCog):
         "Remove a sound :wastebasket:"
         if not await self.redis.sismember(
                 f"soundboard:sounds:{ctx.guild.id}", name):
-            raise UserError("Sound not found")
+            raise commands.UserInputError("Sound not found")
 
         await self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", name)
         await self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{name}")
@@ -219,7 +224,7 @@ class Soundboard(BaseCog):
             f"soundboard:sounds:{ctx.guild.id}:{name}")
 
         if not sound:
-            raise UserError(f"Invalid sound {name}")
+            raise commands.UserInputError(f"Invalid sound {name}")
 
         async with SoundClient(ctx) as client:
             await client.play_sound(sound["youtube-id"])

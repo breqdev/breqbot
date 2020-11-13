@@ -3,8 +3,8 @@ import io
 import random
 
 import discord
+from discord.ext import commands
 
-from ..base import UserError
 from . import comiclib
 
 
@@ -25,7 +25,7 @@ class XKCD(comiclib.Comic):
         try:
             comic = await self.get_url(url, type="json")
         except json.decoder.JSONDecodeError:
-            raise UserError(f"Comic {number} not found!")
+            raise commands.UserInputError(f"Comic {number} not found!")
 
         embed = discord.Embed(url=f"https://xkcd.com/{comic['num']}/")
         embed.title = f"**#{comic['num']}** | {comic['title']} | *xkcd*"

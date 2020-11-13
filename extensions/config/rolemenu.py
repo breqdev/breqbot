@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from discord.ext import commands
 
 
-from ..base import BaseCog, UserError
+from ..base import BaseCog
 
 
 class Menu:
@@ -20,8 +20,8 @@ class Menu:
     async def from_redis(redis, channel_id, message_id):
         hash = await redis.hgetall(f"rolemenu:{channel_id}:{message_id}")
         if not hash:
-            raise UserError(f"Role Menu with ID {channel_id}:{message_id} "
-                            "does not exist")
+            raise commands.UserInputError(
+                f"Role Menu with ID {channel_id}:{message_id} does not exist")
 
         name = hash["name"]
         desc = hash["desc"]
@@ -160,7 +160,8 @@ class RoleMenu(BaseCog):
             urlparse(link).path.lstrip("/").split("/")
 
         if int(guild_id) != ctx.guild.id:
-            raise UserError("That role menu belongs to a different guild!")
+            raise commands.UserInputError(
+                "That role menu belongs to a different guild!")
 
         return await Menu.from_redis(self.redis, channel_id, message_id)
 
@@ -198,7 +199,7 @@ class RoleMenu(BaseCog):
             if irole.name == role:
                 break
         else:
-            raise UserError(f"Role {role} does not exist")
+            raise commands.UserInputError(f"Role {role} does not exist")
 
         menu = await self.get_menu_from_link(ctx, message_link)
         menu.mapping[emoji] = irole.id
