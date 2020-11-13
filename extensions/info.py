@@ -55,7 +55,8 @@ class Info(BaseCog):
     @commands.command()
     async def suggest(self, ctx):
         "Get a link to the Discord server where you can make suggestions!"
-        await ctx.send(f"Help us patch bugs! {os.getenv('TESTING_DISCORD')}")
+        await ctx.send("Suggest new features for Breqbot!"
+                       f" {os.getenv('TESTING_DISCORD')}")
 
     @commands.command()
     async def ping(self, ctx):
@@ -71,7 +72,9 @@ class Info(BaseCog):
     async def stats(self, ctx):
         "Stats for nerds :robot: about the running Breqbot instance"
 
-        embed = discord.Embed(title="`Stats for nerds`")
+        embed = discord.Embed(
+            title="`Stats for nerds`",
+            url=f"{os.getenv('WEBSITE')}status")
 
         fields = []
 
