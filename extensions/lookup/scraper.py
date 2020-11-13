@@ -1,17 +1,15 @@
-import requests
-
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog, run_in_executor
+from ..base import BaseCog
 
 
 class Scraper(BaseCog):
     "Scrape a website or watch it for changes"
 
-    @run_in_executor
-    def _get_content(self, url):
-        return bytes.decode(requests.get(url).content, "utf-8")
+    async def _get_content(self, url):
+        async with self.session.get(url) as response:
+            return await response.text()
 
     @commands.command()
     async def url(self, ctx, url: str):

@@ -1,8 +1,12 @@
+import aiohttp
+
 from . import scraper, vex
 
 
 class Lookup(scraper.Scraper, vex.Vex):
-    pass
+    def __init__(self, bot):
+        super().__init__(bot)
+        self.session = aiohttp.ClientSession()
 
 
 def setup(bot):

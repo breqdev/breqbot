@@ -1,10 +1,9 @@
 import typing
-import requests
 
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog, run_in_executor
+from ..base import BaseCog
 
 
 class Vex(BaseCog):
@@ -12,26 +11,33 @@ class Vex(BaseCog):
 
     SEASON = "Tower Takeover"
 
+    async def get_json(self, url, params={}):
+        async with self.session.get(url, params=params) as response:
+            return await response.json()
+
     async def get_team_overview(self, team):
-        team = requests.get("https://api.vexdb.io/v1/get_teams",
-                            params={"team": team}).json()["result"][0]
+        team = (await self.get_json(
+            "https://api.vexdb.io/v1/get_teams",
+            params={"team": team})
+        )["result"][0]
 
         embed = discord.Embed(
             title=f"{team['program']} team {team['number']}: "
             f"{team['team_name']}")
 
-        awards_raw = requests.get(
+        awards_raw = (await self.get_json(
             "https://api.vexdb.io/v1/get_awards",
-            params={"team": team["number"], "season": self.SEASON}
-        ).json()["result"]
+            params={"team": team["number"], "season": self.SEASON})
+        )["result"]
 
         awards = []
         for award_raw in awards_raw:
             award_name = award_raw["name"]
 
-            event_raw = requests.get(
+            event_raw = (await self.get_json(
                 "https://api.vexdb.io/v1/get_events",
-                params={"sku": award_raw["sku"]}).json()["result"][0]
+                params={"sku": award_raw["sku"]})
+            )["result"][0]
             event_name = event_raw["name"]
             awards.append((award_name, event_name))
 
@@ -42,23 +48,24 @@ class Vex(BaseCog):
 
         awards = "**Awards:**\n" + awards
 
-        rankings_raw = requests.get(
+        rankings_raw = (await self.get_json(
             "https://api.vexdb.io/v1/get_rankings",
-            params={"team": team["number"], "season": self.SEASON}
-        ).json()["result"]
+            params={"team": team["number"], "season": self.SEASON})
+        )["result"]
 
         rankings = []
         for ranking_raw in rankings_raw:
             ranking = ranking_raw["rank"]
 
-            teams_count = requests.get(
+            teams_count = (await self.get_json(
                 "https://api.vexdb.io/v1/get_teams",
-                params={"sku": ranking_raw["sku"], "nodata": "true"}
-            ).json()["size"]
+                params={"sku": ranking_raw["sku"], "nodata": "true"})
+            )["size"]
 
-            event_raw = requests.get(
+            event_raw = (await self.get_json(
                 "https://api.vexdb.io/v1/get_events",
-                params={"sku": ranking_raw["sku"]}).json()["result"][0]
+                params={"sku": ranking_raw["sku"]})
+            )["result"][0]
             event_name = event_raw["name"]
 
             rankings.append((ranking, teams_count, event_name))
@@ -74,38 +81,36 @@ class Vex(BaseCog):
 
         return None, [], embed
 
-    @run_in_executor
-    def get_meet_data(self, team, sku):
-        team = requests.get(
+    async def get_meet_data(self, team, sku):
+        team = (await self.get_json(
             "https://api.vexdb.io/v1/get_teams",
-            params={"team": team}
-        ).json()["result"][0]
+            params={"team": team})
+        )["result"][0]
 
-        event = requests.get(
+        event = (await self.get_json(
             "https://api.vexdb.io/v1/get_events",
-            params={"sku": sku}
-        ).json()["result"][0]
+            params={"sku": sku})
+        )["result"][0]
 
-        matches = requests.get(
+        matches = (await self.get_json(
             "https://api.vexdb.io/v1/get_matches",
-            params={"sku": sku, "team": team["number"],
-                    "scored": 1}
-        ).json()["result"]
+            params={"sku": sku, "team": team["number"], "scored": 1})
+        )["result"]
 
-        driver_skills = requests.get(
+        driver_skills = (await self.get_json(
             "https://api.vexdb.io/v1/get_skills",
-            params={"sku": sku, "team": team["number"], "type": 0}
-        ).json()["result"][0]
+            params={"sku": sku, "team": team["number"], "type": 0})
+        )["result"][0]
 
-        programming_skills = requests.get(
+        programming_skills = (await self.get_json(
             "https://api.vexdb.io/v1/get_skills",
-            params={"sku": sku, "team": team["number"], "type": 1}
-        ).json()["result"][0]
+            params={"sku": sku, "team": team["number"], "type": 1})
+        )["result"][0]
 
-        ranking = requests.get(
+        ranking = (await self.get_json(
             "https://api.vexdb.io/v1/get_rankings",
-            params={"sku": sku, "team": team["number"]}
-        ).json()["result"][0]
+            params={"sku": sku, "team": team["number"]})
+        )["result"][0]
 
         return team, event, matches, driver_skills, programming_skills, ranking
 

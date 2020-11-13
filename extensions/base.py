@@ -1,5 +1,3 @@
-import functools
-import asyncio
 import os
 
 from discord.ext import commands
@@ -33,11 +31,3 @@ class BaseCog(commands.Cog):
                 await dest.send(files=group)
             # Send the final message with the embed
             await dest.send(embed=embed, files=file_groups[-1])
-
-
-def run_in_executor(f):
-    @functools.wraps(f)
-    def inner(*args, **kwargs):
-        loop = asyncio.get_running_loop()
-        return loop.run_in_executor(None, lambda: f(*args, **kwargs))
-    return inner
