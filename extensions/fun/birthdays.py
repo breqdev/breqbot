@@ -1,10 +1,11 @@
 import typing
 
+import aiocron
 import timestring
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 
-from ..base import BaseCog, graceful_task
+from ..base import BaseCog
 
 
 class Birthdays(BaseCog):
@@ -12,7 +13,29 @@ class Birthdays(BaseCog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.birthday_reminders.start()
+        @aiocron.crontab("0 0 * * *")
+        async def birthday_reminders():
+            date = timestring.Date("now")
+
+            for channel in self.bot.get_all_channels():
+                for member_id in (await self.redis.smembers(
+                        f"birthdays:channel:{channel.id}")):
+
+                    birthday = await self.redis.hgetall(
+                        f"birthdays:user:{member_id}")
+
+                    if not birthday:
+                        continue
+
+                    if not (birthday["month"] == str(date.month)
+                            and birthday["day"] == str(date.day)):
+                        continue
+
+                    member = self.bot.get_user(int(member_id))
+
+                    message = (f"It's {member.mention}'s birthday! "
+                               ":partying_face:")
+                    await channel.send(message)
 
     @commands.command()
     async def setbirthday(self, ctx, *, date: str):
@@ -71,27 +94,3 @@ class Birthdays(BaseCog):
             embed.description = "Nobody's birthday is today :("
 
         await ctx.send(embed=embed)
-
-    @tasks.loop(hours=24)
-    @graceful_task
-    async def birthday_reminders(self):
-        date = timestring.Date("now")
-
-        for channel in self.bot.get_all_channels():
-            for member_id in (await self.redis.smembers(
-                    f"birthdays:channel:{channel.id}")):
-
-                birthday = await self.redis.hgetall(
-                    f"birthdays:user:{member_id}")
-
-                if not birthday:
-                    continue
-
-                if not (birthday["month"] == str(date.month)
-                        and birthday["day"] == str(date.day)):
-                    continue
-
-                member = self.bot.get_user(int(member_id))
-
-                message = f"It's {member.mention}'s birthday! :partying_face:"
-                await channel.send(message)

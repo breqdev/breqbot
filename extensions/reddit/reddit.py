@@ -1,9 +1,10 @@
 import json
 
+import aiocron
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 
-from ..base import BaseCog, graceful_task
+from ..base import BaseCog
 from . import cache
 
 
@@ -11,18 +12,14 @@ class BaseReddit(BaseCog):
     def __init__(self, bot, config):
         super().__init__(bot)
         self.cache = cache.RedditCache(self.redis, config)
-        self.build_cache.start()
-        self.prune_history.start()
 
-    @tasks.loop(hours=3)
-    @graceful_task
-    async def build_cache(self):
-        await self.cache.build()
+        @aiocron.crontab("0 */3 * * *")
+        async def build_cache():
+            await self.cache.build()
 
-    @tasks.loop(minutes=1)
-    @graceful_task
-    async def prune_history(self):
-        await self.cache.prune_history()
+        @aiocron.crontab("*/1 * * * *")
+        async def prune_history():
+            await self.cache.prune_history()
 
     async def default(self, ctx, sub_config):
         return await self.cache.get(sub_config, ctx.channel.id)

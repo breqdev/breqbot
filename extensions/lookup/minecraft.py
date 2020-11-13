@@ -1,18 +1,29 @@
 import json
 
+import aiocron
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 import requests
 
-from ..base import BaseCog, UserError, run_in_executor, graceful_task
+from ..base import BaseCog, UserError, run_in_executor
 
 
 class Minecraft(BaseCog):
     "Tools for Minecraft servers"
     @commands.Cog.listener()
     async def on_ready(self):
-        self.watch_task.start()
+        @aiocron.crontab("*/1 * * * *")
+        async def watch_task():
+            for ip in await self.redis.smembers("mc:watching:ips"):
+                new_hash = await self.get_hash(ip)
+                old_hash = await self.redis.get(f"mc:hash:{ip}")
+                if old_hash != new_hash:
+                    await self.redis.set(f"mc:hash:{ip}", new_hash)
+                    for channel_id in \
+                            await self.redis.smembers(f"mc:watching:ip:{ip}"):
+                        channel = self.bot.get_channel(int(channel_id))
+                        await channel.send(embed=await self.get_embed(ip))
 
     @run_in_executor
     def _get_state(self, ip):
@@ -109,19 +120,6 @@ class Minecraft(BaseCog):
                 f"mc:watching:channel:{ctx.channel.id}"))
 
         await ctx.send(embed=embed)
-
-    @tasks.loop(minutes=1)
-    @graceful_task
-    async def watch_task(self):
-        for ip in await self.redis.smembers("mc:watching:ips"):
-            new_hash = await self.get_hash(ip)
-            old_hash = await self.redis.get(f"mc:hash:{ip}")
-            if old_hash != new_hash:
-                await self.redis.set(f"mc:hash:{ip}", new_hash)
-                for channel_id in \
-                        await self.redis.smembers(f"mc:watching:ip:{ip}"):
-                    channel = self.bot.get_channel(int(channel_id))
-                    await channel.send(embed=await self.get_embed(ip))
 
 
 def setup(bot):

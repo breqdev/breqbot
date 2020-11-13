@@ -1,10 +1,11 @@
 import typing
 
 import aiohttp
+import aiocron
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 
-from ..base import BaseCog, UserError, graceful_task
+from ..base import BaseCog, UserError
 
 from . import animegirl, xkcd, testcomic
 
@@ -20,10 +21,22 @@ class BaseComics(BaseCog):
         # thus it isn't possible to close the aiohttp ClientSession cleanly
         # ...man, I'm getting fed up with some of these design decisions
 
-        self.watch_task.start()
-
         for comic in self.comics.values():
             comic.session = self.session
+
+        @aiocron.crontab("*/15 * * * *")
+        async def watch_task():
+            for name, comic in self.comics.items():
+                new_hash = await comic.get_hash()
+                old_hash = await self.redis.get(f"comic:hash:{name}")
+                if old_hash != new_hash:
+                    await self.redis.set(f"comic:hash:{name}", new_hash)
+                    for channel_id in \
+                            await self.redis.smembers(
+                                f"comic:watching:{name}"):
+                        channel = self.bot.get_channel(int(channel_id))
+                        await self.pack_send(
+                            channel, *(await comic.get_post("latest")))
 
     async def add_watch(self, series, channel_id):
         await self.redis.sadd(f"comic:watching:{series}", channel_id)
@@ -66,20 +79,6 @@ class BaseComics(BaseCog):
         embed.description = ", ".join(name for name in watching)
 
         await ctx.send(embed=embed)
-
-    @tasks.loop(minutes=15)
-    @graceful_task
-    async def watch_task(self):
-        for name, comic in self.comics.items():
-            new_hash = await comic.get_hash()
-            old_hash = await self.redis.get(f"comic:hash:{name}")
-            if old_hash != new_hash:
-                await self.redis.set(f"comic:hash:{name}", new_hash)
-                for channel_id in \
-                        await self.redis.smembers(f"comic:watching:{name}"):
-                    channel = self.bot.get_channel(int(channel_id))
-                    await self.pack_send(
-                        channel, *(await comic.get_post("latest")))
 
 
 comics = {
