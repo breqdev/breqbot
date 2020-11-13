@@ -4,15 +4,17 @@ import aiocron
 import discord
 from discord.ext import commands
 
-import requests
+import aiohttp
 
-from ..base import BaseCog, run_in_executor
+from ..base import BaseCog
 
 
 class Minecraft(BaseCog):
     "Tools for Minecraft servers"
     @commands.Cog.listener()
     async def on_ready(self):
+        self.session = aiohttp.ClientSession()
+
         @aiocron.crontab("*/1 * * * *")
         async def watch_task():
             for ip in await self.redis.smembers("mc:watching:ips"):
@@ -25,15 +27,15 @@ class Minecraft(BaseCog):
                         channel = self.bot.get_channel(int(channel_id))
                         await channel.send(embed=await self.get_embed(ip))
 
-    @run_in_executor
-    def _get_state(self, ip):
-        status = requests.get(f"https://mcstatus.breq.dev/status?server={ip}")
+    async def _get_state(self, ip):
+        async with self.session.get(
+                f"https://mcstatus.breq.dev/status?server={ip}") as response:
+            code = response.status
+            status = await response.json()
 
-        if status.status_code != 200:
+        if code != 200:
             raise commands.UserInputError(
                 "Could not connect to Minecraft server")
-
-        status = status.json()
 
         description = []
 
