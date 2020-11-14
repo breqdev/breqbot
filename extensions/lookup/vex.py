@@ -1,5 +1,8 @@
 import typing
+import json
 
+import aiohttp
+import aiocron
 import discord
 from discord.ext import commands
 
@@ -10,6 +13,27 @@ class Vex(BaseCog):
     "Information about the VEX Robotics Competition"
 
     SEASON = "Tower Takeover"
+
+    def __init__(self, bot):
+        super().__init__(bot)
+        self.session = aiohttp.ClientSession()
+
+        @aiocron.crontab("*/1 * * * *")
+        async def watch_task():
+            for pair in await self.redis.smembers("vex:watch:list"):
+                data = await self.get_meet_data(*(pair.split(":")))
+                new_hash = json.dumps(data)
+                old_hash = await self.redis.get(f"vex:hash:{pair}")
+                if old_hash != new_hash:
+                    await self.redis.set(f"vex:hash:{pair}", new_hash)
+
+                    embed = self.get_meet_overview(*data)
+
+                    for channel_id in \
+                            await self.redis.smembers(f"vex:watch:{pair}"):
+                        channel = self.bot.get_channel(int(channel_id))
+
+                        await channel.send(embed=embed)
 
     async def get_json(self, url, params={}):
         async with self.session.get(url, params=params) as response:
@@ -114,6 +138,10 @@ class Vex(BaseCog):
 
         return team, event, matches, driver_skills, programming_skills, ranking
 
+    async def get_hash(self, team, sku):
+        data = await self.get_meet_data(team, sku)
+        return json.dumps(data)
+
     def matchnum(self, match):
         if match["round"] == 1:  # Practice
             return f"P{match['matchnum']}"
@@ -164,9 +192,8 @@ class Vex(BaseCog):
 
         return f"{num}\t-\t{redteams}\t{score}\t{blueteams}\t-\t{result}"
 
-    async def get_meet_overview(self, team, sku):
-        team, event, matches, driver_skills, programming_skills, ranking \
-            = await self.get_meet_data(team, sku)
+    def get_meet_overview(self, team, event, matches,
+                          driver_skills, programming_skills, ranking):
 
         embed = discord.Embed(
             title=f"**{team['number']}**: *{team['team_name']}* at"
@@ -194,9 +221,69 @@ class Vex(BaseCog):
     async def vex(self, ctx, team: str, sku: typing.Optional[str] = None):
         ":mag: :robot: Get info about a Vex team :video_game:"
         if sku:
-            content, files, embed = await self.get_meet_overview(team, sku)
+            content, files, embed = self.get_meet_overview(
+                *(await self.get_meet_data(team, sku)))
         else:
             content, files, embed = await self.get_team_overview(team)
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def watchteam(self, ctx, team: str, sku: str):
+        "Subscribe to updates from a Vex team!"
+
+        if ctx.guild:
+            if not ctx.channel.permissions_for(ctx.author).administrator:
+                raise commands.UserInputError(
+                    "To prevent spam, "
+                    "only administrators can watch VEX teams.")
+
+        team = team.upper()
+        sku = sku.upper()
+
+        hash = await self.get_hash(team, sku)
+
+        await self.redis.set(f"vex:hash:{team}:{sku}", hash)
+        await self.redis.sadd(f"vex:watch:{team}:{sku}", ctx.channel.id)
+        await self.redis.sadd(f"vex:channel:{ctx.channel.id}", f"{team}:{sku}")
+        await self.redis.sadd("vex:watch:list", f"{team}:{sku}")
+
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    async def unwatchteam(self, ctx, team: str, sku: str):
+        "Unsubscribe from updates about a team."
+
+        if ctx.guild:
+            if not ctx.channel.permissions_for(ctx.author).administrator:
+                raise commands.UserInputError(
+                    "To prevent spam, "
+                    "only administrators can unwatch VEX teams.")
+
+        team = team.upper()
+        sku = sku.upper()
+
+        await self.redis.srem(f"vex:watch:{team}:{sku}", ctx.channel.id)
+        await self.redis.srem(f"vex:channel:{ctx.channel.id}", f"{team}:{sku}")
+        if (await self.redis.scard(f"vex:watch:{team}:{sku}")) == 0:
+            await self.redis.srem("vex:watch:list", f"{team}:{sku}")
+
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    async def watchingteams(self, ctx):
+        "List VEX teams and events being watched"
+
+        embed = discord.Embed(title=f"#{ctx.channel.name} is watching...")
+
+        embed.description = ""
+        pairs = await self.redis.smembers(f"vex:channel:{ctx.channel.id}")
+        for pair in pairs:
+            team, sku = pair.split(":")
+            embed.description += f"**{team}** | *{sku}*\n"
+
+        if not embed.description:
+            embed.description = "None"
 
         await ctx.send(embed=embed)
 

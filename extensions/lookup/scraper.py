@@ -1,3 +1,4 @@
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -6,6 +7,10 @@ from ..base import BaseCog
 
 class Scraper(BaseCog):
     "Scrape a website or watch it for changes"
+
+    def __init__(self, bot):
+        super().__init__(bot)
+        self.session = aiohttp.ClientSession()
 
     async def _get_content(self, url):
         async with self.session.get(url) as response:

@@ -41,7 +41,8 @@ breqbot.load_extension("extensions.comics.comics")
 breqbot.load_extension("extensions.fun.fun")
 
 # - Lookup
-breqbot.load_extension("extensions.lookup.lookup")
+breqbot.load_extension("extensions.lookup.scraper")
+breqbot.load_extension("extensions.lookup.vex")
 breqbot.load_extension("extensions.lookup.minecraft")
 
 # - Configuration
