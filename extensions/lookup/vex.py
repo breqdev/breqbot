@@ -9,7 +9,7 @@ from discord.ext import commands
 from .. import base
 
 
-class Vex(base.BaseCog):
+class Vex(base.BaseCog, command_attrs=dict(hidden=True)):
     "Information about the VEX Robotics Competition"
 
     SEASON = "Tower Takeover"
