@@ -11,8 +11,9 @@ class TestComic(comiclib.Comic):
     "this is a test"
 
     async def get_post(self, number):
-        max_no = await self.get_url(
-            "https://k.breq.dev/testcomic/info.json", type="json")["num"]
+        max_no = json.loads(
+            await self.get_url(
+                "https://k.breq.dev/testcomic/info.json"))["num"]
 
         if number == "random":
             url = ("https://k.breq.dev/testcomic/"
@@ -24,7 +25,7 @@ class TestComic(comiclib.Comic):
             url = f"https://k.breq.dev/testcomic/{number}.json"
 
         try:
-            comic = await self.get_url(url, type="json")
+            comic = json.loads(await self.get_url(url))
         except json.decoder.JSONDecodeError:
             raise commands.UserInputError(f"Comic {number} not found!")
 
