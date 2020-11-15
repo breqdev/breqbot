@@ -25,17 +25,20 @@ class Info(base.BaseCog):
 
         embed = discord.Embed(title="Hi, I'm Breqbot! Beep boop :robot:")
 
-        embed.description = ("A bot built by the one and only Breq#8296. "
-                             f"See {self.bot.main_prefix}help for "
-                             "features!")
+        embed.description = (
+            "A bot built by the one and only Breq#8296, "
+            "full of fun commands for your server! "
+            f"See `{self.bot.main_prefix}help` for features. "
+            "\n\n"
+            "[Invite Breqbot to your server!]"
+            f"({os.getenv('WEBSITE')}invite)\n"
+            "[Join the Breqbot discussion server!]"
+            f"({os.getenv('WEBSITE')}guild)\n"
+            "[View Breqbot's code on GitHub!]"
+            f"({os.getenv('WEBSITE')}github)\n"
+        )
 
-        embed.add_field(name="Invite Breqbot to your server!",
-                        value=f"{os.getenv('WEBSITE')}invite",
-                        inline=False)
-        embed.add_field(name="Join the Breqbot discussion server!",
-                        value=f"{os.getenv('TESTING_DISCORD')}", inline=False)
-        embed.add_field(name="View and contribute to Breqbot's code!",
-                        value=f"{os.getenv('GITHUB_URL')}", inline=False)
+        embed.set_image(url=f"{os.getenv('WEBSITE')}static/banner.jpg")
 
         await ctx.send(embed=embed)
 
