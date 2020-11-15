@@ -152,7 +152,7 @@ class EconomyCog(BaseCog):
             return False
         if ctx.author.permissions_in(ctx.channel).administrator:
             return True
-        if ctx.author.id == int(os.getenv("MAIN_SHOPKEEPER")):
+        if ctx.author.id == int(os.getenv("BOT_OWNER")):
             return True
         for role in ctx.author.roles:
             if role.name == "Shopkeeper":
