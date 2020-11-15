@@ -53,6 +53,7 @@ breqbot.load_extension("extensions.utility.help_command")
 breqbot.load_extension("extensions.utility.error_handler")
 breqbot.load_extension("extensions.utility.guild_watch")
 breqbot.load_extension("extensions.utility.friendly_bots")
+breqbot.load_extension("extensions.utility.global_config")
 
 
 breqbot.run(os.getenv("DISCORD_TOKEN"))
