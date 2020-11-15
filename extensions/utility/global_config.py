@@ -87,6 +87,28 @@ class GlobalConfig(BaseCog):
         friends = await self.redis.smembers("user:friend:list")
         await ctx.send(" ".join(f"<@{id}>" for id in friends))
 
+    @commands.command()
+    @commands.check(BaseCog.config_only)
+    async def addalsotry(self, ctx, bot: discord.User, invite: str,
+                         *, desc: str):
+        "Add a bot to Breqbot's 'also try <name>!' feature!"
+
+        await self.redis.hset(f"alsotry:{bot.id}", "invite", invite)
+        await self.redis.hset(f"alsotry:{bot.id}", "name", bot.name)
+        await self.redis.hset(f"alsotry:{bot.id}", "desc", desc)
+
+        await self.redis.sadd("alsotry:list", bot.id)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    @commands.check(BaseCog.config_only)
+    async def remalsotry(self, ctx, bot_id: int):
+        "Remove a bot from the 'also try' list."
+
+        await self.redis.srem("alsotry:list", bot_id)
+        await self.redis.delete(f"alsotry:{bot_id}")
+        await ctx.message.add_reaction("✅")
+
     @commands.Cog.listener()
     async def on_ready(self):
         await self.load_activity()

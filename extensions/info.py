@@ -140,6 +140,26 @@ class Info(BaseCog):
                                  f"`{self.bot.main_prefix}enable website`")
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def alsotry(self, ctx):
+        """Also try some other cool bots!
+        Here's some small bots my friends made."""
+
+        embed = discord.Embed(title="Also try...")
+
+        lines = []
+
+        for bot_id in (await self.redis.smembers("alsotry:list")):
+            name = await self.redis.hget(f"alsotry:{bot_id}", "name")
+            invite = await self.redis.hget(f"alsotry:{bot_id}", "invite")
+            desc = await self.redis.hget(f"alsotry:{bot_id}", "desc")
+
+            lines.append(f"[{name}]({invite}) - {desc}")
+
+        embed.description = "\n".join(lines)
+
+        await ctx.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_ready(self):
         channel = self.bot.get_channel(int(os.getenv("UPDATE_CHANNEL")))
