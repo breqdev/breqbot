@@ -308,9 +308,9 @@ class Portal(BaseCog):
                 await message.edit(content="Transaction cancelled")
                 return
 
-            await self.redis.incrby(
+            await self.redis.decrby(
                 f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
-                -int(portal_price))
+                portal_price)
         else:
             message = None
 

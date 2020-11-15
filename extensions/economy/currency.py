@@ -80,7 +80,7 @@ class Currency(EconomyCog):
             raise commands.UserInputError("Not enough coins!")
             return
 
-        await self.redis.decr(
+        await self.redis.decrby(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
         await self.redis.incrby(
             f"currency:balance:{ctx.guild.id}:{user.id}", amount)
@@ -141,7 +141,7 @@ class Currency(EconomyCog):
         if balance < price:
             raise commands.UserInputError("Not enough coins!")
 
-        await self.redis.decr(
+        await self.redis.decrby(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
         await self.redis.hincrby(
             f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
