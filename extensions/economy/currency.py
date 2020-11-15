@@ -8,6 +8,7 @@ import time
 import discord
 from discord.ext import commands
 
+from ..base import FuzzyMember
 from .itemlib import Item, MissingItem, EconomyCog
 
 
@@ -28,7 +29,7 @@ class Currency(EconomyCog):
 
     @commands.command()
     @commands.guild_only()
-    async def balance(self, ctx, user: typing.Optional[discord.User]):
+    async def balance(self, ctx, user: typing.Optional[FuzzyMember]):
         "Check your current coin balance :moneybag:"
         if user is None:
             user = ctx.author
