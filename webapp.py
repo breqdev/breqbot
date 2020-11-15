@@ -135,6 +135,11 @@ def invite():
     return redirect(os.getenv("BOT_INVITE"))
 
 
+@app.route("/github")
+def github():
+    return redirect(os.getenv("GITHUB_URL"))
+
+
 @app.route("/status")
 def status():
     server_count = redis_client.scard("guild:list")

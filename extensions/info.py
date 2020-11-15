@@ -33,6 +33,8 @@ class Info(BaseCog):
                         inline=False)
         embed.add_field(name="Join the Breqbot discussion server!",
                         value=f"{os.getenv('TESTING_DISCORD')}", inline=False)
+        embed.add_field(name="View and contribute to Breqbot's code!",
+                        value=f"{os.getenv('GITHUB_URL')}", inline=False)
 
         await ctx.send(embed=embed)
 
