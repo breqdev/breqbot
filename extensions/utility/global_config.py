@@ -9,8 +9,10 @@ from .. import base
 class GlobalConfig(base.BaseCog):
     "Enable and disable Breqbot functions"
 
+    def cog_check(self, ctx):
+        return base.config_only(ctx)
+
     @commands.command()
-    @commands.check(base.config_only)
     async def guilds(self, ctx):
         "List guilds that the bot is in"
 
@@ -26,7 +28,6 @@ class GlobalConfig(base.BaseCog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.check(base.config_only)
     async def activity(self, ctx, type: str, *, desc: str):
         "Change Breqbot's status in Discord"
 
@@ -56,7 +57,6 @@ class GlobalConfig(base.BaseCog):
                                        activity=activity)
 
     @commands.command()
-    @commands.check(base.config_only)
     async def addfriend(self, ctx, bot_id: int,
                         prefix: typing.Optional[str] = None):
         "Add a friendly bot to Breqbot's list of friends!"
@@ -71,7 +71,6 @@ class GlobalConfig(base.BaseCog):
         await ctx.message.add_reaction("✅")
 
     @commands.command()
-    @commands.check(base.config_only)
     async def remfriend(self, ctx, bot_id: int):
         "Remove a friendly bot from Breqbot's list of friends"
 
@@ -80,7 +79,6 @@ class GlobalConfig(base.BaseCog):
         await ctx.message.add_reaction("✅")
 
     @commands.command()
-    @commands.check(base.config_only)
     async def friends(self, ctx):
         "List Breqbot's friends!"
 
@@ -88,7 +86,6 @@ class GlobalConfig(base.BaseCog):
         await ctx.send(" ".join(f"<@{id}>" for id in friends))
 
     @commands.command()
-    @commands.check(base.config_only)
     async def addalsotry(self, ctx, bot: discord.User, invite: str,
                          *, desc: str):
         "Add a bot to Breqbot's 'also try <name>!' feature!"
@@ -101,7 +98,6 @@ class GlobalConfig(base.BaseCog):
         await ctx.message.add_reaction("✅")
 
     @commands.command()
-    @commands.check(base.config_only)
     async def remalsotry(self, ctx, bot_id: int):
         "Remove a bot from the 'also try' list."
 
