@@ -1,3 +1,5 @@
+import typing
+
 import discord
 from discord.ext import commands
 
@@ -55,8 +57,15 @@ class Config(BaseCog):
 
     @commands.command()
     @commands.check(BaseCog.config_only)
-    async def addfriend(self, ctx, bot_id: int):
+    async def addfriend(self, ctx, bot_id: int,
+                        prefix: typing.Optional[str] = None):
         "Add a friendly bot to Breqbot's list of friends!"
+
+        if prefix is None:
+            prefix = f"<@{bot_id}>"
+
+        await self.redis.hmset_dict(
+            f"user:friend:{bot_id}", {"prefix": prefix})
 
         await self.redis.sadd("user:friend:list", bot_id)
         await ctx.message.add_reaction("✅")
@@ -67,6 +76,7 @@ class Config(BaseCog):
         "Remove a friendly bot from Breqbot's list of friends"
 
         await self.redis.srem("user:friend:list", bot_id)
+        await self.redis.delete(f"user:friend:{bot_id}")
         await ctx.message.add_reaction("✅")
 
     @commands.command()
@@ -75,7 +85,7 @@ class Config(BaseCog):
         "List Breqbot's friends!"
 
         friends = await self.redis.smembers("user:friend:list")
-        await ctx.send(" ".join(f"<@!{id}>" for id in friends))
+        await ctx.send(" ".join(f"<@{id}>" for id in friends))
 
     @commands.command()
     @commands.guild_only()
