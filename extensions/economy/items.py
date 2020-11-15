@@ -4,6 +4,7 @@ import json
 import discord
 from discord.ext import commands
 
+from ..base import FuzzyMember
 from .itemlib import Item, MissingItem, EconomyCog
 
 
@@ -25,7 +26,7 @@ class Items(EconomyCog):
 
     @commands.command()
     @commands.guild_only()
-    async def items(self, ctx, user: typing.Optional[discord.User] = None):
+    async def items(self, ctx, user: typing.Optional[FuzzyMember] = None):
         "Get a list of items, optionally filter by creator :dividers:"
         if user:
             uuids = await self.redis.smembers(
@@ -129,7 +130,7 @@ class Items(EconomyCog):
 
     @commands.command()
     @commands.guild_only()
-    async def inventory(self, ctx, user: typing.Optional[discord.User]):
+    async def inventory(self, ctx, user: typing.Optional[FuzzyMember]):
         "List items in your current inventory :dividers:"
         if user is None:
             user = ctx.author
@@ -234,7 +235,7 @@ class Items(EconomyCog):
 
     @commands.command()
     @commands.guild_only()
-    async def outfit(self, ctx, user: typing.Optional[discord.User]):
+    async def outfit(self, ctx, user: typing.Optional[FuzzyMember]):
         "List the items that a user is wearing :lab_coat:"
         if user is None:
             user = ctx.author

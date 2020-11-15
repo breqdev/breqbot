@@ -8,7 +8,7 @@ from discord.ext import commands
 
 import git
 
-from .base import BaseCog
+from .base import BaseCog, FuzzyMember
 
 startup_timestamp = time.time()
 
@@ -119,7 +119,7 @@ class Info(BaseCog):
         raise ValueError("Test Exception")
 
     @commands.command()
-    async def website(self, ctx, user: typing.Optional[discord.User]):
+    async def website(self, ctx, user: typing.Optional[FuzzyMember]):
         "Link to the bot's website :computer:"
         embed = discord.Embed()
 

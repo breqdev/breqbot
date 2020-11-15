@@ -9,7 +9,7 @@ from resizeimage import resizeimage
 import discord
 from discord.ext import commands
 
-from .base import BaseCog
+from .base import BaseCog, FuzzyMember
 
 bigfont = ImageFont.truetype(
     "fonts/UbuntuMono-R.ttf", 72, encoding="unic")
@@ -33,7 +33,7 @@ class Profile(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    async def profile(self, ctx, user: typing.Optional[discord.User] = None):
+    async def profile(self, ctx, user: typing.Optional[FuzzyMember] = None):
         "Display the profile of a user!"
         if not user:
             user = ctx.author
