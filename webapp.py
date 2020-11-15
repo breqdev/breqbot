@@ -9,7 +9,24 @@ import geventwebsocket
 import redis
 import git
 
-from extensions.economy.itemlib import Item
+
+class Item:
+    @property
+    def redis_key(self):
+        return f"items:{self.uuid}"
+
+    @staticmethod
+    def from_redis(redis, uuid):
+        item = Item()
+        item.uuid = uuid
+
+        item.name = redis.hget(item.redis_key, "name")
+        item.guild = int(redis.hget(item.redis_key, "guild") or "0")
+        item.owner = int(redis.hget(item.redis_key, "owner") or "0")
+        item.desc = redis.hget(item.redis_key, "desc")
+        item.wearable = redis.hget(item.redis_key, "wearable") or "0"
+        return item
+
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
