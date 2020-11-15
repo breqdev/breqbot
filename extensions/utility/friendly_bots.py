@@ -59,7 +59,7 @@ def setup(bot):
             if not is_friendly:
                 return
 
-            if ctx.command.name != "whisper":
+            if ctx.command is not None and ctx.command.name != "whisper":
                 return
 
         await bot.invoke(ctx)
