@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import timezone
 import typing
 
 import discord
@@ -158,6 +159,31 @@ class Info(BaseCog):
 
         embed.description = "\n".join(lines)
 
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    async def announcements(self, ctx):
+        "Show the latest announcements!"
+
+        embed = discord.Embed(title="Breqbot Announcements! :mega:")
+
+        channel = self.bot.get_channel(
+            int(os.getenv("ANNOUNCEMENTS_CHANNEL")))
+
+        announcements = []
+
+        async for message in channel.history(limit=10):
+            date = message.created_at.replace(
+                tzinfo=timezone.utc).astimezone(tz=None)
+
+            content = message.content.replace("\n", "")
+
+            content = content if len(content) < 50 else content[:47]+"..."
+
+            announcements.append(f"**{date.strftime('%m/%d/%Y')}** "
+                                 f"[{content}]({message.jump_url})")
+
+        embed.description = "\n".join(announcements)
         await ctx.send(embed=embed)
 
     @commands.Cog.listener()
