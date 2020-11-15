@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from discord.ext import commands
 
 
-from ..base import BaseCog
+from .. import base
 
 
 class Menu:
@@ -150,7 +150,7 @@ class Menu:
         await member.edit(roles=roles)
 
 
-class RoleMenu(BaseCog):
+class RoleMenu(base.BaseCog):
     "Create and manage menus for users to choose their roles"
 
     async def get_menu_from_link(self, ctx, link):

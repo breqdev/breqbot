@@ -8,14 +8,14 @@ from discord.ext import commands
 
 import git
 
-from .base import BaseCog, FuzzyMember
+from . import base
 
 startup_timestamp = time.time()
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
 
-class Info(BaseCog):
+class Info(base.BaseCog):
     "Information about Breqbot"
 
     @commands.command()
@@ -119,7 +119,7 @@ class Info(BaseCog):
         raise ValueError("Test Exception")
 
     @commands.command()
-    async def website(self, ctx, user: typing.Optional[FuzzyMember]):
+    async def website(self, ctx, user: typing.Optional[base.FuzzyMember]):
         "Link to the bot's website :computer:"
         embed = discord.Embed()
 

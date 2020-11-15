@@ -11,13 +11,6 @@ class BaseCog(commands.Cog):
         self.redis = bot.redis
 
     @staticmethod
-    async def config_only(ctx):
-        if not ctx.guild:
-            return False
-        return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
-                and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
-
-    @staticmethod
     async def pack_send(dest, content, files, embed):
         file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
 
@@ -33,6 +26,13 @@ class BaseCog(commands.Cog):
                 await dest.send(files=group)
             # Send the final message with the embed
             await dest.send(embed=embed, files=file_groups[-1])
+
+
+async def config_only(ctx):
+    if not ctx.guild:
+        return False
+    return (ctx.guild.id == int(os.getenv("CONFIG_GUILD"))
+            and ctx.channel.id == int(os.getenv("CONFIG_CHANNEL")))
 
 
 class FuzzyMember(commands.Converter):

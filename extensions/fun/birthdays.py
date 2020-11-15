@@ -5,10 +5,10 @@ import timestring
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 
-class Birthdays(BaseCog):
+class Birthdays(base.BaseCog):
     "Breqbot can remember your birthday and wish you happy birthday!"
 
     @commands.Cog.listener()

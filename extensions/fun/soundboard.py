@@ -8,7 +8,7 @@ from discord.ext import commands
 import emoji
 import youtube_dl
 
-from ..base import BaseCog
+from .. import base
 from .. import emoji_utils
 
 ytdl_format_options = {
@@ -103,7 +103,7 @@ class SoundClient():
         await asyncio.sleep(1)
 
 
-class Soundboard(BaseCog):
+class Soundboard(base.BaseCog):
     "Play sounds in the voice channel!"
 
     def extract_id(self, url):

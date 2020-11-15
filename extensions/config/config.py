@@ -1,9 +1,9 @@
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 
-class Config(BaseCog):
+class Config(base.BaseCog):
     @commands.command()
     @commands.guild_only()
     @commands.has_guild_permissions(administrator=True)

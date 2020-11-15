@@ -4,11 +4,11 @@ import aiocron
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 from . import cache
 
 
-class BaseReddit(BaseCog):
+class BaseReddit(base.BaseCog):
     def __init__(self, bot, config):
         super().__init__(bot)
         self.cache = cache.RedditCache(self.redis, config)
@@ -22,7 +22,7 @@ class BaseReddit(BaseCog):
             await self.cache.prune_history()
 
     @commands.command()
-    @commands.check(BaseCog.config_only)
+    @commands.check(base.config_only)
     async def rebuild_cache(self, ctx):
         await ctx.message.add_reaction("✅")
         await self.cache.build()

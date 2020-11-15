@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 
 class ItemError(commands.UserInputError):
@@ -145,7 +145,7 @@ class MissingItem(Item):
         await redis.delete(f"items:{self.uuid}")
 
 
-class EconomyCog(BaseCog):
+class EconomyCog(base.BaseCog):
     @staticmethod
     async def shopkeeper_only(ctx):
         if not ctx.guild:

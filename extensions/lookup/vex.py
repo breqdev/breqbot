@@ -6,10 +6,10 @@ import aiocron
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 
-class Vex(BaseCog):
+class Vex(base.BaseCog):
     "Information about the VEX Robotics Competition"
 
     SEASON = "Tower Takeover"

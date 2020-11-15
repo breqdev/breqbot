@@ -9,7 +9,7 @@ from resizeimage import resizeimage
 import discord
 from discord.ext import commands
 
-from .base import BaseCog, FuzzyMember
+from . import base
 
 bigfont = ImageFont.truetype(
     "fonts/UbuntuMono-R.ttf", 72, encoding="unic")
@@ -23,7 +23,7 @@ draw = ImageDraw.Draw(mask)
 draw.ellipse((0, 0) + size, fill=255)
 
 
-class Profile(BaseCog):
+class Profile(base.BaseCog):
     "Customize your user profile!"
 
     fields = {
@@ -33,7 +33,7 @@ class Profile(BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    async def profile(self, ctx, user: typing.Optional[FuzzyMember] = None):
+    async def profile(self, ctx, user: typing.Optional[base.FuzzyMember]):
         "Display the profile of a user!"
         if not user:
             user = ctx.author

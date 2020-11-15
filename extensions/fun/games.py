@@ -3,12 +3,12 @@ import typing
 
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 from . import space, the2048
 
 
-class BaseGames(BaseCog):
+class BaseGames(base.BaseCog):
     async def play(self, ctx, GameType, args):
         game = GameType(ctx, args)
         await game.init()

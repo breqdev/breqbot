@@ -5,12 +5,12 @@ import aiocron
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 from . import animegirl, xkcd, testcomic
 
 
-class BaseComics(BaseCog):
+class BaseComics(base.BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
         self.session = aiohttp.ClientSession()

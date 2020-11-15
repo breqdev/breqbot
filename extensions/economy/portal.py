@@ -5,10 +5,10 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from ..base import BaseCog
+from .. import base
 
 
-class Portal(BaseCog):
+class Portal(base.BaseCog):
     "Interface with real-world things"
 
     async def get_portal(self, id, user_id=None):

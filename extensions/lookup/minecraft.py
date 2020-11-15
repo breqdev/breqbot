@@ -6,10 +6,10 @@ from discord.ext import commands
 
 import aiohttp
 
-from ..base import BaseCog
+from .. import base
 
 
-class Minecraft(BaseCog):
+class Minecraft(base.BaseCog):
     "Tools for Minecraft servers"
     @commands.Cog.listener()
     async def on_ready(self):
