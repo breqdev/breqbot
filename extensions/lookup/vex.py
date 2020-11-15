@@ -234,7 +234,7 @@ class Vex(base.BaseCog):
 
         if ctx.guild:
             if not ctx.channel.permissions_for(ctx.author).administrator:
-                raise commands.UserInputError(
+                raise commands.CommandError(
                     "To prevent spam, "
                     "only administrators can watch VEX teams.")
 
@@ -256,7 +256,7 @@ class Vex(base.BaseCog):
 
         if ctx.guild:
             if not ctx.channel.permissions_for(ctx.author).administrator:
-                raise commands.UserInputError(
+                raise commands.CommandError(
                     "To prevent spam, "
                     "only administrators can unwatch VEX teams.")
 

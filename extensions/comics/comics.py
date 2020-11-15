@@ -94,7 +94,7 @@ def make_command(name, comic):
         if number == "watch":
             if ctx.guild:
                 if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise commands.UserInputError(
+                    raise commands.CommandError(
                         "To prevent spam, "
                         "only administrators can watch comics.")
             await self.add_watch(name, ctx.channel.id)
@@ -102,7 +102,7 @@ def make_command(name, comic):
         elif number == "unwatch":
             if ctx.guild:
                 if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise commands.UserInputError(
+                    raise commands.CommandError(
                         "To prevent spam, "
                         "only administrators can watch comics.")
             await self.rem_watch(name, ctx.channel.id)

@@ -17,7 +17,7 @@ class FriendlyBots(base.BaseCog):
     @commands.command(hidden=True)
     async def whisper(self, ctx, *, whisper: str):
         if not ctx.author.bot:
-            raise commands.UserInputError("Only bots can whisper to Breqbot!")
+            raise commands.CommandError("Only bots can whisper to Breqbot!")
 
         message = self.unpack_whisper(whisper)
 
@@ -30,11 +30,11 @@ class FriendlyBots(base.BaseCog):
         "Send a message to one of Breqbot's friends!"
 
         if not bot.bot:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 "Breqbot can only whisper to other bots!")
 
         if not (await self.redis.sismember("user:friend:list", bot.id)):
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 "Breqbot can only whisper with friends! "
                 "(want your bot to make friends with Breqbot? "
                 "shoot Breq a DM, she'll help you add your bot!)")

@@ -59,7 +59,7 @@ class AnimeGirl(comiclib.Comic):
 
                 if episode_no == "1":
                     # We have reached the first comic without any matches
-                    raise commands.UserInputError(
+                    raise commands.CommandError(
                         f"Episode {number} not found")
 
     async def get_post(self, number):

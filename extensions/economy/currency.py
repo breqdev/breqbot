@@ -74,11 +74,11 @@ class Currency(EconomyCog):
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
 
         if amount < 0:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 f"Nice try {ctx.author.mention}, you cannot steal coins.")
 
         if int(balance) < amount:
-            raise commands.UserInputError("Not enough coins!")
+            raise commands.CommandError("Not enough coins!")
             return
 
         await self.redis.decrby(
@@ -133,14 +133,14 @@ class Currency(EconomyCog):
         price_ea = await self.redis.get(
             f"shop:prices:{ctx.guild.id}:{item.uuid}")
         if price_ea is None:
-            raise commands.UserInputError("Item is not for sale!")
+            raise commands.CommandError("Item is not for sale!")
 
         price = int(price_ea) * amount
         balance = int(await self.redis.get(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
 
         if balance < price:
-            raise commands.UserInputError("Not enough coins!")
+            raise commands.CommandError("Not enough coins!")
 
         await self.redis.decrby(
             f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
@@ -268,7 +268,7 @@ class Currency(EconomyCog):
 
         if time_until > 0:
             ftime = time.strftime("%H:%M:%S", time.gmtime(time_until))
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 f"{ctx.author.display_name}, you must wait "
                 f"**{ftime}** to claim more coins!")
 

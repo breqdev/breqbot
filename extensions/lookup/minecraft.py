@@ -34,7 +34,7 @@ class Minecraft(base.BaseCog):
             status = await response.json()
 
         if code != 200:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 "Could not connect to Minecraft server")
 
         description = []

@@ -14,10 +14,10 @@ class Portal(base.BaseCog):
     async def get_portal(self, id, user_id=None):
         portal = await self.redis.hgetall(f"portal:{id}")
         if not portal:
-            raise commands.UserInputError(f"Portal {id} does not exist.")
+            raise commands.CommandError(f"Portal {id} does not exist.")
 
         if user_id and int(portal["owner"]) != user_id:
-            raise commands.UserInputError(f"You do not own the portal {id}.")
+            raise commands.CommandError(f"You do not own the portal {id}.")
 
         if "price" not in portal:
             portal["price"] = 0
@@ -92,7 +92,7 @@ class Portal(base.BaseCog):
         elif field == "price":
             portal["price"] = int(value)
         else:
-            raise commands.UserInputError(f"Invalid field {field}")
+            raise commands.CommandError(f"Invalid field {field}")
 
         await self.set_portal(portal)
         await ctx.message.add_reaction("✅")
@@ -175,12 +175,12 @@ class Portal(base.BaseCog):
         portal = await self.get_portal(id, ctx.author.id)
 
         if not await self.check_name(name, ctx.guild.id):
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 f"A portal with the name {name} already exists.")
 
         if await self.redis.sismember(
                 f"portal:list:{ctx.guild.id}", portal["id"]):
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 "That portal already exists in this server.")
 
         await self.redis.sadd(f"portal:list:{ctx.guild.id}", portal["id"])
@@ -199,7 +199,7 @@ class Portal(base.BaseCog):
         portal_id = await self.redis.get(
             f"portal:from_name:{ctx.guild.id}:{name}")
         if not portal_id:
-            raise commands.UserInputError(f"The portal {name} does not exist.")
+            raise commands.CommandError(f"The portal {name} does not exist.")
 
         portal = await self.get_portal(portal_id, ctx.author.id)
 
@@ -270,7 +270,7 @@ class Portal(base.BaseCog):
         portal_id = await self.redis.get(
             f"portal:from_name:{ctx.guild.id}:{name}")
         if not portal_id:
-            raise commands.UserInputError(f"Portal {name} does not exist!")
+            raise commands.CommandError(f"Portal {name} does not exist!")
 
         portal_name = await self.redis.hget(f"portal:{portal_id}", "name")
         portal_price = await self.redis.hget(
@@ -281,7 +281,7 @@ class Portal(base.BaseCog):
                 f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
 
             if int(author_coins) < int(portal_price):
-                raise commands.UserInputError(
+                raise commands.CommandError(
                     f"Portal {name} costs {portal_price} Breqcoins.")
 
             message = await ctx.send(

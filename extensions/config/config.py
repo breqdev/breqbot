@@ -12,7 +12,7 @@ class Config(base.BaseCog):
         if feature == "website":
             await self.redis.hset(f"guild:{ctx.guild.id}", "website", "1")
         else:
-            raise commands.UserInputError(f"Unsupported feature: {feature}")
+            raise commands.CommandError(f"Unsupported feature: {feature}")
 
         await ctx.message.add_reaction("✅")
 
@@ -24,7 +24,7 @@ class Config(base.BaseCog):
         if feature == "website":
             await self.redis.hset(f"guild:{ctx.guild.id}", "website", "0")
         else:
-            raise commands.UserInputError(f"Unsupported feature: {feature}")
+            raise commands.CommandError(f"Unsupported feature: {feature}")
 
         await ctx.message.add_reaction("✅")
 

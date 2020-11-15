@@ -16,7 +16,7 @@ class Fun(games.Games, soundboard.Soundboard, birthdays.Birthdays):
         "Run a poll to vote for your favorite answers!"
 
         if len(answers) > 10:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 'Polls are limited to 10 options. '
                 'Did you remember to use quotes? e.g.\n'
                 f'`{self.bot.main_prefix}poll '

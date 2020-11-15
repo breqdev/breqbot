@@ -121,7 +121,7 @@ class RedditCache:
             f"reddit:cache:list:{sub_config['command']}")
 
         if cache_size < 1:
-            raise commands.UserInputError("The cache is still being built!")
+            raise commands.CommandError("The cache is still being built!")
 
         post_idx = random.randint(0, cache_size-1)
 
@@ -162,10 +162,10 @@ class RedditCache:
         try:
             sub.id
         except asyncpraw.exceptions.ClientException:
-            raise commands.UserInputError("Subreddit not found.")
+            raise commands.CommandError("Subreddit not found.")
 
         if nsfw is False and sub.over18:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 "NSFW content is limited to NSFW channels only.")
 
         now = time.time()

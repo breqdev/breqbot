@@ -27,7 +27,7 @@ class TestComic(comiclib.Comic):
         try:
             comic = json.loads(await self.get_url(url))
         except json.decoder.JSONDecodeError:
-            raise commands.UserInputError(f"Comic {number} not found!")
+            raise commands.CommandError(f"Comic {number} not found!")
 
         embed = discord.Embed()
         embed.title = f"**#{comic['title']}** | `test comic`"

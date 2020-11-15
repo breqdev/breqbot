@@ -20,7 +20,7 @@ class Menu:
     async def from_redis(redis, channel_id, message_id):
         hash = await redis.hgetall(f"rolemenu:{channel_id}:{message_id}")
         if not hash:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 f"Role Menu with ID {channel_id}:{message_id} does not exist")
 
         name = hash["name"]
@@ -160,7 +160,7 @@ class RoleMenu(base.BaseCog):
             urlparse(link).path.lstrip("/").split("/")
 
         if int(guild_id) != ctx.guild.id:
-            raise commands.UserInputError(
+            raise commands.CommandError(
                 "That role menu belongs to a different guild!")
 
         return await Menu.from_redis(self.redis, channel_id, message_id)
@@ -199,7 +199,7 @@ class RoleMenu(base.BaseCog):
             if irole.name == role:
                 break
         else:
-            raise commands.UserInputError(f"Role {role} does not exist")
+            raise commands.CommandError(f"Role {role} does not exist")
 
         menu = await self.get_menu_from_link(ctx, message_link)
         menu.mapping[emoji] = irole.id

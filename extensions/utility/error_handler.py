@@ -4,30 +4,30 @@ import os
 import discord
 from discord.ext import commands
 
+from .. import base
 
-def setup(bot):
-    @bot.event
-    async def on_command_completion(ctx):
-        await bot.redis.incr("commands:total_run")
 
-    @bot.event
-    async def on_command_error(ctx, exception):
+class ErrorHandler(base.BaseCog):
+    @commands.Cog.listener()
+    async def on_command_completion(self, ctx):
+        await self.redis.incr("commands:total_run")
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, exception):
         if (isinstance(exception, commands.CheckFailure)
                 or isinstance(exception, commands.DisabledCommand)):
             await ctx.message.add_reaction("⛔")
 
         elif isinstance(exception, commands.UserInputError):
-            await ctx.message.add_reaction("🚫")
-            await ctx.send(exception)
-
-        elif isinstance(exception, commands.UserInputError):
             embed = discord.Embed()
             embed.title = "Usage:"
             if ctx.command.signature:
-                embed.description = (f"`{bot.main_prefix}{ctx.command.name}"
-                                     f" {ctx.command.signature}`")
+                embed.description = (
+                    f"`{self.bot.main_prefix}{ctx.command.name}"
+                    f" {ctx.command.signature}`")
             else:
-                embed.description = f"`{bot.main_prefix}{ctx.command.name}`"
+                embed.description = \
+                    f"`{self.bot.main_prefix}{ctx.command.name}`"
             embed.set_footer(
                 text=ctx.command.brief or ctx.command.help.split("\n")[0])
             await ctx.send(embed=embed)
@@ -36,7 +36,7 @@ def setup(bot):
             # await ctx.message.add_reaction("🤔")
             pass
 
-        else:
+        elif isinstance(exception, commands.CommandInvokeError):
             error_id = str(uuid.uuid4())
 
             embed = discord.Embed(title="Aw, snap!")
@@ -51,3 +51,11 @@ def setup(bot):
             print("="*20)
             print(f"Exception raised with error ID {error_id}")
             raise exception
+
+        elif isinstance(exception, commands.CommandError):
+            await ctx.message.add_reaction("🚫")
+            await ctx.send(exception)
+
+
+def setup(bot):
+    bot.add_cog(ErrorHandler(bot))
