@@ -37,10 +37,10 @@ class Item():
 
     @staticmethod
     async def from_redis(redis, uuid):
-        exists = redis.sismember("items:list", uuid)
+        exists = await redis.sismember("items:list", uuid)
         if not exists:
             item = MissingItem(uuid)
-            item.cleanup(redis)
+            await item.cleanup(redis)
             return item
 
         item = Item()
@@ -59,7 +59,7 @@ class Item():
         if not uuid:
             raise ItemError("Item does not exist")
 
-        item = Item.from_redis(redis, uuid)
+        item = await Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
             await redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
             raise ItemError("Item does not exist")
