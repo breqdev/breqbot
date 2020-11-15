@@ -29,7 +29,9 @@ class HelpCommand(commands.HelpCommand):
         return sig
 
     async def send_bot_help(self, mapping):
-        embed = discord.Embed(title="Hi, I'm Breqbot! Beep boop :robot:")
+        embed = discord.Embed(
+            title=("Hi, I'm Breqbot! Beep boop :robot:. "
+                   f"Try `{self.context.bot.main_prefix}info`!"))
 
         description = ""
 
