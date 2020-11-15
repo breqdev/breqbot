@@ -107,7 +107,7 @@ class Portal(BaseCog):
         await self.redis.srem(f"portal:from_owner:{ctx.author.id}", id)
         await self.redis.delete(f"portal:{id}")
 
-        guild_ids = self.redis.smembers(f"portal:guilds:{id}")
+        guild_ids = await self.redis.smembers(f"portal:guilds:{id}")
         for gid in guild_ids:
             await self.remove_portal(id, gid)
 

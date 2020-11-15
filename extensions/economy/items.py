@@ -183,8 +183,8 @@ class Items(EconomyCog):
         item = await Item.from_name(self.redis, ctx.guild.id, item)
         await self.ensure_item(ctx, ctx.author, item)
 
-        # self.redis.hincrby(f"inventory:{ctx.guild.id}:{ctx.author.id}",
-        #                    item.uuid, -1)
+        # await self.redis.hincrby(
+        #     f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
 
         await ctx.send(f"You used {item.name}. It did nothing!")
 
@@ -242,8 +242,8 @@ class Items(EconomyCog):
         embed = discord.Embed(title=f"{user.display_name} is wearing...")
 
         items = [await Item.from_redis(self.redis, uuid)
-                 for uuid in self.redis.smembers(
-                     f"wear:{ctx.guild.id}:{user.id}")]
+                 for uuid in (await self.redis.smembers(
+                     f"wear:{ctx.guild.id}:{user.id}"))]
 
         missing = []
         for item in items:
