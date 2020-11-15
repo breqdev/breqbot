@@ -38,7 +38,7 @@ class Info(base.BaseCog):
             f"({os.getenv('WEBSITE')}github)\n"
         )
 
-        embed.set_image(url=f"{os.getenv('WEBSITE')}static/banner.jpg")
+        embed.set_image(url="https://bot.breq.dev/static/banner.png")
 
         await ctx.send(embed=embed)
 
