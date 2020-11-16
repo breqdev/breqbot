@@ -39,6 +39,7 @@ breqbot.load_extension("extensions.comics.comics")
 
 # - Fun
 breqbot.load_extension("extensions.fun.fun")
+breqbot.load_extension("extensions.fun.pronouns")
 
 # - Lookup
 breqbot.load_extension("extensions.lookup.vex")
