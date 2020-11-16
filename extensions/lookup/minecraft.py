@@ -22,10 +22,19 @@ class Minecraft(base.BaseCog):
                 old_hash = await self.redis.get(f"mc:hash:{ip}")
                 if old_hash != new_hash:
                     await self.redis.set(f"mc:hash:{ip}", new_hash)
-                    for channel_id in \
+                    for pair in \
                             await self.redis.smembers(f"mc:watching:ip:{ip}"):
-                        channel = self.bot.get_channel(int(channel_id))
-                        await channel.send(embed=await self.get_embed(ip))
+
+                        channel_id, message_id = [
+                            int(token) for token in pair.split(":")]
+
+                        channel = self.bot.get_channel(channel_id)
+                        try:
+                            message = await channel.fetch_message(message_id)
+                        except discord.errors.NotFound:
+                            pass
+                        else:
+                            await message.edit(embed=await self.get_embed(ip))
 
     async def _get_state(self, ip):
         async with self.session.get(
@@ -95,34 +104,36 @@ class Minecraft(base.BaseCog):
     @commands.command()
     async def mcwatch(self, ctx, ip: str):
         """Watch a Minecraft server and announce when players join or leave"""
+
+        embed = await self.get_embed(ip)
+
+        message = await ctx.send(embed=embed)
+
         await self.redis.sadd("mc:watching:ips", ip)
-        await self.redis.sadd(f"mc:watching:ip:{ip}", ctx.channel.id)
-        await self.redis.sadd(f"mc:watching:channel:{ctx.channel.id}", ip)
-        await ctx.message.add_reaction("✅")
+        await self.redis.sadd(
+            f"mc:watching:ip:{ip}",
+            f"{ctx.channel.id}:{message.id}")
+        await self.redis.set(
+            f"mc:watching:message:{ctx.channel.id}:{message.id}", ip)
 
-    @commands.command()
-    async def mcunwatch(self, ctx, ip: str):
-        """Unwatch a Minecraft server"""
-        await self.redis.srem(f"mc:watching:ip:{ip}", ctx.channel.id)
-        await self.redis.srem(f"mc:watching:channel:{ctx.channel.id}", ip)
-        if not await self.redis.scard(f"mc:watching:ip{ip}"):
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload):
+        ip = await self.redis.get(
+            "mc:watching:message:"
+            f"{payload.channel_id}:{payload.message_id}")
+
+        if ip is None:
+            return
+
+        await self.redis.delete(
+            f"mc:watching:channel:{payload.channel_id}:{payload.message_id}")
+
+        await self.redis.srem(
+            f"mc:watching:ip:{ip}",
+            f"{payload.channel_id}:{payload.message_id}")
+
+        if not await self.redis.scard(f"mc:watching:ip:{ip}"):
             await self.redis.srem("mc:watching:ips", ip)
-        await ctx.message.add_reaction("✅")
-
-    @commands.command()
-    async def mcwatching(self, ctx):
-        """List watched Minecraft servers"""
-
-        if ctx.guild:
-            name = f"#{ctx.channel.name}"
-        else:
-            name = f"@{ctx.author.display_name}"
-        embed = discord.Embed(title=f"{name} is watching...")
-        embed.description = ", ".join(
-            ip for ip in await self.redis.smembers(
-                f"mc:watching:channel:{ctx.channel.id}"))
-
-        await ctx.send(embed=embed)
 
 
 def setup(bot):
