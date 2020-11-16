@@ -216,33 +216,33 @@ class RoleMenu(base.BaseCog):
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload):
+        if await self.redis.sismember(
+                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
+            await self.bot.wait_until_ready()
+            menu = await Menu.from_redis(
+                self.redis, payload.channel_id, payload.message_id)
+            await menu.delete(self.redis)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        if await self.redis.sismember(
+                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
+            await self.bot.wait_until_ready()
+            menu = await Menu.from_redis(
+                self.redis, payload.channel_id, payload.message_id)
+            await menu.handle_reaction_add(self.bot, payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        if await self.redis.sismember(
+                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
+            await self.bot.wait_until_ready()
+            menu = await Menu.from_redis(
+                self.redis, payload.channel_id, payload.message_id)
+            await menu.handle_reaction_remove(self.bot, payload)
+
 
 def setup(bot):
     bot.add_cog(RoleMenu(bot))
-
-    @bot.listen()
-    async def on_raw_message_delete(payload):
-        if await bot.redis.sismember(
-                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
-            await bot.wait_until_ready()
-            menu = await Menu.from_redis(
-                bot.redis, payload.channel_id, payload.message_id)
-            await menu.delete(bot.redis)
-
-    @bot.listen()
-    async def on_raw_reaction_add(payload):
-        if await bot.redis.sismember(
-                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
-            await bot.wait_until_ready()
-            menu = await Menu.from_redis(
-                bot.redis, payload.channel_id, payload.message_id)
-            await menu.handle_reaction_add(bot, payload)
-
-    @bot.listen()
-    async def on_raw_reaction_remove(payload):
-        if await bot.redis.sismember(
-                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
-            await bot.wait_until_ready()
-            menu = await Menu.from_redis(
-                bot.redis, payload.channel_id, payload.message_id)
-            await menu.handle_reaction_remove(bot, payload)
