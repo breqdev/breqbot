@@ -18,7 +18,9 @@ class Minecraft(base.BaseCog):
         @aiocron.crontab("*/1 * * * *")
         async def watch_task():
             for ip in await self.redis.smembers("mc:watching:ips"):
-                new_hash = await self.get_hash(ip)
+                state = await self.get_state(ip)
+                new_hash = json.dumps(state)
+
                 old_hash = await self.redis.get(f"mc:hash:{ip}")
                 if old_hash != new_hash:
                     await self.redis.set(f"mc:hash:{ip}", new_hash)
@@ -34,17 +36,17 @@ class Minecraft(base.BaseCog):
                         except discord.errors.NotFound:
                             pass
                         else:
-                            await message.edit(embed=await self.get_embed(ip))
+                            embed = self.get_embed(ip, state)
+                            await message.edit(embed=embed)
 
-    async def _get_state(self, ip):
+    async def get_state(self, ip):
         async with self.session.get(
                 f"https://mcstatus.breq.dev/status?server={ip}") as response:
             code = response.status
             status = await response.json()
 
         if code != 200:
-            raise commands.CommandError(
-                "Could not connect to Minecraft server")
+            return "Can't connect to server", (0, 0), []
 
         description = []
 
@@ -73,16 +75,8 @@ class Minecraft(base.BaseCog):
 
         return description, players, sample
 
-    async def get_hash(self, ip):
-        try:
-            result = await self._get_state(ip)
-        except commands.UserInputError:
-            return "disconnected"
-        else:
-            return json.dumps(result)
-
-    async def get_embed(self, ip):
-        description, players, sample = await self._get_state(ip)
+    def get_embed(self, ip, state):
+        description, players, sample = state
         embed = discord.Embed(title=ip)
         description = "**Description**\n" + description
         playerstr = f"Players: **{players[0]}**/{players[1]}"
@@ -99,13 +93,14 @@ class Minecraft(base.BaseCog):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
 
-        await ctx.send(embed=await self.get_embed(ip))
+        embed = self.get_embed(ip, await self.get_state(ip))
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def mcwatch(self, ctx, ip: str):
         """Watch a Minecraft server and announce when players join or leave"""
 
-        embed = await self.get_embed(ip)
+        embed = self.get_embed(ip, await self.get_state(ip))
 
         message = await ctx.send(embed=embed)
 
