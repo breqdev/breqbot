@@ -4,6 +4,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
+from .. import emoji_utils
 from . import games, soundboard, birthdays
 
 
@@ -47,6 +48,13 @@ class Fun(games.Games, soundboard.Soundboard, birthdays.Birthdays):
         response = random.choice(["YES", "NO", "MAYBE"])
         await message.edit(content="The 8 ball says... "
                            f":8ball: **{response}**")
+
+    @commands.command()
+    async def emoji(self, ctx, *, text: str):
+        "Write text in 🇧 🇮 🇬 letters"
+
+        text = emoji_utils.text_to_emoji(text)
+        await ctx.send(text or "\u200b")
 
 
 def setup(bot):

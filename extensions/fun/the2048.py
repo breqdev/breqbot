@@ -73,14 +73,14 @@ class The2048(game.Game):
         await self.draw()
         await self.message.clear_reactions()
 
-        for character in emoji_utils.text_to_emoji("game ovr").split(" "):
+        for character in emoji_utils.text_to_emoji("game ov3r", join=False):
             await self.message.add_reaction(character)
 
     async def show_win(self):
         await self.draw()
         await self.message.clear_reactions()
 
-        for character in emoji_utils.text_to_emoji("you win").split(" "):
+        for character in emoji_utils.text_to_emoji("you win", join=False):
             await self.message.add_reaction(character)
 
     def compress_row_to_left(self, row):
