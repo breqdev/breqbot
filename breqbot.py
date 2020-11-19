@@ -33,6 +33,7 @@ breqbot.load_extension("extensions.about.global_config")
 breqbot.load_extension("extensions.profile.card")
 breqbot.load_extension("extensions.profile.birthdays")
 breqbot.load_extension("extensions.profile.pronouns")
+breqbot.load_extension("extensions.profile.outfit")
 
 # Economy
 breqbot.load_extension("extensions.economy.currency")
