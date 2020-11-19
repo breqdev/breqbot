@@ -13,6 +13,10 @@ git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
 
 class Debug(base.BaseCog):
+    "Get Breqbot statistics and test functionality"
+
+    category = "About"
+
     @commands.command()
     async def ping(self, ctx):
         "Pong! :ping_pong: Test system latency."

@@ -11,6 +11,8 @@ from .. import base
 class Portal(base.BaseCog):
     "Interface with real-world things"
 
+    category = "Connections"
+
     async def get_portal(self, id, user_id=None):
         portal = await self.redis.hgetall(f"portal:{id}")
         if not portal:

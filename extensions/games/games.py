@@ -9,6 +9,10 @@ from . import space, the2048, soundboard
 
 
 class BaseGames(base.BaseCog):
+
+    description = "Play a few simple games right in Discord"
+    category = "Games"
+
     async def play(self, ctx, GameType, args):
         game = GameType(ctx, args, self.redis)
         await game.init()
@@ -58,7 +62,6 @@ for name, game in games.items():
     new_commands[name] = make_command(name, game)
 
 Games = type("Games", (BaseGames,), new_commands)
-Games.description = "Play a few simple games right in Discord"
 
 
 def setup(bot):

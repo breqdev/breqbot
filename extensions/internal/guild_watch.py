@@ -4,6 +4,9 @@ from .. import base
 
 
 class GuildWatch(base.BaseCog):
+
+    category = "Internal"
+
     @commands.Cog.listener()
     async def on_ready(self):
         await self.redis.delete("guild:list")

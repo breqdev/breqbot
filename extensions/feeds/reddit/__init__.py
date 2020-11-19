@@ -9,6 +9,10 @@ from . import cache
 
 
 class BaseReddit(base.BaseCog):
+
+    description = "View memes, images, and other posts from Reddit"
+    category = "Feeds"
+
     def __init__(self, bot, config):
         super().__init__(bot)
         self.cache = cache.RedditCache(self.redis, config)
@@ -74,7 +78,6 @@ for sub_config in config:
     new_attrs[sub_config["command"]] = make_command(sub_config)
 
 Reddit = type("Reddit", (BaseReddit,), new_attrs)
-Reddit.description = "View memes, images, and other posts from Reddit"
 
 
 def setup(bot):

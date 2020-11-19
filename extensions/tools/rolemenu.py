@@ -153,6 +153,8 @@ class Menu:
 class RoleMenu(base.BaseCog):
     "Create and manage menus for users to choose their roles"
 
+    category = "Tools"
+
     async def get_menu_from_link(self, ctx, link):
         # Grab the guild, channel, message out of the message link
         # https://discordapp.com/channels/747905649303748678/747921216186220654/748237781519827114

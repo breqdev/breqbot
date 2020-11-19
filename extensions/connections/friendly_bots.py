@@ -5,6 +5,10 @@ from .. import base
 
 
 class FriendlyBots(base.BaseCog):
+    "Breqbot can talk to other friendly bots!"
+
+    category = "Connections"
+
     @staticmethod
     def pack_whisper(message):
         return " ".join(format(ord(char), "b").zfill(8) for char in message)

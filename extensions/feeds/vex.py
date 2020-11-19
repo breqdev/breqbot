@@ -12,6 +12,7 @@ from .. import base
 class Vex(base.BaseCog, command_attrs=dict(hidden=True)):
     "Information about the VEX Robotics Competition"
 
+    category = "Feeds"
     SEASON = "Tower Takeover"
 
     def __init__(self, bot):

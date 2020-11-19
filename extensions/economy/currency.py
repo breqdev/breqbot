@@ -14,6 +14,9 @@ from .itemlib import Item, MissingItem, EconomyCog
 
 class Currency(EconomyCog):
     "Earn and spend Breqcoins!"
+
+    category = "Economy"
+
     def __init__(self, bot):
         super().__init__(bot)
 

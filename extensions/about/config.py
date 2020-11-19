@@ -4,6 +4,10 @@ from .. import base
 
 
 class Config(base.BaseCog):
+    "Enable and disable Breqbot's features"
+
+    category = "About"
+
     @commands.command()
     @commands.guild_only()
     @commands.has_guild_permissions(administrator=True)

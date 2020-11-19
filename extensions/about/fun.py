@@ -10,6 +10,8 @@ from .. import base, emoji_utils
 class Fun(base.BaseCog):
     "Miscellaneous fun commands"
 
+    category = "About"
+
     @commands.command()
     async def say(self, ctx, *, message: str):
         "Repeat after me!"

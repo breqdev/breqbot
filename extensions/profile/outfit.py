@@ -8,6 +8,10 @@ from ..economy.itemlib import Item, EconomyCog, MissingItem
 
 
 class Outfit(EconomyCog):
+    "Customize your outfit! Wear items that you buy in the shop."
+
+    category = "Profile"
+
     @commands.command()
     @commands.guild_only()
     async def wear(self, ctx, item: str):

@@ -26,6 +26,8 @@ draw.ellipse((0, 0) + size, fill=255)
 class Card(base.BaseCog):
     "Customize your user profile card!"
 
+    category = "Profile"
+
     fields = {
         "desc": "Set your profile card description!",
         "bg": "Set the URL for your background image!"

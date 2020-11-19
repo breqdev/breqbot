@@ -3,6 +3,9 @@ from discord.ext import commands
 
 
 class HelpCommand(commands.HelpCommand):
+
+    category = "Internal"
+
     def __init__(self):
         super().__init__(command_attrs={
             'help': 'Shows help about the bot, a command, or a category'
@@ -33,7 +36,7 @@ class HelpCommand(commands.HelpCommand):
             title=("Hi, I'm Breqbot! Beep boop :robot:. "
                    f"Try `{self.context.bot.main_prefix}info`!"))
 
-        description = ""
+        description = {}
 
         for cog, commands_unfiltered in mapping.items():
             commands_filtered = await self.filter_commands(commands_unfiltered)
@@ -41,7 +44,7 @@ class HelpCommand(commands.HelpCommand):
                 continue
 
             if cog:
-                name = f"**{cog.qualified_name}** - "
+                name = f"*{cog.qualified_name}* - "
             else:
                 continue
 
@@ -51,9 +54,14 @@ class HelpCommand(commands.HelpCommand):
                 value = " ".join(
                     f"`{self.context.bot.main_prefix}{command.qualified_name}`"
                     for command in commands_filtered) + "\n"
-            description += (name + value)
 
-        embed.description = description
+            if cog.category not in description:
+                description[cog.category] = []
+
+            description[cog.category].append(name + value)
+
+        for category, desc in description.items():
+            embed.add_field(name=category, value="".join(desc), inline=False)
 
         await self.context.send(embed=embed)
 

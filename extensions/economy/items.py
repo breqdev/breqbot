@@ -10,6 +10,9 @@ from .itemlib import Item, MissingItem, EconomyCog
 
 class Items(EconomyCog):
     "Have fun with items! These can be purchased, traded, used, or worn."
+
+    category = "Economy"
+
     @commands.command()
     @commands.guild_only()
     async def item(self, ctx, item: str):

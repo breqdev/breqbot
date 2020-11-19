@@ -6,6 +6,8 @@ from .. import base
 class Pronouns(base.BaseCog):
     "Tell people your pronouns!"
 
+    category = "Profile"
+
     @commands.command()
     async def setpronouns(self, ctx, *, pronouns: str):
         "Set your pronouns!"

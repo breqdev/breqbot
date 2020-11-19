@@ -11,6 +11,10 @@ from . import animegirl, xkcd, testcomic
 
 
 class BaseComics(base.BaseCog):
+
+    description = "View a variety of cool comics!"
+    category = "Feeds"
+
     def __init__(self, bot):
         super().__init__(bot)
         self.session = aiohttp.ClientSession()
@@ -126,7 +130,6 @@ for name, comic in comics.items():
 
 Comics = type("Comics", (BaseComics,), new_commands)
 Comics.comics = comics
-Comics.description = "View a variety of cool comics!"
 
 
 def setup(bot):

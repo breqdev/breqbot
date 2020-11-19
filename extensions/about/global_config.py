@@ -7,7 +7,9 @@ from .. import base
 
 
 class GlobalConfig(base.BaseCog):
-    "Enable and disable Breqbot functions"
+    "Enable and disable Breqbot functions globally"
+
+    category = "About"
 
     def cog_check(self, ctx):
         return base.config_only(ctx)

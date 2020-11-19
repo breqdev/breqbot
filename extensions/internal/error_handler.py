@@ -8,6 +8,9 @@ from .. import base
 
 
 class ErrorHandler(base.BaseCog):
+
+    category = "Internal"
+
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):
         await self.redis.incr("commands:total_run")

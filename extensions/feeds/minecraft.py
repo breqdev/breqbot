@@ -11,6 +11,9 @@ from .. import base
 
 class Minecraft(base.BaseCog):
     "Tools for Minecraft servers"
+
+    category = "Feeds"
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.session = aiohttp.ClientSession()

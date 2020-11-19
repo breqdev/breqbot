@@ -11,6 +11,8 @@ from .. import base
 class Birthdays(base.BaseCog):
     "Breqbot can remember your birthday and wish you happy birthday!"
 
+    category = "Profile"
+
     @commands.Cog.listener()
     async def on_ready(self):
         @aiocron.crontab("0 0 * * *")

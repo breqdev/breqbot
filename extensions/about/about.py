@@ -11,6 +11,8 @@ from .. import base
 class About(base.BaseCog):
     "Information about Breqbot"
 
+    category = "About"
+
     @commands.command()
     async def info(self, ctx):
         """:information_source: Show info about Breqbot and invite links!
