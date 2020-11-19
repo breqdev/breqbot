@@ -2,8 +2,9 @@ import os
 
 
 class Game():
-    def __init__(self, ctx, args):
+    def __init__(self, ctx, args, redis):
         self.ctx = ctx
+        self.redis = redis
         self.args = args.split(" ") if args else []
 
     async def get_emoji(self, emoji_name):

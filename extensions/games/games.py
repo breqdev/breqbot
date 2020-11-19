@@ -5,13 +5,15 @@ from discord.ext import commands
 
 from .. import base
 
-from . import space, the2048
+from . import space, the2048, soundboard
 
 
 class BaseGames(base.BaseCog):
     async def play(self, ctx, GameType, args):
-        game = GameType(ctx, args)
+        game = GameType(ctx, args, self.redis)
         await game.init()
+        if not game.running:
+            return
         await game.new_player(ctx.author)
 
         message = await game.draw()
@@ -38,6 +40,7 @@ class BaseGames(base.BaseCog):
 games = {
     "space": space.Space,
     "2048": the2048.The2048,
+    "soundboard": soundboard.Soundboard,
 }
 
 
@@ -56,3 +59,7 @@ for name, game in games.items():
 
 Games = type("Games", (BaseGames,), new_commands)
 Games.description = "Play a few simple games right in Discord"
+
+
+def setup(bot):
+    bot.add_cog(Games(bot))

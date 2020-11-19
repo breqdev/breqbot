@@ -8,8 +8,9 @@ from discord.ext import commands
 import emoji
 import youtube_dl
 
-from .. import base
 from .. import emoji_utils
+
+from . import game
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -70,17 +71,22 @@ class SoundClient():
     def guild_id(self):
         return self.channel.guild.id
 
-    async def __aenter__(self):
+    async def connect(self):
         try:
             self.device = await self.channel.connect()
         except discord.ClientException:
             raise commands.CommandError(
                 "Breqbot is already connected to a voice channel!")
-        else:
-            return self
+
+    async def __aenter__(self):
+        await self.connect()
+        return self
+
+    async def disconnect(self):
+        await self.device.disconnect()
 
     async def __aexit__(self, exc_type, exc, tb):
-        await self.device.disconnect()
+        await self.disconnect()
 
     async def play_sound(self, id):
         while self.playing:
@@ -103,8 +109,8 @@ class SoundClient():
         await asyncio.sleep(1)
 
 
-class Soundboard(base.BaseCog):
-    "Play sounds in the voice channel!"
+class Soundboard(game.Game):
+    desc = "Play sounds in the voice channel!"
 
     def extract_id(self, url):
         "Extract the video ID from a YouTube URL"
@@ -160,49 +166,62 @@ class Soundboard(base.BaseCog):
             raise commands.CommandError(f"Invalid YouTube ID: {id}")
         return metadata["title"]
 
-    @commands.command()
-    @commands.guild_only()
-    async def newsound(self, ctx, name: str, url: str):
+    async def init(self):
+        if self.args:
+            if self.args[0] == "new":
+                await self.newsound(self.args[1], self.args[2])
+            elif self.args[0] == "del":
+                await self.delsound(self.args[1])
+            elif self.args[0] == "list":
+                await self.list()
+            elif self.args[0] == "play":
+                await self.play(self.args[1])
+            self.running = False
+        else:
+            self.message = None
+            self.running = True
+
+    async def new_player(self, user):
+        pass
+
+    async def newsound(self, name: str, url: str):
         "Add a new sound from YouTube url :new:"
 
         id = self.extract_id(url)
         title = self.get_yt_title(id)
 
-        await self.redis.hset(
-            f"soundboard:sounds:{ctx.guild.id}:{name}",
-            mapping={
+        await self.redis.hmset_dict(
+            f"soundboard:sounds:{self.ctx.guild.id}:{name}",
+            {
                 "name": name,
                 "youtube-id": id,
                 "title": title
             })
-        await self.redis.sadd(f"soundboard:sounds:{ctx.guild.id}", name)
+        await self.redis.sadd(f"soundboard:sounds:{self.ctx.guild.id}", name)
 
-        await ctx.message.add_reaction("✅")
+        await self.ctx.message.add_reaction("✅")
 
-    @commands.command()
-    @commands.guild_only()
-    async def delsound(self, ctx, name: str):
+    async def delsound(self, name: str):
         "Remove a sound :wastebasket:"
         if not await self.redis.sismember(
-                f"soundboard:sounds:{ctx.guild.id}", name):
+                f"soundboard:sounds:{self.ctx.guild.id}", name):
             raise commands.CommandError("Sound not found")
 
-        await self.redis.srem(f"soundboard:sounds:{ctx.guild.id}", name)
-        await self.redis.delete(f"soundboard:sounds:{ctx.guild.id}:{name}")
+        await self.redis.srem(f"soundboard:sounds:{self.ctx.guild.id}", name)
+        await self.redis.delete(
+            f"soundboard:sounds:{self.ctx.guild.id}:{name}")
 
-        await ctx.message.add_reaction("✅")
+        await self.ctx.message.add_reaction("✅")
 
-    @commands.command()
-    @commands.guild_only()
-    async def sounds(self, ctx):
+    async def list(self):
         "List enabled sounds :dividers:"
-        embed = discord.Embed(title=f"Soundboard on {ctx.guild.name}")
+        embed = discord.Embed(title=f"Soundboard on {self.ctx.guild.name}")
 
         sound_names = await self.redis.smembers(
-            f"soundboard:sounds:{ctx.guild.id}")
+            f"soundboard:sounds:{self.ctx.guild.id}")
 
         sounds = {name: await self.redis.hgetall(
-                    f"soundboard:sounds:{ctx.guild.id}:{name}")
+                    f"soundboard:sounds:{self.ctx.guild.id}:{name}")
                   for name in sound_names}
 
         if sounds:
@@ -214,62 +233,61 @@ class Soundboard(base.BaseCog):
         else:
             embed.description = ("The soundboard is currently empty. Try a "
                                  f"`{self.bot.main_prefix}newsound` ?")
-        await ctx.send(embed=embed)
+        await self.ctx.send(embed=embed)
 
-    @commands.command()
-    @commands.guild_only()
-    async def sound(self, ctx, name: str):
+    async def get_voice(self):
+        voice_state = self.ctx.author.voice
+        if not voice_state or not voice_state.channel:
+            raise commands.CommandError(
+                "You are not connected to a voice channel!")
+
+        return await voice_state.channel.connect()
+
+    async def play(self, name: str):
         "Play a sound"
         sound = await self.redis.hgetall(
-            f"soundboard:sounds:{ctx.guild.id}:{name}")
+            f"soundboard:sounds:{self.ctx.guild.id}:{name}")
 
         if not sound:
             raise commands.CommandError(f"Invalid sound {name}")
 
-        async with SoundClient(ctx) as client:
+        async with SoundClient(self.ctx) as client:
             await client.play_sound(sound["youtube-id"])
 
-    @commands.command()
-    @commands.guild_only()
-    async def soundboard(self, ctx):
-        "React to the soundboard to play sounds :control_knobs:"
+    async def draw(self):
+        if self.message:
+            return
 
-        message = await ctx.send(emoji_utils.text_to_emoji("Soundboard"))
+        message = await self.ctx.send(emoji_utils.text_to_emoji("Soundboard"))
 
         sound_names = await self.redis.smembers(
-            f"soundboard:sounds:{ctx.guild.id}")
+            f"soundboard:sounds:{self.ctx.guild.id}")
         for name in sound_names:
             if name in emoji.UNICODE_EMOJI:
                 await message.add_reaction(name)
         await message.add_reaction("❌")
 
-        def check(reaction, user):
-            return (reaction.message.id == message.id
-                    and user.id != self.bot.user.id)
+        self.client = SoundClient(self.ctx)
+        await self.client.connect()
 
-        async with SoundClient(ctx) as client:
-            while True:
-                try:
-                    reaction, user = await self.bot.wait_for(
-                        "reaction_add", timeout=120, check=check)
-                    await reaction.remove(user)
-                except asyncio.TimeoutError:
-                    return
-                else:
-                    if reaction.emoji == "❌":
-                        await message.clear_reactions()
-                        return
-                    if await self.redis.sismember(
-                            f"soundboard:sounds:{ctx.guild.id}",
-                            reaction.emoji):
+        self.message = message
+        return message
 
-                        sound = await self.redis.hgetall(
-                            "soundboard:sounds:"
-                            f"{ctx.guild.id}:{reaction.emoji}")
-                        await client.play_sound(sound["youtube-id"])
+    async def move(self, user, emoji):
+        if emoji == "❌":
+            await self.message.clear_reactions()
+            await self.stop()
+        if await self.redis.sismember(
+                f"soundboard:sounds:{self.ctx.guild.id}", emoji):
 
-        await message.clear_reactions()
+            sound = await self.redis.hgetall(
+                f"soundboard:sounds:{self.ctx.guild.id}:{emoji}")
+            await self.client.play_sound(sound["youtube-id"])
 
+    async def timeout(self):
+        await self.stop()
 
-def setup(bot):
-    bot.add_cog(Soundboard(bot))
+    async def stop(self):
+        await self.client.disconnect()
+        await self.message.clear_reactions()
+        self.running = False

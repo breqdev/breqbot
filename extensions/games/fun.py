@@ -4,11 +4,10 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from .. import emoji_utils
-from . import games, soundboard
+from .. import base, emoji_utils
 
 
-class Fun(games.Games, soundboard.Soundboard):
+class Fun(base.BaseCog):
     "Miscellaneous fun commands and games"
 
     @commands.command()

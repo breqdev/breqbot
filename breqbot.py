@@ -37,7 +37,8 @@ breqbot.load_extension("extensions.economy.currency")
 breqbot.load_extension("extensions.economy.items")
 
 # Games
-breqbot.load_extension("extensions.fun.fun")
+breqbot.load_extension("extensions.games.fun")
+breqbot.load_extension("extensions.games.games")
 
 # Feeds
 breqbot.load_extension("extensions.reddit.reddit")
