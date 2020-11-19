@@ -6,7 +6,7 @@ from discord.ext import commands
 from .. import base
 
 
-class ItemError(commands.UserInputError):
+class ItemError(commands.CommandError):
     pass
 
 
@@ -55,6 +55,8 @@ class Item():
 
     @staticmethod
     async def from_name(redis, guild_id, name):
+        name = name.strip('" ')
+
         uuid = await redis.get(f"items:from_name:{guild_id}:{name.lower()}")
         if not uuid:
             raise ItemError("Item does not exist")
