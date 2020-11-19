@@ -8,14 +8,14 @@ from discord.ext import commands
 
 import git
 
-from . import base
+from .. import base
 
 startup_timestamp = time.time()
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
 
-class Info(base.BaseCog):
+class About(base.BaseCog):
     "Information about Breqbot"
 
     @commands.command()
@@ -203,4 +203,4 @@ class Info(base.BaseCog):
 
 
 def setup(bot):
-    bot.add_cog(Info(bot))
+    bot.add_cog(About(bot))

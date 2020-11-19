@@ -23,9 +23,9 @@ breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
 
 
 # About
-breqbot.load_extension("extensions.info")
-breqbot.load_extension("extensions.config.config")
-breqbot.load_extension("extensions.utility.global_config")
+breqbot.load_extension("extensions.about.about")
+breqbot.load_extension("extensions.about.config")
+breqbot.load_extension("extensions.about.global_config")
 
 # Profile
 breqbot.load_extension("extensions.profile.card")
