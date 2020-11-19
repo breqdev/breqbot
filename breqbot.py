@@ -22,39 +22,40 @@ breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
     os.getenv("REDIS_URL"), encoding="utf-8"))
 
 
-# - General
+# About
 breqbot.load_extension("extensions.info")
-breqbot.load_extension("extensions.profile")
+breqbot.load_extension("extensions.config.config")
+breqbot.load_extension("extensions.utility.global_config")
+
+# Profile
+breqbot.load_extension("extensions.profile.card")
+breqbot.load_extension("extensions.profile.birthdays")
+breqbot.load_extension("extensions.profile.pronouns")
 
 # Economy
 breqbot.load_extension("extensions.economy.currency")
 breqbot.load_extension("extensions.economy.items")
-breqbot.load_extension("extensions.economy.portal")
 
-# - Reddit
-breqbot.load_extension("extensions.reddit.reddit")
-
-# - Comics
-breqbot.load_extension("extensions.comics.comics")
-
-# - Fun
+# Games
 breqbot.load_extension("extensions.fun.fun")
-breqbot.load_extension("extensions.fun.pronouns")
 
-# - Lookup
+# Feeds
+breqbot.load_extension("extensions.reddit.reddit")
+breqbot.load_extension("extensions.comics.comics")
 breqbot.load_extension("extensions.lookup.vex")
 breqbot.load_extension("extensions.lookup.minecraft")
 
-# - Configuration
-breqbot.load_extension("extensions.config.config")
+# Tools
 breqbot.load_extension("extensions.config.rolemenu")
 
-# - Utility
+# Connections
+breqbot.load_extension("extensions.utility.friendly_bots")
+breqbot.load_extension("extensions.economy.portal")
+
+# Internal
 breqbot.load_extension("extensions.utility.help_command")
 breqbot.load_extension("extensions.utility.error_handler")
 breqbot.load_extension("extensions.utility.guild_watch")
-breqbot.load_extension("extensions.utility.friendly_bots")
-breqbot.load_extension("extensions.utility.global_config")
 
 
 breqbot.run(os.getenv("DISCORD_TOKEN"))

@@ -94,3 +94,7 @@ class Birthdays(base.BaseCog):
             embed.description = "Nobody's birthday is today :("
 
         await ctx.send(embed=embed)
+
+
+def setup(bot):
+    bot.add_cog(Birthdays(bot))

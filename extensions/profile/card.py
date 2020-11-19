@@ -9,7 +9,7 @@ from resizeimage import resizeimage
 import discord
 from discord.ext import commands
 
-from . import base
+from .. import base
 
 bigfont = ImageFont.truetype(
     "fonts/UbuntuMono-R.ttf", 72, encoding="unic")
@@ -23,18 +23,18 @@ draw = ImageDraw.Draw(mask)
 draw.ellipse((0, 0) + size, fill=255)
 
 
-class Profile(base.BaseCog):
-    "Customize your user profile!"
+class Card(base.BaseCog):
+    "Customize your user profile card!"
 
     fields = {
-        "desc": "Set your profile description!",
+        "desc": "Set your profile card description!",
         "bg": "Set the URL for your background image!"
     }
 
     @commands.command()
     @commands.guild_only()
-    async def profile(self, ctx, user: typing.Optional[base.FuzzyMember]):
-        "Display the profile of a user!"
+    async def card(self, ctx, user: typing.Optional[base.FuzzyMember]):
+        "Display the profile card of a user!"
         if not user:
             user = ctx.author
 
@@ -86,13 +86,13 @@ class Profile(base.BaseCog):
         await ctx.send(file=file)
 
     @commands.command()
-    async def setprofile(self, ctx,
-                         field: typing.Optional[str] = None,
-                         *, value: typing.Optional[str] = None):
-        "Set your profile!"
+    async def setcard(self, ctx,
+                      field: typing.Optional[str] = None,
+                      *, value: typing.Optional[str] = None):
+        "Set your profile card!"
 
         if field not in self.fields:
-            embed = discord.Embed(title="Profile options")
+            embed = discord.Embed(title="Profile card options")
             embed.description = "\n".join(
                 f"`{key}`: {value}" for key, value in self.fields.items()
             )
@@ -102,7 +102,7 @@ class Profile(base.BaseCog):
             current = await self.redis.hget(
                 f"profile:{ctx.guild.id}:{ctx.author.id}", field)
 
-            embed = discord.Embed(title=f"Profile: {field}")
+            embed = discord.Embed(title=f"Profile card: {field}")
             embed.description = (
                 f"`{field}`: {self.fields[field]}\n"
                 f"Current value: `{current}`"
@@ -117,4 +117,4 @@ class Profile(base.BaseCog):
 
 
 def setup(bot):
-    bot.add_cog(Profile(bot))
+    bot.add_cog(Card(bot))

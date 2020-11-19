@@ -5,10 +5,10 @@ import discord
 from discord.ext import commands
 
 from .. import emoji_utils
-from . import games, soundboard, birthdays
+from . import games, soundboard
 
 
-class Fun(games.Games, soundboard.Soundboard, birthdays.Birthdays):
+class Fun(games.Games, soundboard.Soundboard):
     "Miscellaneous fun commands and games"
 
     @commands.command()
