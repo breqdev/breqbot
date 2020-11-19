@@ -8,7 +8,12 @@ from .. import base, emoji_utils
 
 
 class Fun(base.BaseCog):
-    "Miscellaneous fun commands and games"
+    "Miscellaneous fun commands"
+
+    @commands.command()
+    async def say(self, ctx, *, message: str):
+        "Repeat after me!"
+        await ctx.send(discord.utils.escape_mentions(message))
 
     @commands.command()
     @commands.guild_only()

@@ -24,7 +24,9 @@ breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
 
 # About
 breqbot.load_extension("extensions.about.about")
+breqbot.load_extension("extensions.about.fun")
 breqbot.load_extension("extensions.about.config")
+breqbot.load_extension("extensions.about.debug")
 breqbot.load_extension("extensions.about.global_config")
 
 # Profile
@@ -37,7 +39,6 @@ breqbot.load_extension("extensions.economy.currency")
 breqbot.load_extension("extensions.economy.items")
 
 # Games
-breqbot.load_extension("extensions.games.fun")
 breqbot.load_extension("extensions.games.games")
 
 # Feeds
