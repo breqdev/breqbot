@@ -49,11 +49,11 @@ breqbot.load_extension("extensions.lookup.vex")
 breqbot.load_extension("extensions.lookup.minecraft")
 
 # Tools
-breqbot.load_extension("extensions.config.rolemenu")
+breqbot.load_extension("extensions.tools.rolemenu")
 
 # Connections
-breqbot.load_extension("extensions.utility.friendly_bots")
-breqbot.load_extension("extensions.economy.portal")
+breqbot.load_extension("extensions.connections.friendly_bots")
+breqbot.load_extension("extensions.connections.portal")
 
 # Internal
 breqbot.load_extension("extensions.utility.help_command")
