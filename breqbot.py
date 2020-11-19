@@ -43,10 +43,10 @@ breqbot.load_extension("extensions.economy.items")
 breqbot.load_extension("extensions.games.games")
 
 # Feeds
-breqbot.load_extension("extensions.reddit.reddit")
-breqbot.load_extension("extensions.comics.comics")
-breqbot.load_extension("extensions.lookup.vex")
-breqbot.load_extension("extensions.lookup.minecraft")
+breqbot.load_extension("extensions.feeds.reddit")
+breqbot.load_extension("extensions.feeds.comics")
+breqbot.load_extension("extensions.feeds.vex")
+breqbot.load_extension("extensions.feeds.minecraft")
 
 # Tools
 breqbot.load_extension("extensions.tools.rolemenu")
@@ -56,9 +56,9 @@ breqbot.load_extension("extensions.connections.friendly_bots")
 breqbot.load_extension("extensions.connections.portal")
 
 # Internal
-breqbot.load_extension("extensions.utility.help_command")
-breqbot.load_extension("extensions.utility.error_handler")
-breqbot.load_extension("extensions.utility.guild_watch")
+breqbot.load_extension("extensions.internal.help_command")
+breqbot.load_extension("extensions.internal.error_handler")
+breqbot.load_extension("extensions.internal.guild_watch")
 
 
 breqbot.run(os.getenv("DISCORD_TOKEN"))

@@ -5,7 +5,7 @@ import aiocron
 import discord
 from discord.ext import commands
 
-from .. import base
+from ... import base
 
 from . import animegirl, xkcd, testcomic
 

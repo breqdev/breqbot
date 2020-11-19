@@ -4,7 +4,7 @@ import aiocron
 import discord
 from discord.ext import commands
 
-from .. import base
+from ... import base
 from . import cache
 
 
@@ -43,7 +43,7 @@ class BaseReddit(base.BaseCog):
         await ctx.send(image)
 
 
-with open("extensions/reddit/config.json") as f:
+with open("extensions/feeds/reddit/config.json") as f:
     config = json.load(f)
 
 
