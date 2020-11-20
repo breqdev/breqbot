@@ -4,10 +4,10 @@ import discord
 from discord.ext import commands
 
 from .. import base
-from ..economy.itemlib import Item, EconomyCog, MissingItem
+from ..economy import itemlib
 
 
-class Outfit(EconomyCog):
+class Outfit(base.BaseCog):
     "Customize your outfit! Wear items that you buy in the shop."
 
     category = "Profile"
@@ -16,11 +16,10 @@ class Outfit(EconomyCog):
     @commands.guild_only()
     async def wear(self, ctx, item: str):
         "Wear an item :lab_coat:"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
         if not int(item.wearable):
             raise commands.CommandError("Item is not wearable!")
-        await self.ensure_item(ctx, ctx.author, item)
 
         wearing = await self.redis.sismember(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
@@ -29,8 +28,10 @@ class Outfit(EconomyCog):
             raise commands.CommandError(
                 f"You are already wearing a {item.name}!")
 
-        await self.redis.hincrby(
-            f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
+        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) \
+                as inventory:
+            await inventory.remove(item)
+
         await self.redis.sadd(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
 
@@ -40,7 +41,7 @@ class Outfit(EconomyCog):
     @commands.guild_only()
     async def takeoff(self, ctx, item: str):
         "Take off an item :x:"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
         wearing = await self.redis.sismember(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
@@ -49,10 +50,12 @@ class Outfit(EconomyCog):
             raise commands.CommandError(
                 f"You are not wearing a {item.name}!")
 
-        await self.redis.hincrby(
-            f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, 1)
         await self.redis.srem(
             f"wear:{ctx.guild.id}:{ctx.author.id}", item.uuid)
+
+        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) \
+                as inventory:
+            await inventory.add(item)
 
         await ctx.message.add_reaction("✅")
 
@@ -65,13 +68,13 @@ class Outfit(EconomyCog):
 
         embed = discord.Embed(title=f"{user.display_name} is wearing...")
 
-        items = [await Item.from_redis(self.redis, uuid)
+        items = [await itemlib.Item.from_redis(self.redis, uuid)
                  for uuid in (await self.redis.smembers(
                      f"wear:{ctx.guild.id}:{user.id}"))]
 
         missing = []
         for item in items:
-            if isinstance(item, MissingItem):
+            if item.missing:
                 missing.append(item)
                 await self.redis.srem(
                     f"wear:{ctx.guild.id}:{user.id}", item.uuid)

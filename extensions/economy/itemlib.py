@@ -1,13 +1,7 @@
-import os
 from uuid import uuid4
 
+import discord
 from discord.ext import commands
-
-from .. import base
-
-
-class ItemError(commands.CommandError):
-    pass
 
 
 class Item():
@@ -19,6 +13,7 @@ class Item():
         self.guild = guild_id if guild_id else None
         self.desc = desc
         self.wearable = wearable
+        self.missing = False
 
     def __str__(self):
         return (f"{self.name}: {self.desc} "
@@ -59,12 +54,12 @@ class Item():
 
         uuid = await redis.get(f"items:from_name:{guild_id}:{name.lower()}")
         if not uuid:
-            raise ItemError("Item does not exist")
+            raise commands.CommandError("Item does not exist")
 
         item = await Item.from_redis(redis, uuid)
         if isinstance(item, MissingItem):
             await redis.delete(f"items:from_name:{guild_id}:{name.lower()}")
-            raise ItemError("Item does not exist")
+            raise commands.CommandError("Item does not exist")
 
         return item
 
@@ -100,7 +95,7 @@ class Item():
 
     async def rename(self, redis, newname):
         if not self.check_name(redis, self.guild, newname):
-            raise ItemError("Item name in use")
+            raise commands.Commanderror("Item name in use")
 
         await redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")
         self.name = newname
@@ -121,7 +116,7 @@ class Item():
 
     def check_owner(self, user):
         if not self.is_owner(user):
-            raise ItemError("You do not own this item")
+            raise commands.CommandError("You do not own this item")
 
     @property
     def dict(self):
@@ -142,30 +137,99 @@ class MissingItem(Item):
         self.desc = "Deleted Item"
         self.wearable = "0"
         self.author = "0"
+        self.missing = True
 
     async def cleanup(self, redis):
         await redis.delete(f"items:{self.uuid}")
 
 
-class EconomyCog(base.BaseCog):
-    @staticmethod
-    async def shopkeeper_only(ctx):
-        if not ctx.guild:
-            return False
-        if ctx.author.permissions_in(ctx.channel).administrator:
-            return True
-        if ctx.author.id == int(os.getenv("BOT_OWNER")):
-            return True
-        for role in ctx.author.roles:
-            if role.name == "Shopkeeper":
-                return True
-        return False
+class Inventory:
+    def __init__(self, user, guild, redis):
+        if isinstance(user, discord.User) or isinstance(user, discord.Member):
+            user = user.id
+        if isinstance(guild, discord.Guild):
+            guild = guild.id
+        self.user = user
+        self.guild = guild
+        self.redis = redis
 
-    async def ensure_item(self, ctx, user, item, qty=1):
-        if qty < 0:
-            raise ItemError("Negative numbers are not allowed.")
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def ensure(self, item, qty=1):
         has = int(await self.redis.hget(
-            f"inventory:{ctx.guild.id}:{user.id}", item.uuid) or "0")
+            f"inventory:{self.guild}:{self.user}", item.uuid) or "0")
         if has < qty:
-            raise ItemError(f"You need at least {qty} of {item.name}, "
-                            f"you only have {has}")
+            raise commands.CommandError(
+                f"You need at least {qty} of {item.name}, you only have {has}")
+
+    async def add(self, item, qty=1):
+        if qty < 0:
+            raise commands.CommandError("Negative numbers are not allowed.")
+        await self.redis.hincrby(
+            f"inventory:{self.guild}:{self.user}", item.uuid, qty)
+
+    async def remove(self, item, qty=1):
+        if qty < 0:
+            raise commands.CommandError("Negative numbers are not allowed.")
+        await self.ensure(item, qty)
+        await self.redis.hdecrby(
+            f"inventory:{self.guild}:{self.user}", item.uuid, qty)
+
+    async def as_mapping(self):
+        inventory = await self.redis.hgetall(
+            f"inventory:{self.guild}:{self.user}")
+        amounts = {await Item.from_redis(self.redis, item): int(amount)
+                   for item, amount in inventory.items() if int(amount) > 0}
+
+        missing = []
+        for item in amounts.keys():
+            if item.missing:
+                await self.redis.hdel(
+                    f"inventory:{self.guild}:{self.user}", item.uuid)
+                missing.append(item)
+
+        for item in missing:
+            del amounts[item]
+
+        return amounts
+
+
+class Wallet:
+    def __init__(self, user, guild, redis):
+        if isinstance(user, discord.User) or isinstance(user, discord.Member):
+            user = user.id
+        if isinstance(guild, discord.Guild):
+            guild = guild.id
+        self.user = user
+        self.guild = guild
+        self.redis = redis
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def get_balance(self):
+        return int(await self.redis.get(
+            f"currency:balance:{self.guild}:{self.user}") or "0")
+
+    async def ensure(self, coins):
+        if await self.get_balance() < coins:
+            raise commands.CommandError(f"You need at least {coins} coins!")
+
+    async def add(self, coins):
+        if coins < 0:
+            raise commands.CommandError("Negative numbers are not allowed.")
+        await self.redis.incrby(
+            f"currency:balance:{self.guild}:{self.user}", coins)
+
+    async def remove(self, coins):
+        if coins < 0:
+            raise commands.CommandError("Negative numbers are not allowed.")
+        await self.redis.decrby(
+            f"currency:balance:{self.guild}:{self.user}", coins)

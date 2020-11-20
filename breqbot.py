@@ -38,6 +38,7 @@ breqbot.load_extension("extensions.profile.outfit")
 # Economy
 breqbot.load_extension("extensions.economy.currency")
 breqbot.load_extension("extensions.economy.items")
+breqbot.load_extension("extensions.economy.shop")
 
 # Games
 breqbot.load_extension("extensions.games.games")

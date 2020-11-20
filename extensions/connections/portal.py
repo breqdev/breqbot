@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 
 from .. import base
+from ..economy import itemlib
 
 
 class Portal(base.BaseCog):
@@ -279,40 +280,35 @@ class Portal(base.BaseCog):
             f"portal:{portal_id}", "price") or 0
 
         if int(portal_price) > 0:
-            author_coins = await self.redis.get(
-                f"currency:balance:{ctx.guild.id}:{ctx.author.id}")
+            async with itemlib.Wallet(ctx.author, ctx.guild, self.redis) \
+                    as wallet:
+                await wallet.ensure(int(portal_price))
 
-            if int(author_coins) < int(portal_price):
-                raise commands.CommandError(
-                    f"Portal {name} costs {portal_price} Breqcoins.")
+                message = await ctx.send(
+                    f"Portal {name} costs **{portal_price} Breqcoins**. "
+                    "Confirm purchase?")
 
-            message = await ctx.send(
-                f"Portal {name} costs **{portal_price} Breqcoins**. "
-                "Confirm purchase?")
+                await message.add_reaction("✅")
+                await message.add_reaction("❌")
 
-            await message.add_reaction("✅")
-            await message.add_reaction("❌")
+                def check(reaction, user):
+                    return (reaction.message.id == message.id
+                            and user.id == ctx.author.id
+                            and reaction.emoji in ("✅", "❌"))
 
-            def check(reaction, user):
-                return (reaction.message.id == message.id
-                        and user.id == ctx.author.id
-                        and reaction.emoji in ("✅", "❌"))
+                try:
+                    reaction, user = await self.bot.wait_for(
+                        "reaction_add", timeout=120, check=check)
+                except asyncio.TimeoutError:
+                    return
 
-            try:
-                reaction, user = await self.bot.wait_for(
-                    "reaction_add", timeout=120, check=check)
-            except asyncio.TimeoutError:
-                return
+                await message.clear_reactions()
 
-            await message.clear_reactions()
+                if reaction.emoji != "✅":
+                    await message.edit(content="Transaction cancelled")
+                    return
 
-            if reaction.emoji != "✅":
-                await message.edit(content="Transaction cancelled")
-                return
-
-            await self.redis.decrby(
-                f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
-                portal_price)
+                await wallet.remove(int(portal_price))
         else:
             message = None
 

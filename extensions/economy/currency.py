@@ -9,10 +9,10 @@ import discord
 from discord.ext import commands
 
 from .. import base
-from .itemlib import Item, MissingItem, EconomyCog
+from . import itemlib
 
 
-class Currency(EconomyCog):
+class Currency(base.BaseCog):
     "Earn and spend Breqcoins!"
 
     category = "Economy"
@@ -36,12 +36,10 @@ class Currency(EconomyCog):
         "Check your current coin balance :moneybag:"
         if user is None:
             user = ctx.author
-        coins = await self.redis.get(
-            f"currency:balance:{ctx.guild.id}:{user.id}")
-        if coins is None:
-            await self.redis.set(
-                f"currency:balance:{ctx.guild.id}:{user.id}", 0)
-            coins = 0
+
+        async with itemlib.Wallet(user, ctx.guild, self.redis) as wallet:
+            coins = await wallet.get_balance()
+
         await ctx.send(f"{user.display_name} has **{coins}** Breqcoins.")
 
     @commands.command()
@@ -52,12 +50,12 @@ class Currency(EconomyCog):
 
         for member_id in \
                 await self.redis.smembers(f"guild:member:{ctx.guild.id}"):
-            richest.append((
-                ctx.guild.get_member(int(member_id)),
-                int(await self.redis.get(
-                    f"currency:balance:{ctx.guild.id}:{member_id}")
-                    or "0")
-            ))
+
+            async with itemlib.Wallet(member_id, ctx.guild, self.redis) \
+                    as wallet:
+                coins = await wallet.get_balance()
+
+            richest.append((ctx.guild.get_member(int(member_id)), coins))
 
         richest = sorted(richest, key=lambda item: item[1], reverse=True)[:5]
 
@@ -73,104 +71,12 @@ class Currency(EconomyCog):
     @commands.guild_only()
     async def pay(self, ctx, user: discord.User, amount: int):
         "Give coins to another user :incoming_envelope:"
-        balance = await self.redis.get(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or "0"
 
-        if amount < 0:
-            raise commands.CommandError(
-                f"Nice try {ctx.author.mention}, you cannot steal coins.")
+        async with itemlib.Wallet(ctx.author, ctx.guild, self.redis) as wallet:
+            await wallet.remove(amount)
 
-        if int(balance) < amount:
-            raise commands.CommandError("Not enough coins!")
-            return
-
-        await self.redis.decrby(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}", amount)
-        await self.redis.incrby(
-            f"currency:balance:{ctx.guild.id}:{user.id}", amount)
-
-        await ctx.message.add_reaction("✅")
-
-    @commands.command()
-    @commands.guild_only()
-    async def shop(self, ctx):
-        "List items in the shop :shopping_bags:"
-
-        item_uuids = await self.redis.smembers(f"shop:items:{ctx.guild.id}")
-        shop_items = {uuid: await Item.from_redis(self.redis, uuid)
-                      for uuid in item_uuids}
-        prices = {}
-
-        missing = []
-        for uuid, item in shop_items.items():
-            if isinstance(item, MissingItem):
-                missing.append(uuid)
-                await self.redis.srem(f"shop:items:{ctx.guild.id}", uuid)
-
-        for uuid in missing:
-            await self.redis.delete(f"shop:prices:{ctx.guild.id}:{uuid}")
-            del shop_items[uuid]
-
-        for item_uuid in item_uuids:
-            prices[item_uuid] = await self.redis.get(
-                f"shop:prices:{ctx.guild.id}:{item_uuid}")
-
-        embed = discord.Embed(title=f"Items for sale on {ctx.guild.name}")
-
-        if prices:
-            embed.description = "\n".join(
-                f"{shop_items[uuid].name}: {prices[uuid]} coins"
-                for uuid in shop_items.keys())
-        else:
-            embed.description = "The shop is empty for now."
-
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    @commands.guild_only()
-    async def buy(self, ctx, item: str, amount: typing.Optional[int] = 1):
-        "Buy an item from the shop :coin:"
-
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
-
-        price_ea = await self.redis.get(
-            f"shop:prices:{ctx.guild.id}:{item.uuid}")
-        if price_ea is None:
-            raise commands.CommandError("Item is not for sale!")
-
-        price = int(price_ea) * amount
-        balance = int(await self.redis.get(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}") or 0)
-
-        if balance < price:
-            raise commands.CommandError("Not enough coins!")
-
-        await self.redis.decrby(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}", price)
-        await self.redis.hincrby(
-            f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, amount)
-
-        await ctx.message.add_reaction("✅")
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(EconomyCog.shopkeeper_only)
-    async def list(self, ctx, item: str, price: int):
-        "List an item in the shop :new:"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
-        await self.redis.sadd(f"shop:items:{ctx.guild.id}", item.uuid)
-        await self.redis.set(f"shop:prices:{ctx.guild.id}:{item.uuid}", price)
-
-        await ctx.message.add_reaction("✅")
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.check(EconomyCog.shopkeeper_only)
-    async def delist(self, ctx, item: str):
-        "Remove an item from the shop :no_entry:"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
-        await self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)
-        await self.redis.delete(f"shop:prices:{ctx.guild.id}:{item.uuid}")
+        async with itemlib.Wallet(user, ctx.guild, self.redis) as wallet:
+            await wallet.add(amount)
 
         await ctx.message.add_reaction("✅")
 
@@ -242,20 +148,24 @@ class Currency(EconomyCog):
                 if user.id == self.bot.user.id:
                     continue
 
-                balance = int(
-                    await self.redis.get(
-                        f"currency:balance:{ctx.guild.id}:{user.id}") or "0")
-
-                if balance < wager:
-                    await reaction.remove(user)
-                    continue
-
-                net_winnings = payout - wager
-                await self.redis.incrby(
-                    f"currency:balance:{ctx.guild.id}:{user.id}", net_winnings)
-                results.append(f"• {user.display_name} "
-                               f"{'won' if net_winnings >= 0 else 'lost'} "
-                               f"{abs(net_winnings)} coins")
+                async with itemlib.Wallet(user, ctx.guild, self.redis) \
+                        as wallet:
+                    try:
+                        await wallet.ensure(wager)
+                    except commands.CommandError:
+                        await reaction.remove(user)
+                    else:
+                        net_winnings = payout - wager
+                        if net_winnings >= 0:
+                            await wallet.add(net_winnings)
+                            results.append(
+                                f"• {user.display_name} won "
+                                f"{net_winnings} coins")
+                        else:
+                            await wallet.remove(-net_winnings)
+                            results.append(
+                                f"• {user.display_name} lost "
+                                f"{-net_winnings} coins")
 
         embed.description += "\n".join(results)
 
@@ -287,9 +197,8 @@ class Currency(EconomyCog):
         await self.free_limit(ctx)
 
         # Give free coins and items
-        await self.redis.incrby(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}",
-            self.GET_COINS_AMOUNT)
+        async with itemlib.Wallet(ctx.author, ctx.guild, self.redis) as wallet:
+            await wallet.add(self.GET_COINS_AMOUNT)
 
         # Calculate time to wait until next free collection
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
@@ -344,8 +253,8 @@ class Currency(EconomyCog):
         coins = int(coin_multipliers[result] * self.GET_COINS_AMOUNT)
         result = scenario[result].format(coins=coins, choice=choice)
 
-        await self.redis.incrby(
-            f"currency:balance:{ctx.guild.id}:{ctx.author.id}", coins)
+        async with itemlib.Wallet(ctx.author, ctx.guild, self.redis) as wallet:
+            await wallet.add(coins)
 
         ftime = time.strftime("%H:%M:%S", time.gmtime(self.GET_COINS_INTERVAL))
         result += f"\nWait {ftime} to play again!"

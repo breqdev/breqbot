@@ -1,14 +1,28 @@
 import typing
 import json
+import os
 
 import discord
 from discord.ext import commands
 
 from .. import base
-from .itemlib import Item, MissingItem, EconomyCog
+from . import itemlib
 
 
-class Items(EconomyCog):
+async def shopkeeper_only(ctx):
+    if not ctx.guild:
+        return False
+    if ctx.author.permissions_in(ctx.channel).administrator:
+        return True
+    if ctx.author.id == int(os.getenv("BOT_OWNER")):
+        return True
+    for role in ctx.author.roles:
+        if role.name == "Shopkeeper":
+            return True
+    return False
+
+
+class Items(base.BaseCog):
     "Have fun with items! These can be purchased, traded, used, or worn."
 
     category = "Economy"
@@ -17,7 +31,7 @@ class Items(EconomyCog):
     @commands.guild_only()
     async def item(self, ctx, item: str):
         "Get information about an item :information_source:"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
         embed = discord.Embed()
         embed.title = item.name
@@ -39,8 +53,8 @@ class Items(EconomyCog):
 
         items = []
         for uuid in uuids:
-            item = await Item.from_redis(self.redis, uuid)
-            if isinstance(item, MissingItem):
+            item = await itemlib.Item.from_redis(self.redis, uuid)
+            if item.missing:
                 if user:
                     await self.redis.srem(
                         f"items:list:{ctx.guild.id}:{user.id}", uuid)
@@ -60,13 +74,13 @@ class Items(EconomyCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(EconomyCog.shopkeeper_only)
+    @commands.check(shopkeeper_only)
     async def makeitem(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
-        if not await Item.check_name(self.redis, ctx.guild.id, item):
+        if not await itemlib.Item.check_name(self.redis, ctx.guild.id, item):
             raise commands.CommandError("Name in use!")
 
-        item = Item(item, ctx.guild.id, ctx.author.id, desc, wearable)
+        item = itemlib.Item(item, ctx.guild.id, ctx.author.id, desc, wearable)
         await item.to_redis(self.redis)
 
         await ctx.message.add_reaction("✅")
@@ -75,7 +89,7 @@ class Items(EconomyCog):
     @commands.guild_only()
     async def delitem(self, ctx, item: str):
         "Delete an item"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
         await item.check_owner(ctx.author)
         await item.delete(self.redis)
 
@@ -85,7 +99,7 @@ class Items(EconomyCog):
     @commands.guild_only()
     async def renameitem(self, ctx, oldname: str, newname: str):
         "Rename an item"
-        item = await Item.from_name(self.redis, ctx.guild.id, oldname)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, oldname)
         await item.check_owner(ctx.author)
         await item.rename(self.redis, newname)
 
@@ -95,7 +109,7 @@ class Items(EconomyCog):
     @commands.guild_only()
     async def modifyitem(self, ctx, item: str, field: str, value: str):
         "Modify an item"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
         await item.check_owner(ctx.author)
         if field == "desc":
             item.desc = value
@@ -111,18 +125,18 @@ class Items(EconomyCog):
     @commands.guild_only()
     async def exportitem(self, ctx, *, item: str):
         "Export an item to import it on another server"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
         await ctx.send(f"```{json.dumps(item.dict)}```")
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(EconomyCog.shopkeeper_only)
+    @commands.check(shopkeeper_only)
     async def importitem(self, ctx, *, blob: str):
         "Import an item from another server to use it here"
         try:
             dict = json.loads(blob)
-            item = Item.from_dict(dict, ctx)
+            item = itemlib.Item.from_dict(dict, ctx)
         except (json.JSONDecodeError, KeyError):
             raise commands.CommandError(
                 "Invalid item import! Did you use "
@@ -140,28 +154,15 @@ class Items(EconomyCog):
 
         embed = discord.Embed(title=f"{user.display_name}'s Inventory")
 
-        inventory = await self.redis.hgetall(
-            f"inventory:{ctx.guild.id}:{user.id}")
-        amounts = {await Item.from_redis(self.redis, item): int(amount)
-                   for item, amount in inventory.items() if int(amount) > 0}
+        async with itemlib.Inventory(user, ctx.guild, self.redis) as inventory:
+            mapping = await inventory.as_mapping()
 
-        missing = []
-        for item in amounts.keys():
-            if isinstance(item, MissingItem):
-                await self.redis.hdel(
-                    f"inventory:{ctx.guild.id}:{user.id}", item.uuid)
-                missing.append(item)
-
-        for item in missing:
-            del amounts[item]
-
-        balance = (
-            await self.redis.get(f"currency:balance:{ctx.guild.id}:{user.id}")
-            or 0)
+        async with itemlib.Wallet(ctx.author, ctx.guild, self.redis) as wallet:
+            balance = await wallet.get_balance()
 
         embed.description = (f"*Breqcoins: {balance}*\n"
                              + "\n".join(f"{item.name}: **{amount}**"
-                                         for item, amount in amounts.items()))
+                                         for item, amount in mapping.items()))
 
         await ctx.send(embed=embed)
 
@@ -170,13 +171,13 @@ class Items(EconomyCog):
     async def give(self, ctx, user: discord.User, item: str,
                    amount: typing.Optional[int] = 1):
         "Give an item to another user :incoming_envelope:"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
-        await self.ensure_item(ctx, ctx.author, item, amount)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
-        await self.redis.hincrby(
-            f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -amount)
-        await self.redis.hincrby(
-            f"inventory:{ctx.guild.id}:{user.id}", item.uuid, amount)
+        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) as inventory:
+            await inventory.remove(item)
+
+        async with itemlib.Inventory(user, ctx.guild, self.redis) as inventory:
+            await inventory.add(item)
 
         await ctx.message.add_reaction("✅")
 
@@ -184,11 +185,10 @@ class Items(EconomyCog):
     @commands.guild_only()
     async def use(self, ctx, item: str):
         "Use an item [TESTING]"
-        item = await Item.from_name(self.redis, ctx.guild.id, item)
-        await self.ensure_item(ctx, ctx.author, item)
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
-        # await self.redis.hincrby(
-        #     f"inventory:{ctx.guild.id}:{ctx.author.id}", item.uuid, -1)
+        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) as inventory:
+            await inventory.ensure(item)
 
         await ctx.send(f"You used {item.name}. It did nothing!")
 
