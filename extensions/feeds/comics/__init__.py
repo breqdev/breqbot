@@ -1,16 +1,16 @@
 import typing
 
 import aiohttp
-import aiocron
 import discord
 from discord.ext import commands
 
 from ... import base
+from ... import watch
 
 from . import animegirl, xkcd, testcomic
 
 
-class BaseComics(base.BaseCog):
+class BaseComics(base.BaseCog, watch.Watchable):
 
     description = "View a variety of cool comics!"
     category = "Feeds"
@@ -18,39 +18,22 @@ class BaseComics(base.BaseCog):
     def __init__(self, bot):
         super().__init__(bot)
         self.session = aiohttp.ClientSession()
-        # Note: discord.py does not run coroutines on Cog unload
-        # see (https://discordpy.readthedocs.io/en/latest/ext/
-        #      commands/api.html#discord.ext.commands.Cog.cog_unload)
-        # and (https://github.com/Rapptz/discord.py/issues/561)
-        # thus it isn't possible to close the aiohttp ClientSession cleanly
-        # ...man, I'm getting fed up with some of these design decisions
 
         for comic in self.comics.values():
             comic.session = self.session
 
-        @aiocron.crontab("*/15 * * * *")
-        async def watch_task():
-            for name, comic in self.comics.items():
-                new_hash = await comic.get_hash()
-                old_hash = await self.redis.get(f"comic:hash:{name}")
-                if old_hash != new_hash:
-                    await self.redis.set(f"comic:hash:{name}", new_hash)
-                    for channel_id in \
-                            await self.redis.smembers(
-                                f"comic:watching:{name}"):
-                        channel = self.bot.get_channel(int(channel_id))
-                        await self.pack_send(
-                            channel, *(await comic.get_post("latest")))
+        self.watch = watch.ChannelWatch(self, crontab="*/15 * * * *")
 
-    async def add_watch(self, series, channel_id):
-        await self.redis.sadd(f"comic:watching:{series}", channel_id)
+    async def get_state(self, target):
+        if target not in self.comics:
+            return None
+        return self.comics[target]
 
-    async def rem_watch(self, series, channel_id):
-        await self.redis.srem(f"comic:watching:{series}", channel_id)
+    async def get_hash(self, state):
+        return await state.get_hash()
 
-    async def is_watching(self, series, channel_id):
-        return await self.redis.sismember(
-            f"comic:watching:{series}", channel_id)
+    async def get_pack(self, state):
+        return await state.get_post("latest")
 
     @commands.command(name="comics")
     async def comics_list(self, ctx):
@@ -68,12 +51,8 @@ class BaseComics(base.BaseCog):
     @commands.command()
     async def comicswatching(self, ctx):
         "List the Comics currently being watched!"
-        watching = []
 
-        for name in self.comics:
-            if await self.redis.sismember(
-                    f"comic:watching:{name}", ctx.channel.id):
-                watching.append(name)
+        watching = await self.watch.get_targets(ctx.channel)
 
         if ctx.guild:
             name = f"#{ctx.channel.name}"
@@ -101,7 +80,7 @@ def make_command(name, comic):
                     raise commands.CommandError(
                         "To prevent spam, "
                         "only administrators can watch comics.")
-            await self.add_watch(name, ctx.channel.id)
+            await self.watch.register(ctx.channel, name)
             await ctx.message.add_reaction("✅")
         elif number == "unwatch":
             if ctx.guild:
@@ -109,10 +88,10 @@ def make_command(name, comic):
                     raise commands.CommandError(
                         "To prevent spam, "
                         "only administrators can watch comics.")
-            await self.rem_watch(name, ctx.channel.id)
+            await self.watch.unregister(ctx.channel, name)
             await ctx.message.add_reaction("✅")
         elif number == "watching":
-            if await self.is_watching(name, ctx.channel.id):
+            if await self.watch.is_registered(ctx.channel, name):
                 await ctx.send(
                     f"{ctx.channel.mention} is currently watching {name}.")
             else:

@@ -58,6 +58,14 @@ class ChannelWatch(Watch):
         await self.redis.srem(
             f"watch:{self.name}:channel:{channel.id}", target)
 
+    async def is_registered(self, channel, target):
+        return await self.redis.sismember(
+            f"watch:{self.name}:target:{target}", channel.id)
+
+    async def get_targets(self, channel):
+        return await self.redis.smembers(
+            f"watch:{self.name}:channel:{channel.id}")
+
     async def watch(self):
         for target in await self.redis.smembers(f"watch:{self.name}:targets"):
             state = await self.cog.get_state(target)
