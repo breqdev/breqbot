@@ -46,7 +46,6 @@ breqbot.load_extension("extensions.games.games")
 # Feeds
 breqbot.load_extension("extensions.feeds.reddit")
 breqbot.load_extension("extensions.feeds.comics")
-breqbot.load_extension("extensions.feeds.vex")
 breqbot.load_extension("extensions.feeds.minecraft")
 breqbot.load_extension("extensions.feeds.youtube")
 breqbot.load_extension("extensions.feeds.url")
