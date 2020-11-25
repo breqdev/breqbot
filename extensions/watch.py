@@ -18,8 +18,8 @@ class Watchable:
 
 
 class Watch:
-    def __init__(self, name, cog, crontab="*/1 * * * *"):
-        self.name = name
+    def __init__(self, cog, crontab="*/1 * * * *"):
+        self.name = cog.qualified_name
         self.cog = cog
         self.bot = self.cog.bot
         self.redis = self.bot.redis
@@ -27,8 +27,11 @@ class Watch:
 
         self.start_listeners()
 
-    def start(self):
-        self.cron = aiocron.crontab(self.crontab, func=self.watch)
+        self.cron = aiocron.crontab(self.crontab, func=self.watch, start=False)
+
+        @self.bot.listen()
+        async def on_ready():
+            self.cron.start()
 
 
 class ChannelWatch(Watch):

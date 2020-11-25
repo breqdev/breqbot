@@ -16,8 +16,7 @@ class URL(base.BaseCog, watch.Watchable, command_attrs=dict(hidden=True)):
 
         self.session = aiohttp.ClientSession()
 
-        self.watch = watch.MessageWatch("url", self)
-        self.watch.start()
+        self.watch = watch.MessageWatch(self)
 
     @commands.command()
     async def url(self, ctx, *, url: str):

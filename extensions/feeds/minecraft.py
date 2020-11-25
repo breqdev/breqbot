@@ -1,46 +1,22 @@
-import json
-
-import aiocron
 import discord
 from discord.ext import commands
 
 import aiohttp
 
 from .. import base
+from .. import watch
 
 
-class Minecraft(base.BaseCog):
+class Minecraft(base.BaseCog, watch.Watchable):
     "Tools for Minecraft servers"
 
     category = "Feeds"
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    def __init__(self, bot):
+        super().__init__(bot)
+
         self.session = aiohttp.ClientSession()
-
-        @aiocron.crontab("*/1 * * * *")
-        async def watch_task():
-            for ip in await self.redis.smembers("mc:watching:ips"):
-                state = await self.get_state(ip)
-                new_hash = json.dumps(state)
-
-                old_hash = await self.redis.get(f"mc:hash:{ip}")
-                if old_hash != new_hash:
-                    await self.redis.set(f"mc:hash:{ip}", new_hash)
-                    for pair in \
-                            await self.redis.smembers(f"mc:watching:ip:{ip}"):
-
-                        channel_id, message_id = [
-                            int(token) for token in pair.split(":")]
-
-                        channel = self.bot.get_channel(channel_id)
-                        try:
-                            message = await channel.fetch_message(message_id)
-                        except discord.errors.NotFound:
-                            pass
-                        else:
-                            embed = self.get_embed(ip, state)
-                            await message.edit(embed=embed)
+        self.watch = watch.MessageWatch(self)
 
     async def get_state(self, ip):
         async with self.session.get(
@@ -76,10 +52,10 @@ class Minecraft(base.BaseCog):
         else:
             sample = []
 
-        return description, players, sample
+        return ip, description, players, sample
 
-    def get_embed(self, ip, state):
-        description, players, sample = state
+    async def get_pack(self, state):
+        ip, description, players, sample = state
         embed = discord.Embed(title=ip)
         description = "**Description**\n" + description
         playerstr = f"Players: **{players[0]}**/{players[1]}"
@@ -89,49 +65,21 @@ class Minecraft(base.BaseCog):
             online = ""
         embed.description = description + "\n" + playerstr + online
 
-        return embed
+        return None, [], embed
 
     @commands.command()
     async def mc(self, ctx, ip: str):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
 
-        embed = self.get_embed(ip, await self.get_state(ip))
-        await ctx.send(embed=embed)
+        pack = await self.get_pack(await self.get_state(ip))
+        await self.pack_send(ctx, *pack)
 
     @commands.command()
     async def mcwatch(self, ctx, ip: str):
         """Watch a Minecraft server and announce when players join or leave"""
 
-        embed = self.get_embed(ip, await self.get_state(ip))
-
-        message = await ctx.send(embed=embed)
-
-        await self.redis.sadd("mc:watching:ips", ip)
-        await self.redis.sadd(
-            f"mc:watching:ip:{ip}",
-            f"{ctx.channel.id}:{message.id}")
-        await self.redis.set(
-            f"mc:watching:message:{ctx.channel.id}:{message.id}", ip)
-
-    @commands.Cog.listener()
-    async def on_raw_message_delete(self, payload):
-        ip = await self.redis.get(
-            "mc:watching:message:"
-            f"{payload.channel_id}:{payload.message_id}")
-
-        if ip is None:
-            return
-
-        await self.redis.delete(
-            f"mc:watching:channel:{payload.channel_id}:{payload.message_id}")
-
-        await self.redis.srem(
-            f"mc:watching:ip:{ip}",
-            f"{payload.channel_id}:{payload.message_id}")
-
-        if not await self.redis.scard(f"mc:watching:ip:{ip}"):
-            await self.redis.srem("mc:watching:ips", ip)
+        await self.watch.register(ctx.channel, ip)
 
 
 def setup(bot):
