@@ -1,9 +1,15 @@
 import aiocron
 
+from discord.ext import commands
+
 from . import base
 
 
 class Watchable:
+    async def check_target(self, target):
+        "Verify that a target represents a valid resource."
+        return True
+
     async def get_state(self, target):
         "Returns some object representing the state of the resource"
         pass
@@ -39,8 +45,14 @@ class ChannelWatch(Watch):
         pass
 
     async def register(self, channel, target):
+        if not self.cog.check_target(target):
+            raise commands.CommandError(f"Invalid target: {target}")
 
-        # todo: if its the first with this target, pre-fill the 'hash'
+        if not await self.redis.sismember(
+                f"watch:{self.name}:targets", target):
+            state = await self.cog.get_state(target)
+            hash = await self.cog.get_hash(state)
+            await self.redis.set(f"watch:{self.name}:hash:{target}", hash)
 
         await self.redis.sadd(f"watch:{self.name}:targets", target)
         await self.redis.sadd(f"watch:{self.name}:target:{target}", channel.id)

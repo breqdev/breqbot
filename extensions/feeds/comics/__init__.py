@@ -35,6 +35,9 @@ class BaseComics(base.BaseCog, watch.Watchable):
     async def get_pack(self, state):
         return await state.get_post("latest")
 
+    async def check_target(self, target):
+        return target in self.comics
+
     @commands.command(name="comics")
     async def comics_list(self, ctx):
         "List the comics available"
