@@ -45,7 +45,7 @@ class ChannelWatch(Watch):
         pass
 
     async def register(self, channel, target):
-        if not self.cog.check_target(target):
+        if not await self.cog.check_target(target):
             raise commands.CommandError(f"Invalid target: {target}")
 
         if not await self.redis.sismember(
@@ -106,6 +106,11 @@ class MessageWatch(Watch):
         state = await self.cog.get_state(target)
         pack = await self.cog.get_pack(state)
         message = await base.BaseCog.pack_send(channel, *pack)
+
+        if not await self.redis.sismember(
+                f"watch:{self.name}:targets", target):
+            hash = await self.cog.get_hash(state)
+            await self.redis.set(f"watch:{self.name}:hash:{target}", hash)
 
         await self.redis.sadd(f"watch:{self.name}:targets", target)
         await self.redis.sadd(f"watch:{self.name}:messages", message.id)
