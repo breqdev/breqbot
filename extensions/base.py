@@ -1,6 +1,7 @@
 import os
 import re
 
+import discord
 from discord.ext import commands
 from fuzzywuzzy import process
 
@@ -14,10 +15,15 @@ class BaseCog(commands.Cog):
     async def pack_send(dest, content, files, embed):
         file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
 
+        if isinstance(dest, discord.Message):
+            await dest.edit(content=content, files=files, embed=embed)
+            return dest
+
         if len(file_groups) == 0:
-            await dest.send(content=content, embed=embed)
+            return await dest.send(content=content, embed=embed)
         elif len(file_groups) == 1:
-            await dest.send(content=content, embed=embed, files=file_groups[0])
+            return await dest.send(
+                content=content, embed=embed, files=file_groups[0])
         else:
             # Send the first message with the content
             await dest.send(content=content, files=file_groups[0])
@@ -25,7 +31,7 @@ class BaseCog(commands.Cog):
             for group in file_groups[1:-1]:
                 await dest.send(files=group)
             # Send the final message with the embed
-            await dest.send(embed=embed, files=file_groups[-1])
+            return await dest.send(embed=embed, files=file_groups[-1])
 
 
 async def config_only(ctx):
