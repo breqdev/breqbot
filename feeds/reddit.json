@@ -1,0 +1,116 @@
+{
+    "doki": {
+        "command": "doki",
+        "sub": "ddlc",
+        "desc": "DDLC fanart. ~~Just Monika!~~",
+        "flair": ["Fanart"],
+        "spoiler": false
+    },
+    "dokifun": {
+        "command": "dokifun",
+        "sub": "ddlc",
+        "desc": "Memes from the Literature Club!",
+        "flair": ["Fun", "Media"]
+    },
+    "okbh": {
+        "command": "okbh",
+        "sub": "okbuddyhetero",
+        "desc": "Ok ~buddy~ hetero"
+    },
+    "wholesomememes": {
+        "command": "wholesome",
+        "sub": "wholesomememes",
+        "desc": "Wholesome :blush: meme"
+    },
+    "lgballt": {
+        "command": "lgballt",
+        "sub": "lgballt",
+        "desc": "Polandball style comics, but gayer"
+    },
+    "memes": {
+        "command": "meme",
+        "sub": "memes",
+        "desc": "Meme from r/memes"
+    },
+    "funny": {
+        "command": "dankmeme",
+        "sub": "funny",
+        "desc": "Nothing but the dankest: r/funny"
+    },
+    "egg_irl": {
+        "command": "egg_irl",
+        "sub": "egg_irl",
+        "desc": "Still cis tho... aha..."
+    },
+    "animemes": {
+        "command": "animeme",
+        "sub": "animemes",
+        "desc": "Meme about anime! Baka~"
+    },
+    "traa": {
+        "command": "traa",
+        "sub": "traaaaaaannnnnnnnnns",
+        "desc": "traaaaaaannnnnnnnnns :transgender_flag:"
+    },
+    "ph": {
+        "command": "ph",
+        "sub": "programmerhumor",
+        "desc": "Memes about programming"
+    },
+    "dokinsfw": {
+        "command": "dokinsfw",
+        "sub": "ddlcrule34",
+        "desc": "Lewd dokis :flushed:",
+        "nsfw": true
+    },
+    "tifu": {
+        "command": "tifu",
+        "sub": "tifu",
+        "desc": "Today I Fr*cked Up",
+        "text": true,
+        "some_nsfw": true
+    },
+    "wholesomeyaoi": {
+        "command": "wholesomeyaoi",
+        "sub": "wholesomeyaoi",
+        "desc": "Wholesome anime bois :)"
+    },
+    "wholesomeyuri": {
+        "command": "wholesomeyuri",
+        "sub": "wholesomeyuri",
+        "desc": "Wholesome anime girls :)"
+    },
+    "yaoi": {
+        "command": "yaoi",
+        "sub": "yaoi",
+        "desc": "Lewd anime bois :flushed:",
+        "nsfw": true
+    },
+    "yuri": {
+        "command": "yuri",
+        "sub": "yuri",
+        "desc": "Lewd anime girls :flushed:",
+        "nsfw": true
+    },
+    "handholding": {
+        "command": "handholding",
+        "sub": "handholding",
+        "desc": "h...holding...hands? :flushed:",
+        "nsfw": true
+    },
+    "foreverbox": {
+        "command": "foreverbox",
+        "sub": "foreverbox",
+        "desc": "me_irl but with style"
+    },
+    "perfectfit": {
+        "command": "perfectfit",
+        "sub": "perfectfit",
+        "desc": "fits perfectly, man"
+    },
+    "furry_irl": {
+        "command": "furry",
+        "sub": "furry_irl",
+        "desc": "for the fur in u ( ͡° ͜ʖ ͡°)"
+    }
+}

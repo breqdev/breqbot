@@ -1,0 +1,39 @@
+import json
+import io
+import random
+
+import discord
+
+from . import feed
+
+
+class XKCDFeed(feed.Feed):
+    async def lookup(self, number):
+        if number == "random":
+            max_no = (await self.get_url(
+                "https://xkcd.com/info.0.json", type="json"))["num"]
+            url = f"https://xkcd.com/{random.randint(1, max_no)}/info.0.json"
+
+        elif number == "latest":
+            url = "https://xkcd.com/info.0.json"
+        else:
+            url = f"https://xkcd.com/{number}/info.0.json"
+
+        try:
+            comic = await self.get_url(url, type="json")
+        except json.decoder.JSONDecodeError:
+            raise feed.FeedLookupError(f"Comic {number} not found!")
+
+        embed = discord.Embed(url=f"https://xkcd.com/{comic['num']}/")
+        embed.title = f"**#{comic['num']}** | {comic['title']} | *xkcd*"
+        # embed.set_image(url=comic["img"])
+        embed.set_footer(text=comic["alt"])
+
+        image = await self.get_url(comic["img"], type="bin")
+        image_file = discord.File(io.BytesIO(image), filename="xkcd.jpg")
+
+        return feed.FeedResponse(embed=embed, files=[image_file])
+
+    async def hash(self):
+        return str((await self.get_url(
+            "https://xkcd.com/info.0.json", type="json"))["num"])
