@@ -11,8 +11,7 @@ from .. import watch
 UPTIMEROBOT_KEY = os.getenv("UPTIMEROBOT_KEY")
 
 
-# class Status(base.BaseCog, watch.Watchable):
-class Status(base.BaseCog):
+class Status(base.BaseCog, watch.Watchable):
     description = "Subscribe to status updates for Breq's services"
     category = "Feeds"
 
@@ -20,7 +19,7 @@ class Status(base.BaseCog):
         super().__init__(bot)
 
         self.session = aiohttp.ClientSession()
-        # self.watch = watch.MessageWatch(self)
+        self.watch = watch.MessageWatch(self)
         self.services = {}
 
     @commands.Cog.listener()
@@ -46,6 +45,19 @@ class Status(base.BaseCog):
         for monitor in response["monitors"]:
             self.services[monitor["friendly_name"]] = monitor
 
+    async def get_state_by_ids(self, monitor_ids):
+        async with self.session.post(
+                "https://api.uptimerobot.com/v2/getMonitors",
+                data={
+                    "api_key": UPTIMEROBOT_KEY,
+                    "format": "json",
+                    "monitors": monitor_ids,
+                    "custom_uptime_ratios": 30
+                }) as response:
+            response = await response.json()
+
+        return response
+
     @commands.command()
     async def status(self, ctx, *service_names: str):
         "Get the status of one of Breq's services"
@@ -57,15 +69,7 @@ class Status(base.BaseCog):
             str(self.services[name]["id"])
             for name in service_names if name in self.services)
 
-        async with self.session.post(
-                "https://api.uptimerobot.com/v2/getMonitors",
-                data={
-                    "api_key": UPTIMEROBOT_KEY,
-                    "format": "json",
-                    "monitors": monitor_ids,
-                    "custom_uptime_ratios": 30
-                }) as response:
-            response = await response.json()
+        response = await self.get_state_by_ids(self, monitor_ids)
 
         embed = discord.Embed(
             title="Breq Services Status", url="https://s.breq.dev")
@@ -84,6 +88,37 @@ class Status(base.BaseCog):
             for service in response["monitors"])
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def statuswatch(self, ctx, service_name: str):
+        "Watch the status of one of Breq's services"
+
+        await self.watch.register(ctx.channel, service_name)
+
+    async def check_target(self, target):
+        return target in self.services
+
+    async def get_state(self, target):
+        monitor_id = self.services[target]["id"]
+        return (await self.get_state_by_ids(monitor_id))["monitors"][0]
+
+    async def get_pack(self, state):
+        embed = discord.Embed(
+            title="Breq Services Status", url="https://s.breq.dev")
+
+        status_emojis = {
+            0: "📴",  # Paused
+            1: "📴",  # Not checked yet
+            2: "🟢",  # Up
+            8: "🔴",  # Seems Down
+            9: "🔴",  # Down
+        }
+
+        embed.description = (
+            f"{status_emojis[state['status']]} {state['friendly_name']}: "
+            f"{state['custom_uptime_ratio']}%")
+
+        return "", [], embed
 
 
 def setup(bot):
