@@ -69,7 +69,7 @@ class Status(base.BaseCog, watch.Watchable):
             str(self.services[name]["id"])
             for name in service_names if name in self.services)
 
-        response = await self.get_state_by_ids(self, monitor_ids)
+        response = await self.get_state_by_ids(monitor_ids)
 
         embed = discord.Embed(
             title="Breq Services Status", url="https://s.breq.dev")
