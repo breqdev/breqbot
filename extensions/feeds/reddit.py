@@ -34,7 +34,8 @@ class BaseReddit(base.BaseCog, command_attrs=dict(hidden=True)):
             await ctx.send(ret)
 
 
-config = requests.get("https://redditor.breq.dev/list").json()
+config = requests.get(
+    "https://redditor.breq.dev/list", params={"nsfw": True}).json()
 
 
 def conditional_decorator(dec, condition):
