@@ -94,7 +94,7 @@ class Item():
             f"items:from_name:{self.guild}:{self.name.lower()}", self.uuid)
 
     async def rename(self, redis, newname):
-        if not self.check_name(redis, self.guild, newname):
+        if not await self.check_name(redis, self.guild, newname):
             raise commands.Commanderror("Item name in use")
 
         await redis.delete(f"items:from_name:{self.guild}:{self.name.lower()}")

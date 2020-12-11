@@ -27,7 +27,7 @@ class Items(base.BaseCog):
 
     category = "Economy"
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def item(self, ctx, item: str):
         "Get information about an item :information_source:"
@@ -41,9 +41,9 @@ class Items(base.BaseCog):
                         value=("Yes" if int(item.wearable) else "No"))
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @item.command()
     @commands.guild_only()
-    async def items(self, ctx, user: typing.Optional[base.FuzzyMember] = None):
+    async def list(self, ctx, user: typing.Optional[base.FuzzyMember] = None):
         "Get a list of items, optionally filter by creator :dividers:"
         if user:
             uuids = await self.redis.smembers(
@@ -72,10 +72,10 @@ class Items(base.BaseCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @item.command()
     @commands.guild_only()
     @commands.check(shopkeeper_only)
-    async def makeitem(self, ctx, item: str, desc: str, wearable: int = 0):
+    async def create(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
         if not await itemlib.Item.check_name(self.redis, ctx.guild.id, item):
             raise commands.CommandError("Name in use!")
@@ -85,32 +85,32 @@ class Items(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
+    @item.command()
     @commands.guild_only()
-    async def delitem(self, ctx, item: str):
+    async def delete(self, ctx, item: str):
         "Delete an item"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
-        await item.check_owner(ctx.author)
+        item.check_owner(ctx.author)
         await item.delete(self.redis)
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
+    @item.command()
     @commands.guild_only()
-    async def renameitem(self, ctx, oldname: str, newname: str):
+    async def rename(self, ctx, oldname: str, newname: str):
         "Rename an item"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, oldname)
-        await item.check_owner(ctx.author)
+        item.check_owner(ctx.author)
         await item.rename(self.redis, newname)
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
+    @item.command()
     @commands.guild_only()
-    async def modifyitem(self, ctx, item: str, field: str, value: str):
+    async def set(self, ctx, item: str, field: str, value: str):
         "Modify an item"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
-        await item.check_owner(ctx.author)
+        item.check_owner(ctx.author)
         if field == "desc":
             item.desc = value
         elif field == "wearable":
@@ -121,18 +121,18 @@ class Items(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
+    @item.command()
     @commands.guild_only()
-    async def exportitem(self, ctx, *, item: str):
+    async def export(self, ctx, *, item: str):
         "Export an item to import it on another server"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
         await ctx.send(f"```{json.dumps(item.dict)}```")
 
-    @commands.command()
+    @item.command(name="import")
     @commands.guild_only()
     @commands.check(shopkeeper_only)
-    async def importitem(self, ctx, *, blob: str):
+    async def import_(self, ctx, *, blob: str):
         "Import an item from another server to use it here"
         try:
             dict = json.loads(blob)
@@ -173,7 +173,8 @@ class Items(base.BaseCog):
         "Give an item to another user :incoming_envelope:"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
-        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) as inventory:
+        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) \
+                as inventory:
             await inventory.remove(item)
 
         async with itemlib.Inventory(user, ctx.guild, self.redis) as inventory:
@@ -183,11 +184,12 @@ class Items(base.BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    async def use(self, ctx, item: str):
+    async def use(self, ctx, *, item: str):
         "Use an item [TESTING]"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
 
-        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) as inventory:
+        async with itemlib.Inventory(ctx.author, ctx.guild, self.redis) \
+                as inventory:
             await inventory.ensure(item)
 
         await ctx.send(f"You used {item.name}. It did nothing!")
