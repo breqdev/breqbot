@@ -12,7 +12,7 @@ class EmojiBoard(base.BaseCog):
     def cog_check(self, ctx):
         return ctx.author.guild_permissions.administrator
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     async def emojiboard(self, ctx,
                          emoji: str,
                          amount: int = 1):
@@ -36,8 +36,8 @@ class EmojiBoard(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
-    async def emojiboards(self, ctx):
+    @emojiboard.command()
+    async def list(self, ctx):
         "List the EmojiBoards enabled in this server"
 
         embed = discord.Embed(title=f"EmojiBoards on {ctx.guild.name}")
