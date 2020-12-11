@@ -91,6 +91,7 @@ class Status(base.BaseCog, watch.Watchable):
         await ctx.send(embed=embed)
 
     @status.command()
+    @commands.has_guild_permissions(manage_messages=True)
     async def watch(self, ctx, service_name: str):
         "Watch the status of one of Breq's services"
 

@@ -77,6 +77,7 @@ class Minecraft(base.BaseCog, watch.Watchable):
         await response.send_to(ctx)
 
     @mc.command()
+    @commands.has_guild_permissions(manage_messages=True)
     async def watch(self, ctx, ip: str):
         """Watch a Minecraft server and announce when players join or leave"""
 
