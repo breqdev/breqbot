@@ -2,6 +2,7 @@ import os
 import re
 import dataclasses
 import typing
+import urllib.parse
 
 import discord
 from discord.ext import commands
@@ -42,6 +43,30 @@ class FuzzyMember(commands.Converter):
 
         if score > 80:
             return member_names[match]
+
+
+class MessageLink(commands.Converter):
+    async def convert(self, ctx, argument):
+        # Grab the guild, channel, message out of the message link, e.g.,
+        # https://discordapp.com/channels/747905649303748678/747921216186220654/748237781519827114
+        # or a bare message ID, e.g.
+        # 748237781519827114
+
+        if argument.startswith("https://discord.com/channels/"):
+            message_id = int(
+                urllib.parse.urlparse(argument).path.lstrip("/").split("/")[3])
+        else:
+            try:
+                message_id = int(argument)
+            except ValueError:
+                raise commands.BadArgument("Invalid message ID")
+
+        try:
+            message = await ctx.fetch_message(message_id)
+        except discord.NotFound:
+            raise commands.BadArgument("Message not found")
+
+        return message
 
 
 @dataclasses.dataclass
