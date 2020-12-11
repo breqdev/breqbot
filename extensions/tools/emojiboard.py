@@ -42,9 +42,9 @@ class EmojiBoard(base.BaseCog):
 
         for identifier in (await self.redis.smembers(
                 f"emojiboard:list:{channel.guild.id}")):
-            channel_id, emoji = identifier.split(":")
+            channel_id, emoji = identifier.split(":", 1)
 
-            if emoji == payload.emoji.name:
+            if emoji == str(payload.emoji):
                 await self.handle_board(
                     identifier, channel, payload.message_id)
 
@@ -54,9 +54,9 @@ class EmojiBoard(base.BaseCog):
 
         for identifier in (await self.redis.smembers(
                 f"emojiboard:list:{channel.guild.id}")):
-            channel_id, emoji = identifier.split(":")
+            channel_id, emoji = identifier.split(":", 1)
 
-            if emoji == payload.emoji.name:
+            if emoji == str(payload.emoji):
                 await self.handle_board(
                     identifier, channel, payload.message_id)
 
@@ -84,11 +84,11 @@ class EmojiBoard(base.BaseCog):
         board_message = await self.redis.get(
             f"emojiboard:board:{identifier}:{message.id}")
 
-        channel_id, emoji = identifier.split(":")
+        channel_id, emoji = identifier.split(":", 1)
         board_channel = self.bot.get_channel(int(channel_id))
 
         for reaction in message.reactions:
-            if reaction.emoji == emoji:
+            if str(reaction.emoji) == emoji:
                 amount = reaction.count
                 break
         else:
