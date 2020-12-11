@@ -31,6 +31,13 @@ class HelpCommand(commands.HelpCommand):
             sig += f" {command.signature}"
         return sig
 
+    def get_bot_mapping(self):
+        mapping = {
+            cog: list(cog.walk_commands())
+            for cog in self.context.bot.cogs.values()
+        }
+        return mapping
+
     async def send_bot_help(self, mapping):
         embed = discord.Embed(
             title=("Hi, I'm Breqbot! Beep boop :robot:. "
@@ -70,7 +77,7 @@ class HelpCommand(commands.HelpCommand):
         embed.title = f"{cog.qualified_name} | {cog.description}"
 
         commands = []
-        commands_unfiltered = cog.get_commands()
+        commands_unfiltered = list(cog.walk_commands())
         commands_filtered = await self.filter_commands(commands_unfiltered)
         for command in commands_filtered:
             commands.append(self.get_command_description(command))
