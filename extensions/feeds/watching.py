@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from .. import base
+from .. import watch
 
 
 class Watching(base.BaseCog):
@@ -11,8 +12,8 @@ class Watching(base.BaseCog):
     async def get_watching(self, channel):
         watching = {}
 
-        for name, watch in self.bot.watches.items():
-            watching[name] = await watch.human_targets(channel)
+        for name, watch_instance in self.bot.watches.items():
+            watching[name] = await watch_instance.human_targets(channel)
 
         return watching
 
@@ -35,6 +36,18 @@ class Watching(base.BaseCog):
                     name=name, value=", ".join(targets), inline=False)
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.dm_only()
+    async def rmwatch(self, ctx, *, message: base.MessageLink):
+        "Remove a MessageWatch"
+        for watch_instance in self.bot.watches.values():
+            if isinstance(watch_instance, watch.MessageWatch):
+                await watch.unregister(message.id)
+
+        await message.delete()
+
+        await ctx.message.add_reaction("✅")
 
 
 def setup(bot):
