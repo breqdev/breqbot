@@ -153,12 +153,14 @@ class RoleMenu(base.BaseCog):
 
     category = "Tools"
 
+    def cog_check(self, ctx):
+        return ctx.author.guild_permissions.administrator
+
     async def get_menu(self, message):
         return await Menu.from_redis(
             self.redis, message.channel.id, message.id)
 
     @commands.command()
-    @commands.has_guild_permissions(administrator=True)
     async def menu(self, ctx):
         """Create a menu for members to choose their roles
         using message reactions"""
@@ -168,7 +170,6 @@ class RoleMenu(base.BaseCog):
         await menu.to_redis(self.redis)
 
     @commands.command()
-    @commands.has_guild_permissions(administrator=True)
     async def modifymenu(self, ctx, message: base.MessageLink,
                          field: str, *, value: str):
         "Modify the name or description of a role menu"
@@ -183,7 +184,6 @@ class RoleMenu(base.BaseCog):
         await menu.to_redis(self.redis)
 
     @commands.command()
-    @commands.has_guild_permissions(administrator=True)
     async def addrole(self, ctx, message: base.MessageLink, emoji: str,
                       *, role: str):
         "Add a role to an existing role menu"
@@ -200,7 +200,6 @@ class RoleMenu(base.BaseCog):
         await menu.to_redis(self.redis)
 
     @commands.command()
-    @commands.has_guild_permissions(administrator=True)
     async def remrole(self, ctx, message: base.MessageLink, emoji: str):
         "Remove a role from an existing role menu"
 
