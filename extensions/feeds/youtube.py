@@ -18,7 +18,7 @@ class Youtube(base.BaseCog, watch.Watchable):
         self.session = aiohttp.ClientSession()
         self.key = os.getenv("YOUTUBE_API_KEY")
 
-        self.watch = watch.ChannelWatch(self, crontab="*/15 * * * *")
+        self.watch = watch.ChannelWatch(self, crontab="*/30 * * * *")
         self.bot.watches["Youtube"] = self.watch
 
     async def get_channel(self, search, nsfw=None):
