@@ -139,10 +139,14 @@ class EmojiBoard(base.BaseCog):
                     board_message.id)
 
         else:
-            # Message is already on the board, update the count.
-            message = await board_channel.fetch_message(int(board_message))
-
-            await response.send_to(message)
+            try:
+                # Message is already on the board, update the count.
+                message = await board_channel.fetch_message(int(board_message))
+            except discord.NotFound:
+                # Message has been removed from the board by a server admin
+                return
+            else:
+                await response.send_to(message)
 
 
 def setup(bot):
