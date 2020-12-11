@@ -21,6 +21,7 @@ loop = asyncio.get_event_loop()
 breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
     os.getenv("REDIS_URL"), encoding="utf-8"))
 
+breqbot.watches = {}
 
 # About
 breqbot.load_extension("extensions.about.about")
@@ -50,6 +51,7 @@ breqbot.load_extension("extensions.feeds.minecraft")
 breqbot.load_extension("extensions.feeds.youtube")
 breqbot.load_extension("extensions.feeds.url")
 breqbot.load_extension("extensions.feeds.status")
+breqbot.load_extension("extensions.feeds.watching")
 
 # Tools
 breqbot.load_extension("extensions.tools.rolemenu")

@@ -20,6 +20,10 @@ class Watchable:
         "Returns content, files, embed from the resource"
         return "", [], None
 
+    async def human_targets(self, targets):
+        "Convert machine-readable targets to human-readable ones"
+        return targets
+
 
 class Watch:
     def __init__(self, cog, crontab="*/1 * * * *"):
@@ -75,6 +79,10 @@ class ChannelWatch(Watch):
     async def get_targets(self, channel):
         return await self.redis.smembers(
             f"watch:{self.name}:channel:{channel.id}")
+
+    async def human_targets(self, channel):
+        targets = await self.get_targets(channel)
+        return await self.cog.human_targets(targets)
 
     async def watch(self):
         for target in await self.redis.smembers(f"watch:{self.name}:targets"):

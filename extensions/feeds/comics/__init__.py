@@ -23,6 +23,7 @@ class BaseComics(base.BaseCog, watch.Watchable):
             comic.session = self.session
 
         self.watch = watch.ChannelWatch(self, crontab="*/15 * * * *")
+        self.bot.watches["Comics"] = self.watch
 
     async def get_state(self, target):
         if target not in self.comics:
@@ -48,21 +49,6 @@ class BaseComics(base.BaseCog, watch.Watchable):
             f"""{name}: {self.comics[name].__doc__.replace('''
 ''', ' ')}""" for name in self.comics
         )
-
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def comicswatching(self, ctx):
-        "List the Comics currently being watched!"
-
-        watching = await self.watch.get_targets(ctx.channel)
-
-        if ctx.guild:
-            name = f"#{ctx.channel.name}"
-        else:
-            name = f"@{ctx.author.display_name}"
-        embed = discord.Embed(title=f"{name} is watching...")
-        embed.description = ", ".join(name for name in watching)
 
         await ctx.send(embed=embed)
 

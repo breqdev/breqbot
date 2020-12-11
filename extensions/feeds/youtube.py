@@ -19,6 +19,7 @@ class Youtube(base.BaseCog, watch.Watchable):
         self.key = os.getenv("YOUTUBE_API_KEY")
 
         self.watch = watch.ChannelWatch(self, crontab="*/15 * * * *")
+        self.bot.watches["Youtube"] = self.watch
 
     async def get_channel(self, search, nsfw=None):
         async with self.session.get(
@@ -71,6 +72,9 @@ class Youtube(base.BaseCog, watch.Watchable):
         embed.set_image(url=video["snippet"]["thumbnails"]["high"]["url"])
 
         return base.Response("", {}, embed)
+
+    async def human_targets(self, targets):
+        return [await self.channel_name(id) for id in targets]
 
     async def channel_name(self, channel_id):
         async with self.session.get(
@@ -126,6 +130,8 @@ class Youtube(base.BaseCog, watch.Watchable):
         channel_id = (await self.get_channel(search))["id"]["channelId"]
         await self.watch.register(ctx.channel, channel_id)
 
+        await ctx.message.add_reaction("✅")
+
     @commands.command()
     async def channelunwatch(self, ctx, *, search: str):
 
@@ -137,33 +143,7 @@ class Youtube(base.BaseCog, watch.Watchable):
         channel_id = (await self.get_channel(search))["id"]["channelId"]
         await self.watch.unregister(ctx.channel, channel_id)
 
-    @commands.command()
-    async def channelwatching(self, ctx, *, search: str):
-        channel_id = (await self.get_channel(search))["id"]["channelId"]
-        name = await self.channel_name(channel_id)
-
-        if await self.watch.is_registered(ctx.channel, channel_id):
-            await ctx.send(
-                f"{ctx.channel.mention} is currently watching {name}.")
-        else:
-            await ctx.send(
-                f"{ctx.channel.mention} is not currently watching {name}.")
-
-    @commands.command()
-    async def channelslist(self, ctx):
-        "List the channels currently being watched"
-
-        ids = await self.watch.get_targets(ctx.channel)
-        watching = [await self.channel_name(id) for id in ids]
-
-        if ctx.guild:
-            name = f"#{ctx.channel.name}"
-        else:
-            name = f"@{ctx.author.display_name}"
-        embed = discord.Embed(title=f"{name} is watching...")
-        embed.description = ", ".join(name for name in watching)
-
-        await ctx.send(embed=embed)
+        await ctx.message.add_reaction("✅")
 
 
 def setup(bot):
