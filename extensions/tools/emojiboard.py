@@ -36,6 +36,28 @@ class EmojiBoard(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
+    @commands.command()
+    async def emojiboards(self, ctx):
+        "List the EmojiBoards enabled in this server"
+
+        embed = discord.Embed(title=f"EmojiBoards on {ctx.guild.name}")
+
+        board_names = []
+
+        for identifier in (await self.redis.smembers(
+                f"emojiboard:list:{ctx.guild.id}")):
+            channel_id, emoji = identifier.split(":", 1)
+            needed_amount = int(await self.redis.hget(
+                f"emojiboard:board:{identifier}", "amount"))
+            channel = self.bot.get_channel(int(channel_id))
+
+            board_names.append(
+                f"**≥{needed_amount}** × {emoji} → {channel.mention}")
+
+        embed.description = "\n".join(board_names)
+
+        await ctx.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if not payload.guild_id:
