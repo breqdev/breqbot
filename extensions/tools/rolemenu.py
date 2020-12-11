@@ -206,6 +206,30 @@ class RoleMenu(base.BaseCog):
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
+    @commands.command()
+    async def rolemenus(self, ctx):
+        "List active RoleMenus"
+
+        embed = discord.Embed(title=f"RoleMenus on {ctx.guild.name}")
+
+        rolemenus = []
+
+        for identifier in (await self.redis.smembers(
+                f"rolemenu:list:{ctx.guild.id}")):
+            channel_id, message_id = identifier.split(":", 1)
+            channel = self.bot.get_channel(int(channel_id))
+            message = await channel.fetch_message(int(message_id))
+
+            menu = await Menu.from_redis(
+                self.redis, ctx.guild.id, channel_id, message_id)
+
+            rolemenus.append(
+                f"[{menu.name}]({message.jump_url}): {menu.desc}")
+
+        embed.description = "\n".join(rolemenus)
+
+        await ctx.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):
         if await self.redis.sismember(
