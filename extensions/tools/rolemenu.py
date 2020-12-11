@@ -169,7 +169,7 @@ class RoleMenu(base.BaseCog):
         """Create a menu for members to choose their roles
         using message reactions"""
 
-        menu = Menu()
+        menu = Menu(guild_id=ctx.guild.id)
         await menu.post(self.bot, ctx.channel)
         await menu.to_redis(self.redis)
 
