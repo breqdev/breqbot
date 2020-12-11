@@ -337,7 +337,7 @@ class Portal(base.BaseCog):
 
     async def custom_bot_help(self, ctx):
         if not ctx.guild:
-            return f"`{self.bot.main_prefix}makeportal`\n"
+            return f"`{self.bot.main_prefix}portal create`\n"
         portal_ids = await self.redis.smembers(f"portal:list:{ctx.guild.id}")
 
         desc = [f"`{self.bot.main_prefix}makeportal` | "]
