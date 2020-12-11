@@ -58,12 +58,12 @@ def setup(bot):
         ctx = await bot.get_context(message)
 
         if message.author.bot:
+            if ctx.command is not None and ctx.command.name != "whisper":
+                return
+
             is_friendly = await bot.redis.sismember(
                 "user:friend:list", message.author.id)
             if not is_friendly:
-                return
-
-            if ctx.command is not None and ctx.command.name != "whisper":
                 return
 
         await bot.invoke(ctx)
