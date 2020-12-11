@@ -17,7 +17,7 @@ class Watching(base.BaseCog):
 
         return watching
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     async def watching(self, ctx):
         "List the Feeds that this channel is subscribed to"
 
@@ -37,8 +37,8 @@ class Watching(base.BaseCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def messagewatches(self, ctx):
+    @watching.command()
+    async def messages(self, ctx):
         "List the currently active MessageWatches"
 
         targets = {}
