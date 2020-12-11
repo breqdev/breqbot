@@ -78,12 +78,11 @@ class Youtube(base.BaseCog, watch.Watchable):
 
     async def channel_name(self, channel_id):
         async with self.session.get(
-                "https://youtube.googleapis.com/youtube/v3/search",
+                "https://youtube.googleapis.com/youtube/v3/channels",
                 params={
                     "part": "snippet",
-                    "channelId": channel_id,
+                    "id": channel_id,
                     "maxResults": "1",
-                    "type": "channel",
                     "key": self.key
                 }) as response:
             response = await response.json()
