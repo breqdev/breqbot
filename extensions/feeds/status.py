@@ -20,6 +20,7 @@ class Status(base.BaseCog, watch.Watchable):
 
         self.session = aiohttp.ClientSession()
         self.watch = watch.MessageWatch(self)
+        self.bot.watches["Status"] = self.watch
         self.services = {}
 
     @commands.Cog.listener()

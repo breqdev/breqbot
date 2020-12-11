@@ -106,7 +106,7 @@ class MessageWatch(Watch):
     def start_listeners(self):
         @self.bot.listen()
         async def on_raw_message_delete(payload):
-            await self.unregister(payload.message_id)
+            await self.unregister(payload.channel_id, payload.message_id)
 
     async def register(self, channel, target):
         state = await self.cog.get_state(target)
@@ -121,20 +121,26 @@ class MessageWatch(Watch):
         await self.redis.sadd(f"watch:{self.name}:targets", target)
         await self.redis.sadd(f"watch:{self.name}:messages", message.id)
         await self.redis.sadd(f"watch:{self.name}:target:{target}", message.id)
+        await self.redis.sadd(
+            f"watch:{self.name}:guild:{channel.guild.id}:messages", message.id)
         await self.redis.set(
             f"watch:{self.name}:message:{message.id}:target", target)
         await self.redis.set(
             f"watch:{self.name}:message:{message.id}:channel", channel.id)
 
-    async def unregister(self, message_id):
+    async def unregister(self, channel_id, message_id):
         if not await self.redis.sismember(
                 f"watch:{self.name}:messages", message_id):
             return
+
+        channel = self.bot.get_channel(channel_id)
 
         target = await self.redis.get(
             f"watch:{self.name}:message:{message_id}:target")
 
         await self.redis.srem(f"watch:{self.name}:target:{target}", message_id)
+        await self.redis.sadd(
+            f"watch:{self.name}:guild:{channel.guild.id}:messages", message_id)
 
         card = await self.redis.scard(f"watch:{self.name}:target:{target}")
         if int(card) < 1:
@@ -145,6 +151,27 @@ class MessageWatch(Watch):
             f"watch:{self.name}:message:{message_id}:target")
         await self.redis.delete(
             f"watch:{self.name}:message:{message_id}:channel")
+
+    async def get_targets(self, guild):
+        targets = []
+
+        for message_id in await self.redis.smembers(
+                f"watch:{self.name}:guild:{guild.id}:messages"):
+
+            new_target = {
+                "message_id": message_id,
+                "channel_id": await self.redis.get(
+                    f"watch:{self.name}:message:{message_id}:channel"),
+                "target": await self.redis.get(
+                    f"watch:{self.name}:message:{message_id}:target")
+            }
+
+            targets.append(new_target)
+
+        return targets
+
+    async def human_targets(self, guild):
+        return await self.get_targets(guild)
 
     async def watch(self):
         for target in await self.redis.smembers(f"watch:{self.name}:targets"):

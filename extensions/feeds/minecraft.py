@@ -17,6 +17,7 @@ class Minecraft(base.BaseCog, watch.Watchable):
 
         self.session = aiohttp.ClientSession()
         self.watch = watch.MessageWatch(self)
+        self.bot.watches["Minecraft"] = self.watch
 
     async def get_state(self, ip):
         async with self.session.get(
