@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 from discord.ext import commands
 
 
@@ -155,17 +153,9 @@ class RoleMenu(base.BaseCog):
 
     category = "Tools"
 
-    async def get_menu_from_link(self, ctx, link):
-        # Grab the guild, channel, message out of the message link
-        # https://discordapp.com/channels/747905649303748678/747921216186220654/748237781519827114
-        _, guild_id, channel_id, message_id = \
-            urlparse(link).path.lstrip("/").split("/")
-
-        if int(guild_id) != ctx.guild.id:
-            raise commands.CommandError(
-                "That role menu belongs to a different guild!")
-
-        return await Menu.from_redis(self.redis, channel_id, message_id)
+    async def get_menu(self, message):
+        return await Menu.from_redis(
+            self.redis, message.channel.id, message.id)
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
@@ -179,10 +169,10 @@ class RoleMenu(base.BaseCog):
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
-    async def modifymenu(self, ctx, message_link: str,
+    async def modifymenu(self, ctx, message: base.MessageLink,
                          field: str, *, value: str):
         "Modify the name or description of a role menu"
-        menu = await self.get_menu_from_link(ctx, message_link)
+        menu = await self.get_menu(message)
 
         if field == "name":
             menu.name = value
@@ -194,7 +184,8 @@ class RoleMenu(base.BaseCog):
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
-    async def addrole(self, ctx, message_link: str, emoji: str, *, role: str):
+    async def addrole(self, ctx, message: base.MessageLink, emoji: str,
+                      *, role: str):
         "Add a role to an existing role menu"
 
         for irole in ctx.guild.roles:
@@ -203,17 +194,17 @@ class RoleMenu(base.BaseCog):
         else:
             raise commands.CommandError(f"Role {role} does not exist")
 
-        menu = await self.get_menu_from_link(ctx, message_link)
+        menu = await self.get_menu(message)
         menu.mapping[emoji] = irole.id
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
     @commands.command()
     @commands.has_guild_permissions(administrator=True)
-    async def remrole(self, ctx, message_link: str, emoji: str):
+    async def remrole(self, ctx, message: base.MessageLink, emoji: str):
         "Remove a role from an existing role menu"
 
-        menu = await self.get_menu_from_link(ctx, message_link)
+        menu = await self.get_menu(message)
         del menu.mapping[emoji]
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
