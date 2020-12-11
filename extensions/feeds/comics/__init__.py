@@ -61,41 +61,39 @@ comics = {
 
 
 def make_command(name, comic):
-    @commands.command(name=name, brief=comic.__doc__)
+    @commands.group(name=name, brief=comic.__doc__,
+                    invoke_without_command=True)
     async def _command(self, ctx, *, number: typing.Optional[str] = "random"):
-        if number == "watch":
-            if ctx.guild:
-                if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise commands.CommandError(
-                        "To prevent spam, "
-                        "only administrators can watch comics.")
-            await self.watch.register(ctx.channel, name)
-            await ctx.message.add_reaction("✅")
-        elif number == "unwatch":
-            if ctx.guild:
-                if not ctx.channel.permissions_for(ctx.author).administrator:
-                    raise commands.CommandError(
-                        "To prevent spam, "
-                        "only administrators can watch comics.")
-            await self.watch.unregister(ctx.channel, name)
-            await ctx.message.add_reaction("✅")
-        elif number == "watching":
-            if await self.watch.is_registered(ctx.channel, name):
-                await ctx.send(
-                    f"{ctx.channel.mention} is currently watching {name}.")
-            else:
-                await ctx.send(
-                    f"{ctx.channel.mention} is not currently watching {name}.")
-        else:
-            response = await comic.get_post(number)
-            await response.send_to(ctx)
+        response = await comic.get_post(number)
+        await response.send_to(ctx)
 
-    return _command
+    @_command.command(name="watch")
+    async def watch(self, ctx):
+        if ctx.guild:
+            if not ctx.channel.permissions_for(ctx.author).administrator:
+                raise commands.CommandError(
+                    "To prevent spam, "
+                    "only administrators can watch comics.")
+        await self.watch.register(ctx.channel, name)
+        await ctx.message.add_reaction("✅")
+
+    @_command.command(name="unwatch")
+    async def unwatch(self, ctx):
+        if ctx.guild:
+            if not ctx.channel.permissions_for(ctx.author).administrator:
+                raise commands.CommandError(
+                    "To prevent spam, "
+                    "only administrators can watch comics.")
+        await self.watch.unregister(ctx.channel, name)
+        await ctx.message.add_reaction("✅")
+
+    return {name: _command, f"{name}_watch": watch, f"{name}_unwatch": unwatch}
 
 
 new_commands = {}
 for name, comic in comics.items():
-    new_commands[name] = make_command(name, comic)
+    # can't wait for py3.9
+    new_commands = {**new_commands, **make_command(name, comic)}
 
 Comics = type("Comics", (BaseComics,), new_commands)
 Comics.comics = comics
