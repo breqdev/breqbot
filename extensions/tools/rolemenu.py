@@ -164,8 +164,12 @@ class RoleMenu(base.BaseCog):
         return await Menu.from_redis(
             self.redis, message.guild.id, message.channel.id, message.id)
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     async def menu(self, ctx):
+        pass
+
+    @menu.command()
+    async def create(self, ctx):
         """Create a menu for members to choose their roles
         using message reactions"""
 
@@ -173,9 +177,9 @@ class RoleMenu(base.BaseCog):
         await menu.post(self.bot, ctx.channel)
         await menu.to_redis(self.redis)
 
-    @commands.command()
-    async def modifymenu(self, ctx, message: discord.Message, field: str,
-                         *, value: str):
+    @menu.command()
+    async def set(self, ctx, message: discord.Message,
+                  field: str, *, value: str):
         "Modify the name or description of a role menu"
         menu = await self.get_menu(message)
 
@@ -187,9 +191,9 @@ class RoleMenu(base.BaseCog):
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
-    @commands.command()
-    async def addrole(self, ctx, message: discord.Message, emoji: str,
-                      *, role: discord.Role):
+    @menu.command()
+    async def add(self, ctx, message: discord.Message,
+                  emoji: str, *, role: discord.Role):
         "Add a role to an existing role menu"
 
         menu = await self.get_menu(message)
@@ -197,8 +201,8 @@ class RoleMenu(base.BaseCog):
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
-    @commands.command()
-    async def remrole(self, ctx, message: discord.Message, emoji: str):
+    @menu.command()
+    async def remove(self, ctx, message: discord.Message, emoji: str):
         "Remove a role from an existing role menu"
 
         menu = await self.get_menu(message)
@@ -206,8 +210,8 @@ class RoleMenu(base.BaseCog):
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
-    @commands.command()
-    async def rolemenus(self, ctx):
+    @menu.command()
+    async def list(self, ctx):
         "List active RoleMenus"
 
         embed = discord.Embed(title=f"RoleMenus on {ctx.guild.name}")
