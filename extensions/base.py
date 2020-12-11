@@ -72,16 +72,20 @@ class MessageLink(commands.Converter):
 @dataclasses.dataclass
 class Response:
     """Class to represent a prepared Discord message that can be sent."""
-    content: str
-    files: dict
-    embed: discord.Embed
+    content: str = None
+    files: dict = None
+    embed: discord.Embed = None
 
     async def send_to(self, dest: typing.Union[discord.abc.Messageable,
                                                discord.Message]):
 
-        files = [discord.File(content, filename=name)
-                 for name, content in self.files.items()]
-        file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
+        if self.files:
+            files = [discord.File(content, filename=name)
+                     for name, content in self.files.items()]
+            file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
+        else:
+            files = []
+            file_groups = []
 
         if isinstance(dest, discord.Message):
             await dest.edit(
