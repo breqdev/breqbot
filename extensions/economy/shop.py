@@ -26,7 +26,7 @@ class Shop(base.BaseCog):
 
     category = "Economy"
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def shop(self, ctx):
         "List items in the shop :shopping_bags:"
@@ -84,7 +84,7 @@ class Shop(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
+    @shop.command()
     @commands.guild_only()
     @commands.check(shopkeeper_only)
     async def list(self, ctx, item: str, price: int):
@@ -95,7 +95,7 @@ class Shop(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
+    @shop.command()
     @commands.guild_only()
     @commands.check(shopkeeper_only)
     async def delist(self, ctx, item: str):
