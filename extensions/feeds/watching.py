@@ -39,7 +39,7 @@ class Watching(base.BaseCog):
 
     @commands.command()
     @commands.dm_only()
-    async def rmwatch(self, ctx, *, message: base.MessageLink):
+    async def rmwatch(self, ctx, *, message: discord.Message):
         "Remove a MessageWatch"
         for watch_instance in self.bot.watches.values():
             if isinstance(watch_instance, watch.MessageWatch):

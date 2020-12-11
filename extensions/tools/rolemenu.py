@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 
 
@@ -170,8 +171,8 @@ class RoleMenu(base.BaseCog):
         await menu.to_redis(self.redis)
 
     @commands.command()
-    async def modifymenu(self, ctx, message: base.MessageLink,
-                         field: str, *, value: str):
+    async def modifymenu(self, ctx, message: discord.Message, field: str,
+                         *, value: str):
         "Modify the name or description of a role menu"
         menu = await self.get_menu(message)
 
@@ -184,7 +185,7 @@ class RoleMenu(base.BaseCog):
         await menu.to_redis(self.redis)
 
     @commands.command()
-    async def addrole(self, ctx, message: base.MessageLink, emoji: str,
+    async def addrole(self, ctx, message: discord.Message, emoji: str,
                       *, role: str):
         "Add a role to an existing role menu"
 
@@ -200,7 +201,7 @@ class RoleMenu(base.BaseCog):
         await menu.to_redis(self.redis)
 
     @commands.command()
-    async def remrole(self, ctx, message: base.MessageLink, emoji: str):
+    async def remrole(self, ctx, message: discord.Message, emoji: str):
         "Remove a role from an existing role menu"
 
         menu = await self.get_menu(message)
