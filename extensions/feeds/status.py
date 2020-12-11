@@ -59,7 +59,7 @@ class Status(base.BaseCog, watch.Watchable):
 
         return response
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     async def status(self, ctx, *service_names: str):
         "Get the status of one of Breq's services"
 
@@ -90,8 +90,8 @@ class Status(base.BaseCog, watch.Watchable):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def statuswatch(self, ctx, service_name: str):
+    @status.command()
+    async def watch(self, ctx, service_name: str):
         "Watch the status of one of Breq's services"
 
         await self.watch.register(ctx.channel, service_name)
