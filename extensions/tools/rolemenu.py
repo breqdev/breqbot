@@ -8,15 +8,16 @@ from .. import base
 class Menu:
     def __init__(self, name="Under Construction",
                  desc="Role menu currently under construction.",
-                 mapping={}, channel_id=None, message_id=None):
+                 mapping={}, guild_id=None, channel_id=None, message_id=None):
         self.name = name
         self.desc = desc
         self.mapping = mapping
+        self.guild_id = guild_id
         self.channel_id = channel_id
         self.message_id = message_id
 
     @staticmethod
-    async def from_redis(redis, channel_id, message_id):
+    async def from_redis(redis, guild_id, channel_id, message_id):
         hash = await redis.hgetall(f"rolemenu:{channel_id}:{message_id}")
         if not hash:
             raise commands.CommandError(
@@ -31,7 +32,7 @@ class Menu:
                 emoji = key[len("emoji:"):]
                 mapping[emoji] = val
 
-        return Menu(name, desc, mapping, channel_id, message_id)
+        return Menu(name, desc, mapping, guild_id, channel_id, message_id)
 
     async def to_redis(self, redis):
         hash = {
@@ -47,11 +48,13 @@ class Menu:
         await redis.hmset_dict(
             f"rolemenu:{self.channel_id}:{self.message_id}", hash)
         await redis.sadd(
-            "rolemenu:list", f"{self.channel_id}:{self.message_id}")
+            f"rolemenu:list:{self.guild_id}",
+            f"{self.channel_id}:{self.message_id}")
 
     async def delete(self, redis):
         await redis.srem(
-            "rolemenu:list", f"{self.channel_id}{self.message_id}")
+            f"rolemenu:list:{self.guild_id}",
+            f"{self.channel_id}:{self.message_id}")
         await redis.delete(f"rolemenu:{self.channel_id}:{self.message_id}")
 
     async def post(self, bot, channel=None):
@@ -159,7 +162,7 @@ class RoleMenu(base.BaseCog):
 
     async def get_menu(self, message):
         return await Menu.from_redis(
-            self.redis, message.channel.id, message.id)
+            self.redis, message.guild.id, message.channel.id, message.id)
 
     @commands.command()
     async def menu(self, ctx):
@@ -206,28 +209,34 @@ class RoleMenu(base.BaseCog):
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):
         if await self.redis.sismember(
-                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
+                f"rolemenu:list:{payload.guild_id}",
+                f"{payload.channel_id}:{payload.message_id}"):
             await self.bot.wait_until_ready()
             menu = await Menu.from_redis(
-                self.redis, payload.channel_id, payload.message_id)
+                self.redis, payload.guild_id,
+                payload.channel_id, payload.message_id)
             await menu.delete(self.redis)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if await self.redis.sismember(
-                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
+                f"rolemenu:list:{payload.guild_id}",
+                f"{payload.channel_id}:{payload.message_id}"):
             await self.bot.wait_until_ready()
             menu = await Menu.from_redis(
-                self.redis, payload.channel_id, payload.message_id)
+                self.redis, payload.guild_id,
+                payload.channel_id, payload.message_id)
             await menu.handle_reaction_add(self.bot, payload)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         if await self.redis.sismember(
-                "rolemenu:list", f"{payload.channel_id}:{payload.message_id}"):
+                f"rolemenu:list:{payload.guild_id}",
+                f"{payload.channel_id}:{payload.message_id}"):
             await self.bot.wait_until_ready()
             menu = await Menu.from_redis(
-                self.redis, payload.channel_id, payload.message_id)
+                self.redis, payload.guild_id,
+                payload.channel_id, payload.message_id)
             await menu.handle_reaction_remove(self.bot, payload)
 
 
