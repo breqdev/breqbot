@@ -92,8 +92,8 @@ class Youtube(base.BaseCog, watch.Watchable):
 
         return response["items"][0]["snippet"]["title"]
 
-    @commands.command()
-    async def channel(self, ctx, *, search: str):
+    @commands.group(invoke_without_command=True)
+    async def youtube(self, ctx, *, search: str):
         "Display info about a YouTube channel"
 
         channel = await self.get_channel(search, ctx.channel.is_nsfw())
@@ -107,8 +107,8 @@ class Youtube(base.BaseCog, watch.Watchable):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def latestvid(self, ctx, *, search: str):
+    @youtube.command()
+    async def latest(self, ctx, *, search: str):
         "Display a YouTube channel's latest video"
 
         channel_id = (await self.get_channel(search))["id"]["channelId"]
@@ -117,8 +117,8 @@ class Youtube(base.BaseCog, watch.Watchable):
         response = await self.get_response(video)
         await response.send_to(ctx)
 
-    @commands.command()
-    async def channelwatch(self, ctx, *, search: str):
+    @youtube.command()
+    async def watch(self, ctx, *, search: str):
         "Get updates for a YouTube channel"
 
         if ctx.guild:
@@ -131,8 +131,8 @@ class Youtube(base.BaseCog, watch.Watchable):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
-    async def channelunwatch(self, ctx, *, search: str):
+    @youtube.command()
+    async def unwatch(self, ctx, *, search: str):
 
         if ctx.guild:
             if not ctx.channel.permissions_for(ctx.author).administrator:
