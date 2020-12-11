@@ -6,6 +6,7 @@ import bs4
 import discord
 from discord.ext import commands
 
+from ... import base
 from . import comiclib
 
 
@@ -73,7 +74,7 @@ class AnimeGirl(comiclib.Comic):
 
         soup = bs4.BeautifulSoup(page, "html.parser")
 
-        files = []
+        files = {}
 
         images = soup.find(id="_imageList")
         for idx, image in enumerate(images.find_all("img")):
@@ -83,14 +84,12 @@ class AnimeGirl(comiclib.Comic):
             image_file = await self.get_url(
                 image_url, headers=headers, type="bin")
 
-            image_file = discord.File(
-                io.BytesIO(image_file), filename=f"{idx}.jpg")
-            files.append(image_file)
+            files[f"{idx}.jpg"] = io.BytesIO(image_file)
 
         caption = f"**{title}** | *I Want To Be a Cute Anime Girl!*"
 
         embed = discord.Embed(title=caption, url=url)
-        return None, files, embed
+        return base.Response(None, files, embed)
 
     async def get_hash(self):
         url = ("https://www.webtoons.com/en/challenge"

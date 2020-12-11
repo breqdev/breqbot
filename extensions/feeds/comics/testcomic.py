@@ -4,6 +4,7 @@ import random
 import discord
 from discord.ext import commands
 
+from ... import base
 from . import comiclib
 
 
@@ -32,7 +33,7 @@ class TestComic(comiclib.Comic):
         embed = discord.Embed()
         embed.title = f"**#{comic['title']}** | `test comic`"
 
-        return None, [], embed
+        return base.Response(None, {}, embed)
 
     async def get_hash(self):
         return str((await self.get_url(

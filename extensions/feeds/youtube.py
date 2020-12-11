@@ -60,7 +60,7 @@ class Youtube(base.BaseCog, watch.Watchable):
     async def get_hash(self, state):
         return state["id"]["videoId"]
 
-    async def get_pack(self, video):
+    async def get_response(self, video):
         embed = discord.Embed()
         embed.title = video["snippet"]["title"]
         embed.description = video["snippet"]["description"]
@@ -70,7 +70,7 @@ class Youtube(base.BaseCog, watch.Watchable):
 
         embed.set_image(url=video["snippet"]["thumbnails"]["high"]["url"])
 
-        return "", [], embed
+        return base.Response("", {}, embed)
 
     async def channel_name(self, channel_id):
         async with self.session.get(
@@ -111,7 +111,8 @@ class Youtube(base.BaseCog, watch.Watchable):
         channel_id = (await self.get_channel(search))["id"]["channelId"]
         video = await self.get_state(channel_id)
 
-        await self.pack_send(ctx, *(await self.get_pack(video)))
+        response = await self.get_response(video)
+        await response.send_to(ctx)
 
     @commands.command()
     async def channelwatch(self, ctx, *, search: str):

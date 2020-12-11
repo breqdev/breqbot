@@ -47,11 +47,11 @@ class URL(base.BaseCog, watch.Watchable, command_attrs=dict(hidden=True)):
 
         return {"url": target, "data": data}
 
-    async def get_pack(self, state):
+    async def get_response(self, state):
         embed = discord.Embed(title=state["url"])
         embed.description = state["data"][:200]
 
-        return "", [], embed
+        return base.Response("", {}, embed)
 
 
 def setup(bot):

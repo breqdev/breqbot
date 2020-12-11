@@ -1,5 +1,7 @@
 import os
 import re
+import dataclasses
+import typing
 
 import discord
 from discord.ext import commands
@@ -10,28 +12,6 @@ class BaseCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.redis = bot.redis
-
-    @staticmethod
-    async def pack_send(dest, content, files, embed):
-        file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
-
-        if isinstance(dest, discord.Message):
-            await dest.edit(content=content, files=files, embed=embed)
-            return dest
-
-        if len(file_groups) == 0:
-            return await dest.send(content=content, embed=embed)
-        elif len(file_groups) == 1:
-            return await dest.send(
-                content=content, embed=embed, files=file_groups[0])
-        else:
-            # Send the first message with the content
-            await dest.send(content=content, files=file_groups[0])
-            # Send the middle messages with just files
-            for group in file_groups[1:-1]:
-                await dest.send(files=group)
-            # Send the final message with the embed
-            return await dest.send(embed=embed, files=file_groups[-1])
 
 
 async def config_only(ctx):
@@ -62,3 +42,37 @@ class FuzzyMember(commands.Converter):
 
         if score > 80:
             return member_names[match]
+
+
+@dataclasses.dataclass
+class Response:
+    """Class to represent a prepared Discord message that can be sent."""
+    content: str
+    files: dict
+    embed: discord.Embed
+
+    async def send_to(self, dest: typing.Union[discord.abc.Messageable,
+                                               discord.Message]):
+
+        files = [discord.File(content, filename=name)
+                 for name, content in self.files.items()]
+        file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
+
+        if isinstance(dest, discord.Message):
+            await dest.edit(
+                content=self.content, files=files, embed=self.embed)
+            return dest
+
+        if len(file_groups) == 0:
+            return await dest.send(content=self.content, embed=self.embed)
+        elif len(file_groups) == 1:
+            return await dest.send(
+                content=self.content, embed=self.embed, files=file_groups[0])
+        else:
+            # Send the first message with the content
+            await dest.send(content=self.content, files=file_groups[0])
+            # Send the middle messages with just files
+            for group in file_groups[1:-1]:
+                await dest.send(files=group)
+            # Send the final message with the embed
+            return await dest.send(embed=self.embed, files=file_groups[-1])

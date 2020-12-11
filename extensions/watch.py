@@ -2,8 +2,6 @@ import aiocron
 
 from discord.ext import commands
 
-from . import base
-
 
 class Watchable:
     async def check_target(self, target):
@@ -18,7 +16,7 @@ class Watchable:
         "Returns a string which will change if the resource changes"
         return str(state)
 
-    async def get_pack(self, state):
+    async def get_response(self, state):
         "Returns content, files, embed from the resource"
         return "", [], None
 
@@ -85,7 +83,7 @@ class ChannelWatch(Watch):
 
             old_hash = await self.redis.get(f"watch:{self.name}:hash:{target}")
             if old_hash != new_hash:
-                pack = await self.cog.get_pack(state)
+                response = await self.cog.get_response(state)
 
                 await self.redis.set(
                     f"watch:{self.name}:hash:{target}", new_hash)
@@ -93,7 +91,7 @@ class ChannelWatch(Watch):
                 for channel_id in await self.redis.smembers(
                         f"watch:{self.name}:target:{target}"):
                     channel = self.bot.get_channel(int(channel_id))
-                    await base.BaseCog.pack_send(channel, *pack)
+                    await response.send_to(channel)
 
 
 class MessageWatch(Watch):
@@ -104,8 +102,8 @@ class MessageWatch(Watch):
 
     async def register(self, channel, target):
         state = await self.cog.get_state(target)
-        pack = await self.cog.get_pack(state)
-        message = await base.BaseCog.pack_send(channel, *pack)
+        response = await self.cog.get_response(state)
+        message = await response.send_to(channel)
 
         if not await self.redis.sismember(
                 f"watch:{self.name}:targets", target):
@@ -147,7 +145,7 @@ class MessageWatch(Watch):
 
             old_hash = await self.redis.get(f"watch:{self.name}:hash:{target}")
             if old_hash != new_hash:
-                pack = await self.cog.get_pack(state)
+                response = await self.cog.get_response(state)
 
                 await self.redis.set(
                     f"watch:{self.name}:hash:{target}", new_hash)
@@ -160,4 +158,4 @@ class MessageWatch(Watch):
                     channel = self.bot.get_channel(int(channel_id))
                     message = await channel.fetch_message(int(message_id))
 
-                    await base.BaseCog.pack_send(message, *pack)
+                    await response.send_to(message)

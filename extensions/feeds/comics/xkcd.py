@@ -5,6 +5,7 @@ import random
 import discord
 from discord.ext import commands
 
+from ... import base
 from . import comiclib
 
 
@@ -33,9 +34,8 @@ class XKCD(comiclib.Comic):
         embed.set_footer(text=comic["alt"])
 
         image = await self.get_url(comic["img"], type="bin")
-        image_file = discord.File(io.BytesIO(image), filename="xkcd.jpg")
 
-        return None, [image_file], embed
+        return base.Response(None, {"xkcd.jpg": io.BytesIO(image)}, embed)
 
     async def get_hash(self):
         return str((await self.get_url(

@@ -32,7 +32,7 @@ class BaseComics(base.BaseCog, watch.Watchable):
     async def get_hash(self, state):
         return await state.get_hash()
 
-    async def get_pack(self, state):
+    async def get_response(self, state):
         return await state.get_post("latest")
 
     async def check_target(self, target):
@@ -101,7 +101,8 @@ def make_command(name, comic):
                 await ctx.send(
                     f"{ctx.channel.mention} is not currently watching {name}.")
         else:
-            await self.pack_send(ctx, *(await comic.get_post(number)))
+            response = await comic.get_post(number)
+            await response.send_to(ctx)
 
     return _command
 

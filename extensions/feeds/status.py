@@ -102,7 +102,7 @@ class Status(base.BaseCog, watch.Watchable):
         monitor_id = self.services[target]["id"]
         return (await self.get_state_by_ids(monitor_id))["monitors"][0]
 
-    async def get_pack(self, state):
+    async def get_response(self, state):
         embed = discord.Embed(
             title="Breq Services Status", url="https://s.breq.dev")
 
@@ -118,7 +118,7 @@ class Status(base.BaseCog, watch.Watchable):
             f"{status_emojis[state['status']]} {state['friendly_name']}: "
             f"{state['custom_uptime_ratio']}%")
 
-        return "", [], embed
+        return base.Response("", {}, embed)
 
 
 def setup(bot):

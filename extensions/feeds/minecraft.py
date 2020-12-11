@@ -54,7 +54,7 @@ class Minecraft(base.BaseCog, watch.Watchable):
 
         return ip, description, players, sample
 
-    async def get_pack(self, state):
+    async def get_response(self, state):
         ip, description, players, sample = state
         embed = discord.Embed(title=ip)
         description = "**Description**\n" + description
@@ -65,15 +65,15 @@ class Minecraft(base.BaseCog, watch.Watchable):
             online = ""
         embed.description = description + "\n" + playerstr + online
 
-        return None, [], embed
+        return base.Response(None, {}, embed)
 
     @commands.command()
     async def mc(self, ctx, ip: str):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
 
-        pack = await self.get_pack(await self.get_state(ip))
-        await self.pack_send(ctx, *pack)
+        response = await self.get_response(await self.get_state(ip))
+        await response.send_to(ctx)
 
     @commands.command()
     async def mcwatch(self, ctx, ip: str):
