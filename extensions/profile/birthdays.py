@@ -39,8 +39,12 @@ class Birthdays(base.BaseCog):
                                ":partying_face:")
                     await channel.send(message)
 
-    @commands.command()
-    async def setbirthday(self, ctx, *, date: str):
+    @commands.group(invoke_without_command=True)
+    async def birthday(self, ctx):
+        pass
+
+    @birthday.command()
+    async def set(self, ctx, *, date: str):
         "Tell Breqbot when your birthday is"
         date = timestring.Date(date)
 
@@ -51,9 +55,8 @@ class Birthdays(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
-    async def birthdayreminder(self, ctx,
-                               user: typing.Optional[discord.User] = None):
+    @birthday.command()
+    async def remind(self, ctx, user: typing.Optional[discord.User] = None):
         "Tell Breqbot to remind you of your or someone else's birthday"
         if user is None:
             user = ctx.author
@@ -62,8 +65,8 @@ class Birthdays(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
-    async def noreminder(self, ctx):
+    @birthday.command()
+    async def noremind(self, ctx):
         "Tell Breqbot to stop remind you about your birthday, if you hate fun."
 
         await self.redis.srem(
@@ -71,8 +74,8 @@ class Birthdays(base.BaseCog):
 
         await ctx.message.add_reaction("✅")
 
-    @commands.command()
-    async def whosbirthday(self, ctx):
+    @birthday.command()
+    async def who(self, ctx):
         "Who's birthday is it today?"
 
         date = timestring.Date("now")
