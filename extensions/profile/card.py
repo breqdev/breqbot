@@ -23,7 +23,7 @@ draw = ImageDraw.Draw(mask)
 draw.ellipse((0, 0) + size, fill=255)
 
 
-class Card(base.BaseCog):
+class Card(base.BaseCog, command_attrs=dict(hidden=True)):
     "Customize your user profile card!"
 
     category = "Profile"

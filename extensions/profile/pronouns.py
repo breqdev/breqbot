@@ -3,7 +3,7 @@ from discord.ext import commands
 from .. import base
 
 
-class Pronouns(base.BaseCog):
+class Pronouns(base.BaseCog, command_attrs=dict(hidden=True)):
     "Tell people your pronouns!"
 
     category = "Profile"
