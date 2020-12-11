@@ -118,7 +118,7 @@ class Youtube(base.BaseCog, watch.Watchable):
         await response.send_to(ctx)
 
     @youtube.command()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def watch(self, ctx, *, search: str):
         "Get updates for a YouTube channel"
 
@@ -128,7 +128,7 @@ class Youtube(base.BaseCog, watch.Watchable):
         await ctx.message.add_reaction("✅")
 
     @youtube.command()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def unwatch(self, ctx, *, search: str):
         "Disable updates for a YouTube channel"
 

@@ -72,7 +72,7 @@ class Shop(base.BaseCog):
 
     @shop.command()
     @commands.guild_only()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def list(self, ctx, item: str, price: int):
         "List an item in the shop :new:"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
@@ -83,8 +83,8 @@ class Shop(base.BaseCog):
 
     @shop.command()
     @commands.guild_only()
-    @commands.has_guild_permissions(administrator=True)
-    async def delist(self, ctx, item: str):
+    @commands.has_guild_permissions(manage_guild=True)
+    async def delist(self, ctx, *, item: str):
         "Remove an item from the shop :no_entry:"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
         await self.redis.srem(f"shop:items:{ctx.guild.id}", item.uuid)

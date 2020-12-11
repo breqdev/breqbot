@@ -10,7 +10,7 @@ class EmojiBoard(base.BaseCog):
     category = "Tools"
 
     def cog_check(self, ctx):
-        return ctx.author.guild_permissions.administrator
+        return ctx.author.guild_permissions.manage_messages
 
     @commands.group(invoke_without_command=True)
     async def emojiboard(self, ctx,

@@ -60,7 +60,7 @@ class Items(base.BaseCog):
 
     @item.command()
     @commands.guild_only()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def create(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
         if not await itemlib.Item.check_name(self.redis, ctx.guild.id, item):
@@ -117,7 +117,7 @@ class Items(base.BaseCog):
 
     @item.command(name="import")
     @commands.guild_only()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def import_(self, ctx, *, blob: str):
         "Import an item from another server to use it here"
         try:

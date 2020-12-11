@@ -10,7 +10,7 @@ class Config(base.BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def enable(self, ctx, feature: str):
         "Enable a Breqbot feature in this guild."
         if feature == "website":
@@ -22,7 +22,7 @@ class Config(base.BaseCog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_guild_permissions(administrator=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def disable(self, ctx, feature: str):
         "Disable a Breqbot feature in this guild."
         if feature == "website":
