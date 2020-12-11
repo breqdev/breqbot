@@ -38,6 +38,9 @@ class EmojiBoard(base.BaseCog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        if not payload.guild_id:
+            return
+
         channel = self.bot.get_channel(payload.channel_id)
 
         for identifier in (await self.redis.smembers(
@@ -50,6 +53,9 @@ class EmojiBoard(base.BaseCog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
+        if not payload.guild_id:
+            return
+
         channel = self.bot.get_channel(payload.channel_id)
 
         for identifier in (await self.redis.smembers(
