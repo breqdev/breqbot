@@ -67,23 +67,15 @@ def make_command(name, comic):
         response = await comic.get_post(number)
         await response.send_to(ctx)
 
-    @_command.command(name="watch")
+    @_command.command(name="watch", brief=f"Get updates for {name}!")
+    @commands.has_guild_permissions(administrator=True)
     async def watch(self, ctx):
-        if ctx.guild:
-            if not ctx.channel.permissions_for(ctx.author).administrator:
-                raise commands.CommandError(
-                    "To prevent spam, "
-                    "only administrators can watch comics.")
         await self.watch.register(ctx.channel, name)
         await ctx.message.add_reaction("✅")
 
-    @_command.command(name="unwatch")
+    @_command.command(name="unwatch", brief=f"Disable updates for {name}")
+    @commands.has_guild_permissions(administrator=True)
     async def unwatch(self, ctx):
-        if ctx.guild:
-            if not ctx.channel.permissions_for(ctx.author).administrator:
-                raise commands.CommandError(
-                    "To prevent spam, "
-                    "only administrators can watch comics.")
         await self.watch.unregister(ctx.channel, name)
         await ctx.message.add_reaction("✅")
 

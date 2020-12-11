@@ -1,25 +1,11 @@
 import typing
 import json
-import os
 
 import discord
 from discord.ext import commands
 
 from .. import base
 from . import itemlib
-
-
-async def shopkeeper_only(ctx):
-    if not ctx.guild:
-        return False
-    if ctx.author.permissions_in(ctx.channel).administrator:
-        return True
-    if ctx.author.id == int(os.getenv("BOT_OWNER")):
-        return True
-    for role in ctx.author.roles:
-        if role.name == "Shopkeeper":
-            return True
-    return False
 
 
 class Items(base.BaseCog):
@@ -74,7 +60,7 @@ class Items(base.BaseCog):
 
     @item.command()
     @commands.guild_only()
-    @commands.check(shopkeeper_only)
+    @commands.has_guild_permissions(administrator=True)
     async def create(self, ctx, item: str, desc: str, wearable: int = 0):
         "Create an item"
         if not await itemlib.Item.check_name(self.redis, ctx.guild.id, item):
@@ -131,7 +117,7 @@ class Items(base.BaseCog):
 
     @item.command(name="import")
     @commands.guild_only()
-    @commands.check(shopkeeper_only)
+    @commands.has_guild_permissions(administrator=True)
     async def import_(self, ctx, *, blob: str):
         "Import an item from another server to use it here"
         try:

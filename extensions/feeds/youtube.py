@@ -118,13 +118,9 @@ class Youtube(base.BaseCog, watch.Watchable):
         await response.send_to(ctx)
 
     @youtube.command()
+    @commands.has_guild_permissions(administrator=True)
     async def watch(self, ctx, *, search: str):
         "Get updates for a YouTube channel"
-
-        if ctx.guild:
-            if not ctx.channel.permissions_for(ctx.author).administrator:
-                raise commands.CommandError(
-                    "To prevent spam, only administrators can watch channels.")
 
         channel_id = (await self.get_channel(search))["id"]["channelId"]
         await self.watch.register(ctx.channel, channel_id)
@@ -132,12 +128,9 @@ class Youtube(base.BaseCog, watch.Watchable):
         await ctx.message.add_reaction("✅")
 
     @youtube.command()
+    @commands.has_guild_permissions(administrator=True)
     async def unwatch(self, ctx, *, search: str):
-
-        if ctx.guild:
-            if not ctx.channel.permissions_for(ctx.author).administrator:
-                raise commands.CommandError(
-                    "To prevent spam, only administrators can watch channels.")
+        "Disable updates for a YouTube channel"
 
         channel_id = (await self.get_channel(search))["id"]["channelId"]
         await self.watch.unregister(ctx.channel, channel_id)

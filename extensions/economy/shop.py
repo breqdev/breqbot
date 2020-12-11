@@ -1,4 +1,3 @@
-import os
 import typing
 
 import discord
@@ -6,19 +5,6 @@ from discord.ext import commands
 
 from .. import base
 from . import itemlib
-
-
-async def shopkeeper_only(ctx):
-    if not ctx.guild:
-        return False
-    if ctx.author.permissions_in(ctx.channel).administrator:
-        return True
-    if ctx.author.id == int(os.getenv("BOT_OWNER")):
-        return True
-    for role in ctx.author.roles:
-        if role.name == "Shopkeeper":
-            return True
-    return False
 
 
 class Shop(base.BaseCog):
@@ -86,7 +72,7 @@ class Shop(base.BaseCog):
 
     @shop.command()
     @commands.guild_only()
-    @commands.check(shopkeeper_only)
+    @commands.has_guild_permissions(administrator=True)
     async def list(self, ctx, item: str, price: int):
         "List an item in the shop :new:"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
@@ -97,7 +83,7 @@ class Shop(base.BaseCog):
 
     @shop.command()
     @commands.guild_only()
-    @commands.check(shopkeeper_only)
+    @commands.has_guild_permissions(administrator=True)
     async def delist(self, ctx, item: str):
         "Remove an item from the shop :no_entry:"
         item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
