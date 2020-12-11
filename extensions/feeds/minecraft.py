@@ -68,7 +68,7 @@ class Minecraft(base.BaseCog, watch.Watchable):
 
         return base.Response(None, {}, embed)
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     async def mc(self, ctx, ip: str):
         """:mag: :desktop: Look up information about a Minecraft server
         :video_game:"""
@@ -76,8 +76,8 @@ class Minecraft(base.BaseCog, watch.Watchable):
         response = await self.get_response(await self.get_state(ip))
         await response.send_to(ctx)
 
-    @commands.command()
-    async def mcwatch(self, ctx, ip: str):
+    @mc.command()
+    async def watch(self, ctx, ip: str):
         """Watch a Minecraft server and announce when players join or leave"""
 
         await self.watch.register(ctx.channel, ip)
