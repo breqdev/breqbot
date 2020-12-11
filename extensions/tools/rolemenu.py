@@ -186,17 +186,11 @@ class RoleMenu(base.BaseCog):
 
     @commands.command()
     async def addrole(self, ctx, message: discord.Message, emoji: str,
-                      *, role: str):
+                      *, role: discord.Role):
         "Add a role to an existing role menu"
 
-        for irole in ctx.guild.roles:
-            if irole.name == role:
-                break
-        else:
-            raise commands.CommandError(f"Role {role} does not exist")
-
         menu = await self.get_menu(message)
-        menu.mapping[emoji] = irole.id
+        menu.mapping[emoji] = role.id
         await menu.post(self.bot)
         await menu.to_redis(self.redis)
 
