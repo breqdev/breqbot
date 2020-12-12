@@ -8,7 +8,6 @@ from discord.ext import commands
 prefix = os.getenv("BOT_PREFIX") or ";"
 
 intents = discord.Intents.default()
-intents.members = True
 
 breqbot = commands.Bot(
     (prefix, "breq ", "b! ", "b!"),
