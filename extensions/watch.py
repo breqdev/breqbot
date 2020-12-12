@@ -44,7 +44,11 @@ class Watch:
 
 class ChannelWatch(Watch):
     def start_listeners(self):
-        pass
+        @self.bot.listen()
+        async def on_guild_channel_delete(channel):
+            targets = await self.get_targets(channel)
+            for target in targets:
+                await self.unregister(channel, target)
 
     async def register(self, channel, target):
         if not await self.cog.check_target(target):
