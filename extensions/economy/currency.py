@@ -55,15 +55,16 @@ class Currency(base.BaseCog):
                     as wallet:
                 coins = await wallet.get_balance()
 
-            richest.append((ctx.guild.get_member(int(member_id)), coins))
+            member = await self.redis.get(
+                f"user:name:{ctx.guild.id}:{member_id}")
+            richest.append((member, coins))
 
         richest = sorted(richest, key=lambda item: item[1], reverse=True)[:5]
 
         embed = discord.Embed(title=f"Richest members on {ctx.guild.name}")
 
         embed.description = "\n".join(
-            f"{member.display_name}: {balance}"
-            for member, balance in richest if member)
+            f"{member}: {balance}" for member, balance in richest if member)
 
         await ctx.send(embed=embed)
 
