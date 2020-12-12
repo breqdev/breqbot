@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from .. import base
 
-from . import space, the2048, soundboard
+from . import space, the2048
 
 
 class BaseGames(base.BaseCog):
@@ -44,7 +44,6 @@ class BaseGames(base.BaseCog):
 games = {
     "space": space.Space,
     "2048": the2048.The2048,
-    "soundboard": soundboard.Soundboard,
 }
 
 
