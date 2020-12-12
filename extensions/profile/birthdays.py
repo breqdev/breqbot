@@ -41,7 +41,29 @@ class Birthdays(base.BaseCog):
 
     @commands.group(invoke_without_command=True)
     async def birthday(self, ctx):
-        pass
+        "Who's birthday is it today?"
+
+        date = timestring.Date("now")
+
+        embed = discord.Embed(title="Birthdays today :partying_face:")
+
+        birthdays = []
+
+        for member in ctx.channel.members:
+            birthday = await self.redis.hgetall(f"birthdays:user:{member.id}")
+            if not birthday:
+                continue  # user has not yet set their birthday
+            if (birthday["month"] == str(date.month)
+                    and birthday["day"] == str(date.day)):
+                birthdays.append(member)
+
+        if birthdays:
+            embed.description = "\n".join(
+                member.mention for member in birthdays)
+        else:
+            embed.description = "Nobody's birthday is today :("
+
+        await ctx.send(embed=embed)
 
     @birthday.command()
     async def set(self, ctx, *, date: str):
@@ -73,32 +95,6 @@ class Birthdays(base.BaseCog):
             f"birthdays:channel:{ctx.channel.id}", ctx.author.id)
 
         await ctx.message.add_reaction("✅")
-
-    @birthday.command()
-    async def who(self, ctx):
-        "Who's birthday is it today?"
-
-        date = timestring.Date("now")
-
-        embed = discord.Embed(title="Birthdays today :partying_face:")
-
-        birthdays = []
-
-        for member in ctx.channel.members:
-            birthday = await self.redis.hgetall(f"birthdays:user:{member.id}")
-            if not birthday:
-                continue  # user has not yet set their birthday
-            if (birthday["month"] == str(date.month)
-                    and birthday["day"] == str(date.day)):
-                birthdays.append(member)
-
-        if birthdays:
-            embed.description = "\n".join(
-                member.mention for member in birthdays)
-        else:
-            embed.description = "Nobody's birthday is today :("
-
-        await ctx.send(embed=embed)
 
 
 def setup(bot):
