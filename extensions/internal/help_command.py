@@ -91,6 +91,25 @@ class HelpCommand(commands.HelpCommand):
 
         await self.context.channel.send(embed=embed)
 
+    async def send_group_help(self, group):
+        embed = discord.Embed()
+        embed.title = self.get_command_description(group)
+
+        commands = []
+        commands_unfiltered = group.commands
+        commands_filtered = await self.filter_commands(commands_unfiltered)
+        for command in commands_filtered:
+            commands.append(self.get_command_description(command))
+
+        if commands:
+            commands = "\n".join(commands)
+            embed.add_field(name="Subcommands", value=commands, inline=False)
+        else:
+            embed.description = (f"No commands from {group.name}"
+                                 " are usable here.")
+
+        await self.context.channel.send(embed=embed)
+
     async def send_command_help(self, command):
         signature = self.get_command_signature(command)
         help = command.help or command.brief or ""
