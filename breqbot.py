@@ -55,6 +55,7 @@ breqbot.load_extension("extensions.feeds.watching")
 # Tools
 breqbot.load_extension("extensions.tools.rolemenu")
 breqbot.load_extension("extensions.tools.emojiboard")
+breqbot.load_extension("extensions.tools.soundboard")
 
 # Connections
 breqbot.load_extension("extensions.connections.friendly_bots")
