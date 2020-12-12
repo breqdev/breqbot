@@ -54,6 +54,9 @@ class Response:
     async def send_to(self, dest: typing.Union[discord.abc.Messageable,
                                                discord.Message]):
 
+        for file in self.files.values():
+            file.seek(0)
+
         if self.files:
             files = [discord.File(content, filename=name)
                      for name, content in self.files.items()]
