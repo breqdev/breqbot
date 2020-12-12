@@ -166,7 +166,8 @@ class RoleMenu(base.BaseCog):
 
     @commands.group(invoke_without_command=True)
     async def menu(self, ctx):
-        pass
+        "Show information about how to use Menus"
+        await ctx.send_help(self)
 
     @menu.command()
     async def create(self, ctx):
