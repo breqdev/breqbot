@@ -238,10 +238,15 @@ class Portal(base.BaseCog):
             portal = await self.get_portal(id)
             portals.append(portal)
 
-        embed.description = "\n".join(
-            f"{self.portal_status_to_emoji(portal['status'])} "
-            f"`{portal['id']}`: {portal['name']}, {portal['desc']}"
-            for portal in portals)
+        if portals:
+            embed.description = "\n".join(
+                f"{self.portal_status_to_emoji(portal['status'])} "
+                f"`{portal['id']}`: {portal['name']}, {portal['desc']}"
+                for portal in portals)
+        else:
+            embed.description = (
+                "You haven't registered any Portals yet. "
+                f"`{self.bot.main_prefix}portal create`?")
 
         await ctx.send(embed=embed)
 
@@ -262,8 +267,13 @@ class Portal(base.BaseCog):
             guild = self.bot.get_guild(int(id))
             guilds.append(guild)
 
-        embed.description = "\n".join(
-            f"`{guild.id}`: {guild.name}" for guild in guilds)
+        if guilds:
+            embed.description = "\n".join(
+                f"`{guild.id}`: {guild.name}" for guild in guilds)
+        else:
+            embed.description = (
+                "That portal has not been added to any guilds."
+                f"`{self.bot.main_prefix}portal add`?")
 
         await ctx.send(embed=embed)
 
@@ -365,11 +375,16 @@ class Portal(base.BaseCog):
         else:
             price_str = "*(free)*"
 
-        embed.description = "\n".join(
-            f"{self.portal_status_to_emoji(portal['status'])} "
-            f"`{portal['alias']}`: {portal['name']}, "
-            f"{portal['desc']} {price_str} ({portal['id']})"
-            for portal in portals)
+        if portals:
+            embed.description = "\n".join(
+                f"{self.portal_status_to_emoji(portal['status'])} "
+                f"`{portal['alias']}`: {portal['name']}, "
+                f"{portal['desc']} {price_str} ({portal['id']})"
+                for portal in portals)
+        else:
+            embed.description = (
+                "There are no portals currently connected here."
+                f"`{self.bot.main_prefix}portal add`?")
 
         await ctx.send(embed=embed)
 

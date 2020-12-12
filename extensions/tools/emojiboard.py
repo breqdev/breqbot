@@ -54,7 +54,12 @@ class EmojiBoard(base.BaseCog):
             board_names.append(
                 f"**≥{needed_amount}** × {emoji} → {channel.mention}")
 
-        embed.description = "\n".join(board_names)
+        if board_names:
+            embed.description = "\n".join(board_names)
+        else:
+            embed.description = (
+                "This server currently has no EmojiBoards."
+                f"`{self.bot.main_prefix}emojiboard`?")
 
         await ctx.send(embed=embed)
 

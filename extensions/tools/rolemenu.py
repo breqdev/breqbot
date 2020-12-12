@@ -230,7 +230,12 @@ class RoleMenu(base.BaseCog):
             rolemenus.append(
                 f"[{menu.name}]({message.jump_url}): {menu.desc}")
 
-        embed.description = "\n".join(rolemenus)
+        if rolemenus:
+            embed.description = "\n".join(rolemenus)
+        else:
+            embed.description = (
+                "This server currently has no RoleMenus."
+                f"`{self.bot.main_prefix}menu create`?")
 
         await ctx.send(embed=embed)
 

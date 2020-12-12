@@ -51,10 +51,15 @@ class Items(base.BaseCog):
 
         embed = discord.Embed(title=f"Items on {ctx.guild.name}")
 
-        embed.description = "\n".join(
-            f"• {item.name}: {item.desc}"
-            + (" *(wearable)*" if int(item.wearable) else "")
-            for item in items)
+        if items:
+            embed.description = "\n".join(
+                f"• {item.name}: {item.desc}"
+                + (" *(wearable)*" if int(item.wearable) else "")
+                for item in items)
+        else:
+            embed.description = (
+                "There are currently no items here."
+                f"`{self.bot.main_prefix}item create`?")
 
         await ctx.send(embed=embed)
 

@@ -93,7 +93,12 @@ class About(base.BaseCog):
 
             lines.append(f"[{name}]({invite}) - {desc}")
 
-        embed.description = "\n".join(lines)
+        if lines:
+            embed.description = "\n".join(lines)
+        else:
+            embed.description = (
+                "Breqbot doesn't feature any other bots at this time. "
+                "Check back later!")
 
         await ctx.send(embed=embed)
 
