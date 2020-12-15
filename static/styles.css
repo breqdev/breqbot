@@ -2,15 +2,14 @@ body {
     overflow-wrap: break-word;
 }
 
-td, th {
-  border: 1px solid #999;
+table, tbody, td, th {
+  border: 2px solid #999;
   padding: 0.5rem;
 }
 
 .table {
-    background-color: #000;
+    background-color: #e9ecef;
     padding: 15px;
-    color: #FFF;
     text-align: center;
     border-radius: 15px;
 }
@@ -20,7 +19,7 @@ td, th {
 }
 
 .table a {
-    color: #FFF;
+    color: inherit;
 }
 
 table {
@@ -29,48 +28,34 @@ table {
     width: 100%;
 }
 
-.navbar {
-    background-color: #D539A6;
-    font-size: 20px;
-}
-
-.navbar a {
-    color: #000000;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-.navbar-brand {
-    font-size: 30px;
-}
-
-body {
-    background-color: #2C353A;
-}
-
-.content {
-    color: #FFF;
-}
-
 .jumbotron {
-    background-color: #000;
     text-align: center;
     padding: 2rem;
+}
+
+.jumbotron.profile-bg .username {
+    color: #FFF;
 }
 
 .jumbotron .username {
     font-size: 96px;
 }
 
-.jumbotron a {
+.jumbotron.profile-bg .server {
     color: #FFF;
+}
+
+.jumbotron.profile-bg a {
+    color: #FFF;
+}
+
+.jumbotron.profile-bg p {
+    color: #DDD;
 }
 
 .jumbotron.status-online {
     background-color: #09E85E;
-    color: #000;
+    color: #FFF;
 }
 
 .big-number {
@@ -117,42 +102,7 @@ body {
     padding: 15px;
 }
 
-strong {
-    color: #6DD3CE;
-    font-weight: bold;
-}
-
-.card {
-    background-color: #000;
-}
-
-
-@media only screen and (max-width: 1000px) {
-    .card-columns.index-cards {
-        column-count: 1;
-    }
-}
-
-@media only screen and (min-width: 1000px) {
-    .card-columns.index-cards {
-        column-count: 2;
-    }
-}
-
-.row .card {
-    margin-bottom: 20px;
-}
-
-.btn-xl {
-    padding: 15px 30px;
-    font-size: 36px;
-    border-radius: 15px;
-}
-
 .jumbotron {
-    border-radius: 15px;
-}
-.card {
     border-radius: 15px;
 }
 
