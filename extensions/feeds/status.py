@@ -73,7 +73,7 @@ class Status(base.BaseCog, watch.Watchable):
         response = await self.get_state_by_ids(monitor_ids)
 
         embed = discord.Embed(
-            title="Breq Services Status", url="https://s.breq.dev")
+            title="Breq Services Status", url="https://status.breq.dev")
 
         status_emojis = {
             0: "📴",  # Paused
@@ -106,7 +106,7 @@ class Status(base.BaseCog, watch.Watchable):
 
     async def get_response(self, state):
         embed = discord.Embed(
-            title="Breq Services Status", url="https://s.breq.dev")
+            title="Breq Services Status", url="https://status.breq.dev")
 
         status_emojis = {
             0: "📴",  # Paused
