@@ -10,8 +10,8 @@ CORS(api)
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
-redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"),
-                                    decode_responses=True)
+redis_client = redis.Redis.from_url(
+    os.getenv("REDIS_URL"), decode_responses=True)
 
 
 class Item:
