@@ -9,6 +9,8 @@ import geventwebsocket
 import redis
 import git
 
+from api import api
+
 
 class Item:
     @property
@@ -265,6 +267,9 @@ def portal_requests(ws):
 
     redis_client.hset(f"portal:{id}", "status", "0")
     portal_backend.unregister(portal, ws)
+
+
+app.register_blueprint(api, url_prefix="/api")
 
 
 if __name__ == "__main__":
