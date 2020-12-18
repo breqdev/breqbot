@@ -125,3 +125,61 @@ def shop():
         shop_items.append(vars(item))
 
     return jsonify(shop_items)
+
+
+@api.route("/profile")
+@cross_origin()
+def profile():
+    member_id = request.args.get("id")
+    guild_id = request.args.get("guild_id")
+
+    website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
+    if not website_enabled:
+        return abort(404)
+
+    guild_name = redis_client.hget(f"guild:{guild_id}", "name")
+    user_name = redis_client.get(f"user:name:{guild_id}:{member_id}")
+
+    guild_size = redis_client.scard(f"guild:member:{guild_id}")
+
+    if not user_name:
+        return abort(404)
+
+    user_name = redis_client.get(f"user:name:{guild_id}:{member_id}")
+
+    profile_desc = redis_client.hget(
+        f"profile:{guild_id}:{member_id}", "desc")
+    profile_bg = redis_client.hget(
+        f"profile:{guild_id}:{member_id}", "bg")
+    profile_pfp = redis_client.hget(
+        f"profile:{guild_id}:{member_id}", "pfp")
+
+    balance = int(
+        redis_client.get(f"currency:balance:{guild_id}:{member_id}") or 0)
+
+    inventory = redis_client.hgetall(f"inventory:{guild_id}:{member_id}")
+
+    amounts = []
+    for item_name, amount in inventory.items():
+        item = Item.from_redis(redis_client, item_name)
+        item.quantity = amount
+        if int(amount) > 0:
+            amounts.append(vars(item))
+
+    wearing = [vars(Item.from_redis(redis_client, uuid))
+               for uuid
+               in redis_client.smembers(f"wear:{guild_id}:{member_id}")]
+
+    return jsonify({
+        "name": user_name,
+        "id": member_id,
+        "guild_name": guild_name,
+        "guild_id": guild_id,
+        "guild_size": guild_size,
+        "desc": profile_desc,
+        "bg": profile_bg,
+        "pfp": profile_pfp,
+        "balance": balance,
+        "inventory": amounts,
+        "outfit": wearing
+    })
