@@ -3,8 +3,10 @@ import os
 import redis
 import git
 from flask import Blueprint, jsonify
+from flask_cors import CORS, cross_origin
 
 api = Blueprint("api", __name__)
+CORS(api)
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
 
@@ -13,6 +15,7 @@ redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"),
 
 
 @api.route("/status")
+@cross_origin()
 def status():
     server_count = redis_client.scard("guild:list")
     user_count = redis_client.scard("user:list")

@@ -16,6 +16,7 @@ dnspython==1.15.0
 dnspython3==1.15.0
 emoji==0.6.0
 Flask==1.1.2
+Flask-Cors==3.0.9
 Flask-Sockets==0.2.1
 fuzzywuzzy==0.18.0
 gevent==20.9.0
