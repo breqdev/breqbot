@@ -67,10 +67,12 @@ class About(base.BaseCog):
             if user:
                 embed.title = (f"Website: **{user.display_name}** "
                                f"on {ctx.guild.name}")
-                embed.url = f"{os.getenv('WEBSITE')}{ctx.guild.id}/{user.id}"
+                embed.url = ("https://breq.dev/apps/breqbot/member"
+                             f"?id={user.id}&guild_id={ctx.guild.id}")
             else:
                 embed.title = f"Website: **{ctx.guild.name}**"
-                embed.url = f"{os.getenv('WEBSITE')}{ctx.guild.id}"
+                embed.url = ("https://breq.dev/apps/breqbot/server"
+                             f"?id={ctx.guild.id}")
         else:
             embed.title = f"{ctx.guild.name}'s website is disabled."
             embed.description = (f"Shopkeepers can enable it with "
