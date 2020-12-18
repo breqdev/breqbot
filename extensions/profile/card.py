@@ -23,7 +23,7 @@ draw = ImageDraw.Draw(mask)
 draw.ellipse((0, 0) + size, fill=255)
 
 
-class Card(base.BaseCog, command_attrs=dict(hidden=True)):
+class Card(base.BaseCog):
     "Customize your user profile card!"
 
     category = "Profile"
@@ -33,9 +33,9 @@ class Card(base.BaseCog, command_attrs=dict(hidden=True)):
         "bg": "Set the URL for your background image!"
     }
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
-    async def card(self, ctx, user: typing.Optional[base.FuzzyMember]):
+    async def card(self, ctx, *, user: typing.Optional[base.FuzzyMember]):
         "Display the profile card of a user!"
         if not user:
             user = ctx.author
@@ -87,10 +87,10 @@ class Card(base.BaseCog, command_attrs=dict(hidden=True)):
 
         await ctx.send(file=file)
 
-    @commands.command()
-    async def setcard(self, ctx,
-                      field: typing.Optional[str] = None,
-                      *, value: typing.Optional[str] = None):
+    @card.command()
+    async def set(self, ctx,
+                  field: typing.Optional[str] = None,
+                  *, value: typing.Optional[str] = None):
         "Set your profile card!"
 
         if field not in self.fields:
