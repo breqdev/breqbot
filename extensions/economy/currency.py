@@ -134,7 +134,10 @@ class Currency(base.BaseCog):
 
         for reaction in message.reactions:
             if reaction.emoji not in bet_types:
-                await reaction.clear()
+                try:
+                    await reaction.clear()
+                except discord.errors.Forbidden:
+                    pass
                 continue
 
             if reaction.emoji == "🟩" and color == "🟩":
@@ -153,7 +156,10 @@ class Currency(base.BaseCog):
                     try:
                         await wallet.ensure(wager)
                     except commands.CommandError:
-                        await reaction.remove(user)
+                        try:
+                            await reaction.remove(user)
+                        except discord.errors.Forbidden:
+                            pass
                     else:
                         net_winnings = payout - wager
                         if net_winnings >= 0:
@@ -240,9 +246,15 @@ class Currency(base.BaseCog):
             if reaction.emoji in emojis:
                 break
             else:
-                await reaction.remove(user)
+                try:
+                    await reaction.remove(user)
+                except discord.errors.Forbidden:
+                    pass
 
-        await message.clear_reactions()
+        try:
+            await message.clear_reactions()
+        except discord.errors.Forbidden:
+            pass
 
         choice = scenario["choices"][emojis.index(reaction.emoji)]
 
