@@ -54,10 +54,10 @@ class Response:
     async def send_to(self, dest: typing.Union[discord.abc.Messageable,
                                                discord.Message]):
 
-        for file in self.files.values():
-            file.seek(0)
-
         if self.files:
+            for file in self.files.values():
+                file.seek(0)
+
             files = [discord.File(content, filename=name)
                      for name, content in self.files.items()]
             file_groups = [files[i:i+10] for i in range(0, len(files), 10)]
