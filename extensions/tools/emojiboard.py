@@ -109,6 +109,10 @@ class EmojiBoard(base.BaseCog):
         if message.attachments:
             embed.set_image(url=message.attachments[0].proxy_url)
 
+        embed.add_field(
+            name="Jump to message",
+            value=f"**on [#{message.channel.name}]({message.jump_url})**")
+
         return base.Response(content=content, embed=embed)
 
     async def handle_board(self, identifier, channel, message_id):
