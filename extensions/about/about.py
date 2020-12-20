@@ -75,7 +75,7 @@ class About(base.BaseCog):
                              f"?id={ctx.guild.id}")
         else:
             embed.title = f"{ctx.guild.name}'s website is disabled."
-            embed.description = (f"Shopkeepers can enable it with "
+            embed.description = (f"Admins can enable it with "
                                  f"`{self.bot.main_prefix}enable website`")
         await ctx.send(embed=embed)
 
