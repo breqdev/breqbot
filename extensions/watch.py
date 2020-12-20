@@ -195,6 +195,10 @@ class MessageWatch(Watch):
                         f"watch:{self.name}:message:{message_id}:channel")
 
                     channel = self.bot.get_channel(int(channel_id))
+
+                    if not channel:
+                        await self.unregister(channel_id, message_id)
+
                     message = await channel.fetch_message(int(message_id))
 
                     await response.send_to(message)
