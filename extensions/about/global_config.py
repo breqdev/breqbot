@@ -14,6 +14,8 @@ class GlobalConfig(base.BaseCog):
     def cog_check(self, ctx):
         return base.config_only(ctx)
 
+    # Diagnostic Commands
+
     @commands.command()
     async def guilds(self, ctx):
         "List guilds that the bot is in"
@@ -28,6 +30,8 @@ class GlobalConfig(base.BaseCog):
         embed.description = "\n".join(f"{name}: {size}"
                                       for name, size in guilds)
         await ctx.send(embed=embed)
+
+    # Set Bot Presence
 
     @commands.command()
     async def activity(self, ctx, type: str, *, desc: str):
@@ -57,6 +61,8 @@ class GlobalConfig(base.BaseCog):
 
         await self.bot.change_presence(status=discord.Status.online,
                                        activity=activity)
+
+    # Manage Bot Friends List
 
     @commands.command()
     async def addfriend(self, ctx, bot_id: int,
@@ -107,10 +113,42 @@ class GlobalConfig(base.BaseCog):
         await self.redis.delete(f"alsotry:{bot_id}")
         await ctx.message.add_reaction("✅")
 
+    # Manage User Bans
+
+    @commands.command()
+    async def ban(self, ctx, user_id: int):
+        "Ban a user from using Breqbot"
+        await self.redis.sadd("user:banned:list", user_id)
+        await ctx.message.add_reaction("✅")
+
+    @commands.command()
+    async def unban(self, ctx, user_id: int):
+        "Revert a user ban"
+        await self.redis.srem("user:banned:list", user_id)
+        await ctx.message.add_reaction("✅")
+
+    # Manage Guild Lock
+
+    @commands.command()
+    async def guildlock(self, ctx, enable: bool):
+        "Enable or disable the lock preventing Breqbot from joining new guilds"
+        await self.redis.set("guildlock:enabled", int(enable))
+        await ctx.message.add_reaction("✅")
+
     @commands.Cog.listener()
     async def on_ready(self):
         await self.load_activity()
 
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        if int(await self.redis.get("guildlock:enabled")):
+            await guild.leave()
+
 
 def setup(bot):
     bot.add_cog(GlobalConfig(bot))
+
+    @bot.check
+    async def check_banned(ctx):
+        return not int(
+            await bot.redis.sismember("user:banned:list", ctx.author.id))
