@@ -1,5 +1,6 @@
 import aiocron
 
+import discord
 from discord.ext import commands
 
 
@@ -103,6 +104,10 @@ class ChannelWatch(Watch):
                 for channel_id in await self.redis.smembers(
                         f"watch:{self.name}:target:{target}"):
                     channel = self.bot.get_channel(int(channel_id))
+
+                    if not channel:
+                        await self.unregister(
+                            discord.Object(int(channel_id)), target)
                     await response.send_to(channel)
 
 
