@@ -24,11 +24,14 @@ class GlobalConfig(base.BaseCog):
 
         guilds = []
         for guild_id in await self.redis.smembers("guild:list"):
-            guilds.append((await self.redis.hget(f"guild:{guild_id}", "name"),
-                          await self.redis.scard(f"guild:member:{guild_id}")))
+            guilds.append((
+                guild_id,
+                await self.redis.hget(f"guild:{guild_id}", "name"),
+                await self.redis.scard(f"guild:member:{guild_id}")
+            ))
 
-        embed.description = "\n".join(f"{name}: {size}"
-                                      for name, size in guilds)
+        embed.description = "\n".join(f"{name}: {size} *({id})*"
+                                      for id, name, size in guilds)
         await ctx.send(embed=embed)
 
     # Set Bot Presence
@@ -127,6 +130,20 @@ class GlobalConfig(base.BaseCog):
         await self.redis.srem("user:banned:list", user_id)
         await ctx.message.add_reaction("✅")
 
+    @commands.command()
+    async def guildban(self, ctx, guild_id: int):
+        "Leave a guild and prevent re-joining"
+        await self.redis.sadd("guild:banned:list", guild_id)
+
+        guild = self.bot.get_guild(guild_id)
+        if guild:
+            await guild.leave()
+
+    @commands.command()
+    async def guildunban(self, ctx, guild_id: int):
+        "Revert a guild ban"
+        await self.redis.srem("guild:banned:list", guild_id)
+
     # Manage Guild Lock
 
     @commands.command()
@@ -142,6 +159,9 @@ class GlobalConfig(base.BaseCog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         if int(await self.redis.get("guildlock:enabled")):
+            await guild.leave()
+
+        if int(await self.redis.sismember("guild:banned:list", guild.id)):
             await guild.leave()
 
 
