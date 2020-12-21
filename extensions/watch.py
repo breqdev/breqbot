@@ -148,8 +148,10 @@ class MessageWatch(Watch):
             f"watch:{self.name}:message:{message_id}:target")
 
         await self.redis.srem(f"watch:{self.name}:target:{target}", message_id)
-        await self.redis.srem(
-            f"watch:{self.name}:guild:{channel.guild.id}:messages", message_id)
+        if channel:
+            await self.redis.srem(
+                f"watch:{self.name}:guild:{channel.guild.id}:messages",
+                message_id)
 
         card = await self.redis.scard(f"watch:{self.name}:target:{target}")
         if int(card) < 1:
