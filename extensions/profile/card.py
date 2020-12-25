@@ -16,12 +16,16 @@ class Card(base.BaseCog):
 
     fields = {
         "bio": "Set your profile card description!",
+        "background": "Pick a cool background image for your card.",
+        "template": ("Set the template for the card. "
+                     "Current options are 'light-profile' and 'dark-profile'.")
         # "background_image": "Set the URL for your background image!"
     }
 
     defaults = {
         "bio": "",
-        "background_image": "https://breq.dev/assets/images/pansexual.png"
+        "background": "https://breq.dev/assets/images/pansexual.png",
+        "template": "light-profile"
     }
 
     @commands.group(invoke_without_command=True)
@@ -40,10 +44,8 @@ class Card(base.BaseCog):
         }
 
         params["name"] = user.display_name
-        # params["avatar"] = str(user.avatar_url)
-        params["background_image"] = str(user.avatar_url)
+        params["avatar"] = str(user.avatar_url)
         params["format"] = "png"
-        params["template"] = "background-image"
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
