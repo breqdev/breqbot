@@ -183,3 +183,29 @@ def profile():
         "inventory": amounts,
         "outfit": wearing
     })
+
+
+@api.route("/card")
+@cross_origin()
+def card():
+    member_id = request.args.get("id")
+    guild_id = request.args.get("guild_id")
+
+    defaults = {
+        "bio": "",
+        "background": "https://breq.dev/assets/images/pansexual.png",
+        "template": "light-profile"
+    }
+
+    params = {
+        field:
+            (redis_client.hget(f"profile:{guild_id}:{member_id}", field)
+             or defaults[field])
+        for field in defaults
+    }
+
+    params["name"] = redis_client.get(f"user:name:{guild_id}:{member_id}")
+    params["avatar"] = redis_client.hget(
+        f"profile:{guild_id}:{member_id}", "pfp")
+
+    return jsonify(params)
