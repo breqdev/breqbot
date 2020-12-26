@@ -1,4 +1,5 @@
 import typing
+import calendar
 
 import aiocron
 import timestring
@@ -40,30 +41,44 @@ class Birthdays(base.BaseCog):
                     await channel.send(message)
 
     @commands.group(invoke_without_command=True)
-    async def birthday(self, ctx):
-        "Who's birthday is it today?"
+    async def birthday(self, ctx, *, user: typing.Optional[base.FuzzyMember]):
+        "Who's birthday is it today? Or, specify a user to get their birthday."
 
-        date = timestring.Date("now")
+        if user:
+            month, day = await self.redis.hmget(
+                f"birthdays:user:{user.id}", "month", "day")
 
-        embed = discord.Embed(title="Birthdays today :partying_face:")
+            if month is None or day is None:
+                await ctx.send(
+                    f"{user.display_name} has not set a birthday. "
+                    f"`{self.bot.main_prefix}birthday set`?")
+            else:
+                await ctx.send(f"{user.display_name}'s birthday is "
+                               f"**{calendar.month_name[int(month)]} {day}**")
 
-        birthdays = []
-
-        for member in ctx.channel.members:
-            birthday = await self.redis.hgetall(f"birthdays:user:{member.id}")
-            if not birthday:
-                continue  # user has not yet set their birthday
-            if (birthday["month"] == str(date.month)
-                    and birthday["day"] == str(date.day)):
-                birthdays.append(member)
-
-        if birthdays:
-            embed.description = "\n".join(
-                member.mention for member in birthdays)
         else:
-            embed.description = "Nobody's birthday is today :("
+            date = timestring.Date("now")
 
-        await ctx.send(embed=embed)
+            embed = discord.Embed(title="Birthdays today :partying_face:")
+
+            birthdays = []
+
+            for member in ctx.channel.members:
+                birthday = await self.redis.hgetall(
+                    f"birthdays:user:{member.id}")
+                if not birthday:
+                    continue  # user has not yet set their birthday
+                if (birthday["month"] == str(date.month)
+                        and birthday["day"] == str(date.day)):
+                    birthdays.append(member)
+
+            if birthdays:
+                embed.description = "\n".join(
+                    member.mention for member in birthdays)
+            else:
+                embed.description = "Nobody's birthday is today :("
+
+            await ctx.send(embed=embed)
 
     @birthday.command()
     async def set(self, ctx, *, date: str):
@@ -75,6 +90,14 @@ class Birthdays(base.BaseCog):
             "day": date.day
         })
 
+        await ctx.send(
+            f"Set {ctx.author.display_name}'s birthday to "
+            f"**{calendar.month_name[int(date.month)]} {date.day}** ✅")
+
+    @birthday.command()
+    async def clear(self, ctx):
+        "Clear your set birthday"
+        await self.redis.delete(f"birthdays:user:{ctx.author.id}")
         await ctx.message.add_reaction("✅")
 
     @birthday.command()
@@ -95,6 +118,21 @@ class Birthdays(base.BaseCog):
             f"birthdays:channel:{ctx.channel.id}", ctx.author.id)
 
         await ctx.message.add_reaction("✅")
+
+    @birthday.command()
+    async def reminders(self, ctx):
+        "List the users for which Breqbot will send out a birthday reminder"
+
+        members = await self.redis.smembers(
+            f"birthdays:channel:{ctx.channel.id}")
+
+        embed = discord.Embed(
+            title=f"Birthday reminders on #{ctx.channel.name}")
+
+        embed.description = "\n".join(
+            self.bot.get_user(int(member_id)).mention for member_id in members)
+
+        await ctx.send(embed=embed)
 
 
 def setup(bot):
