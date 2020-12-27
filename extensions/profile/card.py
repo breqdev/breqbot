@@ -28,6 +28,27 @@ class Card(base.BaseCog):
         "template": "light-profile"
     }
 
+    async def freeze_card(self, guild, user):
+        params = {
+            field:
+                (await self.redis.hget(
+                    f"profile:{guild.id}:{user.id}", field)
+                 or self.defaults[field])
+            for field in self.fields
+        }
+
+        params["name"] = user.display_name
+        params["avatar"] = str(user.avatar_url)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                    "https://cards.breq.dev/card",
+                    params=params) as response:
+                card_id = (await response.json())["card_id"]
+
+        await self.redis.set(f"card:{guild.id}:{user.id}", card_id)
+        return card_id
+
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
     async def card(self, ctx, *, user: typing.Optional[base.FuzzyMember]):
@@ -35,26 +56,24 @@ class Card(base.BaseCog):
         if not user:
             user = ctx.author
 
-        params = {
-            field:
-                (await self.redis.hget(
-                    f"profile:{ctx.guild.id}:{user.id}", field)
-                 or self.defaults[field])
-            for field in self.fields
-        }
+        card_id = await self.redis.get(f"card:{ctx.guild.id}:{user.id}")
 
-        params["name"] = user.display_name
-        params["avatar"] = str(user.avatar_url)
-        params["format"] = "png"
+        if not card_id:
+            card_id = await self.freeze_card(ctx.guild, user)
 
+        url = f"https://cards.breq.dev/card/{card_id}.png"
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                    "https://cards.breq.dev/card", params=params) as response:
+            async with session.get(url) as response:
                 file = io.BytesIO(await response.read())
 
         file = discord.File(file, "card.png")
-
         await ctx.send(file=file)
+
+    @card.command()
+    async def update(self, ctx):
+        "Update your card (e.g. if you change your profile pic)"
+        await self.freeze_card(ctx.guild, ctx.author)
+        await ctx.message.add_reaction("✅")
 
     @card.command()
     async def set(self, ctx,
@@ -84,6 +103,7 @@ class Card(base.BaseCog):
             await self.redis.hset(
                 f"profile:{ctx.guild.id}:{ctx.author.id}", field, value)
 
+            await self.freeze_card(ctx.guild, ctx.author)
             await ctx.message.add_reaction("✅")
 
 
