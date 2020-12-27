@@ -1,7 +1,10 @@
 import uuid
 import time
 import asyncio
+import os
+import json
 
+import aioredis
 import discord
 from discord.ext import commands
 
@@ -81,7 +84,9 @@ class Portal(base.BaseCog):
         else:
             message = None
 
-        pubsub = await self.redis.subscribe(f"portal:{portal_id}:{job_id}")
+        sub_conn = await aioredis.create_redis(
+            os.getenv("REDIS_URL"), encoding="utf-8")
+        channel = (await sub_conn.subscribe(f"portal:{portal_id}:{job_id}"))[0]
 
         query = {
             "type": "query",
@@ -102,9 +107,15 @@ class Portal(base.BaseCog):
         await self.redis.publish_json(
             f"portal:{portal_id}:{job_id}", query)
 
-        response = None
+        async def get_response():
+            async for message in channel.iter(decoder=json.loads):
+                if message["type"] == "response":
+                    return message
+
         ts = time.time()
         frame = 0
+
+        response_task = asyncio.create_task(get_response())
 
         while True:
             if time.time() - ts > 120:
@@ -121,15 +132,14 @@ class Portal(base.BaseCog):
                 embed.description = clock
                 await message.edit(embed=embed)
 
-            if pubsub[0].is_active:
-                response = await pubsub[0].get_json()
-                if response["type"] == "response":
-                    break
+            if response_task.done():
+                break
 
             frame += 1
 
             await asyncio.sleep(0.2)
 
+        response = response_task.result()
         data = response["data"]
 
         embed = discord.Embed()

@@ -1,17 +1,14 @@
 import os
 
-import redis
 import git
-from flask import Blueprint, jsonify, request, abort
-from flask_cors import CORS, cross_origin
+from quart import Blueprint, jsonify, request, abort
+from quart import current_app as app
+from quart_cors import cors
 
 api = Blueprint("api", __name__)
-CORS(api)
+api = cors(api)
 
 git_hash = os.getenv("GIT_REV") or git.Repo().head.object.hexsha
-
-redis_client = redis.Redis.from_url(
-    os.getenv("REDIS_URL"), decode_responses=True)
 
 
 class Item:
@@ -20,26 +17,25 @@ class Item:
         return f"items:{self.uuid}"
 
     @staticmethod
-    def from_redis(redis, uuid):
+    async def from_redis(redis, uuid):
         item = Item()
         item.uuid = uuid
 
-        item.name = redis.hget(item.redis_key, "name")
-        item.guild = int(redis.hget(item.redis_key, "guild") or "0")
-        item.owner = int(redis.hget(item.redis_key, "owner") or "0")
-        item.desc = redis.hget(item.redis_key, "desc")
-        item.wearable = redis.hget(item.redis_key, "wearable") or "0"
+        item.name = await redis.hget(item.redis_key, "name")
+        item.guild = int(await redis.hget(item.redis_key, "guild") or "0")
+        item.owner = int(await redis.hget(item.redis_key, "owner") or "0")
+        item.desc = await redis.hget(item.redis_key, "desc")
+        item.wearable = await redis.hget(item.redis_key, "wearable") or "0"
         return item
 
 
 @api.route("/status")
-@cross_origin()
-def status():
-    server_count = redis_client.scard("guild:list")
-    user_count = redis_client.scard("user:list")
-    testing_server_size = redis_client.scard(
+async def status():
+    server_count = await app.redis.scard("guild:list")
+    user_count = await app.redis.scard("user:list")
+    testing_server_size = await app.redis.scard(
         f"guild:member:{os.getenv('CONFIG_GUILD')}")
-    commands_run = redis_client.get("commands:total_run")
+    commands_run = await app.redis.get("commands:total_run")
 
     return jsonify({
         "server_count": server_count,
@@ -51,19 +47,19 @@ def status():
 
 
 @api.route("/guild")
-@cross_origin()
-def guild():
+async def guild():
     guild_id = request.args.get("id")
 
     if not guild_id:
         return abort(404)
 
-    website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
+    website_enabled = int(await app.redis.hget(
+        f"guild:{guild_id}", "website"))
     if not website_enabled:
         return []
 
-    guild_name = redis_client.hget(f"guild:{guild_id}", "name")
-    member_count = redis_client.scard(f"guild:member:{guild_id}")
+    guild_name = await app.redis.hget(f"guild:{guild_id}", "name")
+    member_count = await app.redis.scard(f"guild:member:{guild_id}")
 
     return jsonify({
         "name": guild_name,
@@ -72,24 +68,25 @@ def guild():
 
 
 @api.route("/richest")
-@cross_origin()
-def richest():
+async def richest():
     guild_id = request.args.get("id")
 
     if not guild_id:
         return abort(404)
 
-    website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
+    website_enabled = int(await app.redis.hget(
+        f"guild:{guild_id}", "website"))
     if not website_enabled:
         return []
 
     balances = []
 
-    guild_members = redis_client.smembers(f"guild:member:{guild_id}")
+    guild_members = await app.redis.smembers(f"guild:member:{guild_id}")
     for member_id in guild_members:
-        balance = int(redis_client.get(
+        balance = int(await app.redis.get(
             f"currency:balance:{guild_id}:{member_id}") or 0)
-        member_name = redis_client.get(f"user:name:{guild_id}:{member_id}")
+        member_name = await app.redis.get(
+            f"user:name:{guild_id}:{member_id}")
         balances.append({
             "balance": balance,
             "name": member_name,
@@ -103,24 +100,25 @@ def richest():
 
 
 @api.route("/shop")
-@cross_origin()
-def shop():
+async def shop():
     guild_id = request.args.get("id")
 
     if not guild_id:
         return abort(404)
 
-    website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
+    website_enabled = int(await app.redis.hget(
+        f"guild:{guild_id}", "website"))
     if not website_enabled:
         return []
 
-    shop_item_ids = redis_client.smembers(f"shop:items:{guild_id}")
+    shop_item_ids = await app.redis.smembers(f"shop:items:{guild_id}")
 
     shop_items = []
 
     for item_id in shop_item_ids:
-        price = int(redis_client.get(f"shop:prices:{guild_id}:{item_id}"))
-        item = Item.from_redis(redis_client, item_id)
+        price = int(await app.redis.get(
+            f"shop:prices:{guild_id}:{item_id}"))
+        item = await Item.from_redis(app.redis, item_id)
         item.price = price
         shop_items.append(vars(item))
 
@@ -128,47 +126,48 @@ def shop():
 
 
 @api.route("/profile")
-@cross_origin()
-def profile():
+async def profile():
     member_id = request.args.get("id")
     guild_id = request.args.get("guild_id")
 
-    website_enabled = int(redis_client.hget(f"guild:{guild_id}", "website"))
+    website_enabled = int(await app.redis.hget(
+        f"guild:{guild_id}", "website"))
     if not website_enabled:
         return abort(404)
 
-    guild_name = redis_client.hget(f"guild:{guild_id}", "name")
-    user_name = redis_client.get(f"user:name:{guild_id}:{member_id}")
+    guild_name = await app.redis.hget(f"guild:{guild_id}", "name")
+    user_name = await app.redis.get(f"user:name:{guild_id}:{member_id}")
 
-    guild_size = redis_client.scard(f"guild:member:{guild_id}")
+    guild_size = await app.redis.scard(f"guild:member:{guild_id}")
 
     if not user_name:
         return abort(404)
 
-    user_name = redis_client.get(f"user:name:{guild_id}:{member_id}")
+    user_name = await app.redis.get(f"user:name:{guild_id}:{member_id}")
 
-    profile_desc = redis_client.hget(
+    profile_desc = await app.redis.hget(
         f"profile:{guild_id}:{member_id}", "desc")
-    profile_bg = redis_client.hget(
+    profile_bg = await app.redis.hget(
         f"profile:{guild_id}:{member_id}", "bg")
-    profile_pfp = redis_client.hget(
+    profile_pfp = await app.redis.hget(
         f"profile:{guild_id}:{member_id}", "pfp")
 
     balance = int(
-        redis_client.get(f"currency:balance:{guild_id}:{member_id}") or 0)
+        await app.redis.get(
+            f"currency:balance:{guild_id}:{member_id}") or 0)
 
-    inventory = redis_client.hgetall(f"inventory:{guild_id}:{member_id}")
+    inventory = await app.redis.hgetall(f"inventory:{guild_id}:{member_id}")
 
     amounts = []
     for item_name, amount in inventory.items():
-        item = Item.from_redis(redis_client, item_name)
+        item = await Item.from_redis(app.redis, item_name)
         item.quantity = amount
         if int(amount) > 0:
             amounts.append(vars(item))
 
-    wearing = [vars(Item.from_redis(redis_client, uuid))
+    wearing = [vars(await Item.from_redis(app.redis, uuid))
                for uuid
-               in redis_client.smembers(f"wear:{guild_id}:{member_id}")]
+               in await app.redis.smembers(f"wear:{guild_id}:{member_id}")]
 
     return jsonify({
         "name": user_name,
@@ -186,8 +185,7 @@ def profile():
 
 
 @api.route("/card")
-@cross_origin()
-def card():
+async def card():
     member_id = request.args.get("id")
     guild_id = request.args.get("guild_id")
 
@@ -199,13 +197,14 @@ def card():
 
     params = {
         field:
-            (redis_client.hget(f"profile:{guild_id}:{member_id}", field)
+            (await app.redis.hget(f"profile:{guild_id}:{member_id}", field)
              or defaults[field])
         for field in defaults
     }
 
-    params["name"] = redis_client.get(f"user:name:{guild_id}:{member_id}")
-    params["avatar"] = redis_client.hget(
+    params["name"] = await app.redis.get(
+        f"user:name:{guild_id}:{member_id}")
+    params["avatar"] = await app.redis.hget(
         f"profile:{guild_id}:{member_id}", "pfp")
 
     return jsonify(params)

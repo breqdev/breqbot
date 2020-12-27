@@ -1,121 +1,79 @@
-import os
 import json
+import asyncio
+import os
 
-import redis
-import gevent
-import geventwebsocket
-from flask import Blueprint
+import aioredis
+from quart import Blueprint, websocket
+from quart import current_app as app
 
-redis_client = redis.Redis.from_url(
-    os.getenv("REDIS_URL"), decode_responses=True)
 
 portal_server = Blueprint("portal", __name__)
 
 
-class PortalBackend():
-    def __init__(self):
-        self.clients = {}
-        self.pubsub = redis_client.pubsub()
-        self.pubsub.psubscribe("portal:*")
-
-    def register(self, portal, client):
-        channel = portal["id"]
-        if channel not in self.clients:
-            self.clients[channel] = set()
-        self.clients[channel].add(client)
-
-    def unregister(self, portal, client):
-        channel = portal["id"]
-        self.clients[channel].remove(client)
-
-        if not self.clients[channel]:
-            del self.clients[channel]
-
-    def send(self, client, message):
-        try:
-            client.send(json.dumps(message))
-        except geventwebsocket.exceptions.WebSocketError:
-            return
-
-    def iter_data(self):
-        for message in self.pubsub.listen():
-            if message["type"] in ("pmessage", "message"):
-                channel = message.get("channel")
-                _, portal, job = channel.split(":")
-
-                message = message.get("data")
-                message = json.loads(message)
-                if message["type"] == "query":
-                    yield message
-
-    def run(self):
-        for message in self.iter_data():
-            if message["portal"] not in self.clients:
-                continue
-            for client in self.clients[message["portal"]]:
-                gevent.spawn(self.send, client, message)
-
-    def start(self):
-        gevent.spawn(self.run)
-
-
-portal_backend = PortalBackend()
-portal_backend.start()
-
-
-def auth_portal(auth_info):
+async def auth_portal(auth_info):
     id = auth_info["id"]
     user_token = auth_info["token"]
 
-    portal_token = redis_client.hget(f"portal:{id}", "token")
+    portal_token = await app.redis.hget(f"portal:{id}", "token")
     if portal_token is None:
         return False  # Portal does not exist
 
     if user_token != portal_token:
         return False  # Invalid token
 
-    return redis_client.hgetall(f"portal:{id}")
+    return await app.redis.hgetall(f"portal:{id}")
 
 
-@portal_server.route("/portal")
-def portal_requests(ws):
-    portal_auth_info = json.loads(ws.receive())
-
-    portal = auth_portal(portal_auth_info)
-    if not portal:
-        ws.close()
-        return
-
+async def receive_portal(portal):
     id = portal["id"]
 
-    portal_backend.register(portal, ws)
+    while True:
+        message = await websocket.receive()
+        message = json.loads(message)
+        if message["type"] == "response":
+            job = message["job"]
+            message["portal"] = id
 
-    while not ws.closed:
-        # Be nice to other processes
-        gevent.sleep(0.1)
-        # Get responses
-        message = None
-        with gevent.Timeout(0.1, False):
-            message = ws.receive()
+            await app.redis.publish_json(f"portal:{id}:{job}", message)
 
-        if message:
-            message = json.loads(message)
+        elif message["type"] == "status":
+            status = message["status"]
+            await app.redis.hset(f"portal:{id}", "status", status)
 
-            if message["type"] == "response":
-                job = message["job"]
-                message["portal"] = id
 
-                redis_client.publish(f"portal:{id}:{job}", json.dumps(message))
+async def send_portal(portal):
+    sub_conn = await aioredis.create_redis(
+        os.getenv("REDIS_URL"), encoding="utf-8")
+    channel = (await sub_conn.psubscribe(f"portal:{portal['id']}:*"))[0]
+    async for _, message in channel.iter(decoder=json.loads):
+        if message["type"] == "query":
+            await websocket.send(json.dumps(message))
 
-            elif message["type"] == "status":
-                status = message["status"]
-                redis_client.hset(f"portal:{id}", "status", status)
 
-        # Send ping to ensure connection
-        try:
-            ws.send(json.dumps({"type": "ping"}))
-        except geventwebsocket.exceptions.WebSocketError:
-            break
+async def maintain_ping(portal):
+    while True:
+        await websocket.send(json.dumps({
+            "type": "ping"
+        }))
+        await asyncio.sleep(1)
 
-    redis_client.hset(f"portal:{id}", "status", "0")
-    portal_backend.unregister(portal, ws)
+
+@portal_server.websocket("/portal")
+async def portal_requests():
+    global clients
+    portal_auth_info = json.loads(await websocket.receive())
+
+    portal = await auth_portal(portal_auth_info)
+    if not portal:
+        websocket.close()
+        return
+
+    receive = receive_portal(portal)
+    send = send_portal(portal)
+    ping = maintain_ping(portal)
+
+    try:
+        await asyncio.gather(receive, send, ping)
+    except asyncio.CancelledError:
+        await app.redis.hset(f"portal:{portal['id']}", "status", "0")
+        raise

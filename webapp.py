@@ -1,47 +1,49 @@
 import os
 
-from flask import Flask, redirect
+import aioredis
+from quart import Quart, redirect
 
 from api import api
 from portal_server import portal_server
-from flask_sockets import Sockets
 
 
-app = Flask(__name__)
-sockets = Sockets(app)
+app = Quart(__name__)
+
+
+@app.before_serving
+async def create_redis_client():
+    app.redis = await aioredis.create_redis_pool(
+        os.getenv("REDIS_URL"), encoding="utf-8")
 
 
 @app.route("/")
-def index():
+async def index():
     return redirect("https://breq.dev/apps/breqbot")
 
 
 @app.route("/guild")
-def guild():
+async def guild():
     return redirect(os.getenv("TESTING_DISCORD"))
 
 
 @app.route("/bugs")
-def bugs():
+async def bugs():
     return redirect(os.getenv("BUG_REPORT"))
 
 
 @app.route("/invite")
-def invite():
+async def invite():
     return redirect(os.getenv("BOT_INVITE"))
 
 
 @app.route("/github")
-def github():
+async def github():
     return redirect(os.getenv("GITHUB_URL"))
 
 
 app.register_blueprint(api, url_prefix="/api")
-sockets.register_blueprint(portal_server)
+app.register_blueprint(portal_server)
 
 
 if __name__ == "__main__":
-    from gevent import pywsgi
-    from geventwebsocket.handler import WebSocketHandler
-    server = pywsgi.WSGIServer(('', 8000), app, handler_class=WebSocketHandler)
-    server.serve_forever()
+    app.run()
