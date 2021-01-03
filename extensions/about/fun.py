@@ -3,33 +3,67 @@ import asyncio
 
 import discord
 from discord.ext import commands
+from discord_slash import cog_ext, SlashCommandOptionType
+from discord_slash.utils import manage_commands
 
-from .. import base, emoji_utils
+from .. import emoji_utils, slash
 
 
-class Fun(base.BaseCog):
+class Fun(slash.SlashCog):
     "Miscellaneous fun commands"
 
     category = "About"
 
-    @commands.command()
-    async def say(self, ctx, *, message: str):
+    @cog_ext.cog_slash(
+        name="say",
+        description="Repeat after me!",
+        guild_ids=[748012955404337296],
+        options=[
+            manage_commands.create_option(
+                name="message",
+                description="Message to repeat",
+                option_type=SlashCommandOptionType.STRING,
+                required=True
+            )
+        ]
+    )
+    async def say(self, ctx, message: str):
         "Repeat after me!"
-        await ctx.send(discord.utils.escape_mentions(message))
+        await ctx.send(content=discord.utils.escape_mentions(message))
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        name="poll",
+        description="Run a poll to vote for your favorite answers!",
+        guild_ids=[748012955404337296],
+        options=[
+            manage_commands.create_option(
+                name="question",
+                description="Question to ask",
+                option_type=SlashCommandOptionType.STRING,
+                required=True
+            )
+        ] + [
+            manage_commands.create_option(
+                name=f"option{n}",
+                description=f"Response number {n}",
+                option_type=SlashCommandOptionType.STRING,
+                required=False
+            )
+            for n in range(1, 5)
+        ]
+    )
     @commands.guild_only()
-    async def poll(self, ctx, question: str, *answers: str):
+    async def poll(self, ctx, question: str,
+                   option1: str = None, option2: str = None,
+                   option3: str = None, option4: str = None):
         "Run a poll to vote for your favorite answers!"
 
-        if len(answers) > 10:
-            raise commands.CommandError(
-                'Polls are limited to 10 options. '
-                'Did you remember to use quotes? e.g.\n'
-                f'`{self.bot.main_prefix}poll '
-                '"my question" "option 1" "option 2"...`')
+        answers = [option for option in (option1, option2, option3, option4)
+                   if option is not None]
 
-        embed = discord.Embed(title=f"Poll: **{question}**")
+        await ctx.send(content=f"Poll: **{question}**")
+
+        embed = discord.Embed()
 
         numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣",
                    "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
@@ -38,25 +72,49 @@ class Fun(base.BaseCog):
         embed.description = "\n".join(f"{emoji}: {answer}"
                                       for emoji, answer in choices.items())
 
-        message = await ctx.send(embed=embed)
+        message = await ctx.channel.send(embed=embed)
 
         for emoji in choices:
             await message.add_reaction(emoji)
 
-    @commands.command(name="8ball")
-    async def eightball(self, ctx):
+    @cog_ext.cog_slash(
+        name="8ball",
+        description="Ask the magic 8 ball...",
+        guild_ids=[748012955404337296],
+        options=[
+            manage_commands.create_option(
+                name="question",
+                description="Question to ask the magic 8 ball",
+                option_type=SlashCommandOptionType.STRING,
+                required=False
+            )
+        ]
+    )
+    async def eightball(self, ctx, message: str):
         "Ask the magic 8 ball..."
 
-        message = await ctx.send("The 8 ball says... "
-                                 ":8ball: ~~*shake shake*~~...")
+        await ctx.send(content=("The 8 ball says... "
+                                ":8ball: ~~*shake shake*~~..."))
         await asyncio.sleep(5)
 
         response = random.choice(["YES", "NO", "MAYBE"])
-        await message.edit(content="The 8 ball says... "
-                           f":8ball: **{response}**")
+        await ctx.edit(content=("The 8 ball says... "
+                                f":8ball: **{response}**"))
 
-    @commands.command()
-    async def emoji(self, ctx, *, text: str):
+    @cog_ext.cog_slash(
+        name="emoji",
+        description="Write text in 🇧 🇮 🇬 letters",
+        guild_ids=[748012955404337296],
+        options=[
+            manage_commands.create_option(
+                name="message",
+                description="Message to biggify",
+                option_type=SlashCommandOptionType.STRING,
+                required=True
+            )
+        ]
+    )
+    async def emoji(self, ctx, text: str):
         "Write text in 🇧 🇮 🇬 letters"
 
         text = emoji_utils.text_to_emoji(text)

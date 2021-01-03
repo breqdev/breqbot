@@ -4,6 +4,7 @@ import asyncio
 import aioredis
 import discord
 from discord.ext import commands
+from discord_slash import SlashCommand
 
 prefix = os.getenv("BOT_PREFIX") or ";"
 
@@ -16,6 +17,8 @@ breqbot = commands.Bot(
     intents=intents
 )
 breqbot.main_prefix = prefix
+breqbot.slash = SlashCommand(breqbot, override_type=True,
+                             auto_register=True, auto_delete=True)
 
 loop = asyncio.get_event_loop()
 breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
