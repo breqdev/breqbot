@@ -176,8 +176,8 @@ class Inventory:
         if qty < 0:
             raise commands.CommandError("Negative numbers are not allowed.")
         await self.ensure(item, qty)
-        await self.redis.hdecrby(
-            f"inventory:{self.guild}:{self.user}", item.uuid, qty)
+        await self.redis.hincrby(
+            f"inventory:{self.guild}:{self.user}", item.uuid, -qty)
 
     async def as_mapping(self):
         inventory = await self.redis.hgetall(
