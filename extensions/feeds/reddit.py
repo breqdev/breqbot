@@ -48,7 +48,7 @@ def conditional_decorator(dec, condition):
 
 def make_command(config_name):
     @commands.command(name=config_name, brief=config[config_name]["desc"])
-    @conditional_decorator(commands.is_nsfw(),
+    @conditional_decorator(base.is_nsfw(),
                            (config[config_name].get("nsfw")
                             or config[config_name].get("some_nsfw")))
     async def _command(self, ctx):

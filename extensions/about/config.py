@@ -15,6 +15,9 @@ class Config(base.BaseCog):
         "Enable a Breqbot feature in this guild."
         if feature == "website":
             await self.redis.hset(f"guild:{ctx.guild.id}", "website", "1")
+        elif feature == "nsfw":
+            await self.redis.set(
+                f"channel:{ctx.guild.id}:{ctx.channel.id}:nsfw", "1")
         else:
             raise commands.CommandError(f"Unsupported feature: {feature}")
 
@@ -27,6 +30,9 @@ class Config(base.BaseCog):
         "Disable a Breqbot feature in this guild."
         if feature == "website":
             await self.redis.hset(f"guild:{ctx.guild.id}", "website", "0")
+        elif feature == "nsfw":
+            await self.redis.set(
+                f"channel:{ctx.guild.id}:{ctx.channel.id}:nsfw", "0")
         else:
             raise commands.CommandError(f"Unsupported feature: {feature}")
 
