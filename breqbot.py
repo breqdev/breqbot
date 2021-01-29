@@ -32,8 +32,8 @@ breqbot.load_extension("extensions.about.global_config")
 
 # Profile
 breqbot.load_extension("extensions.profile.card")
-breqbot.load_extension("extensions.profile.birthdays")
-breqbot.load_extension("extensions.profile.pronouns")
+# breqbot.load_extension("extensions.profile.birthdays")
+# breqbot.load_extension("extensions.profile.pronouns")
 breqbot.load_extension("extensions.profile.outfit")
 
 # Economy
@@ -49,7 +49,7 @@ breqbot.load_extension("extensions.feeds.reddit")
 breqbot.load_extension("extensions.feeds.comics")
 breqbot.load_extension("extensions.feeds.minecraft")
 breqbot.load_extension("extensions.feeds.youtube")
-breqbot.load_extension("extensions.feeds.status")
+# breqbot.load_extension("extensions.feeds.status")
 breqbot.load_extension("extensions.feeds.watching")
 
 # Tools
@@ -58,7 +58,7 @@ breqbot.load_extension("extensions.tools.emojiboard")
 breqbot.load_extension("extensions.tools.soundboard")
 
 # Connections
-breqbot.load_extension("extensions.connections.friendly_bots")
+# breqbot.load_extension("extensions.connections.friendly_bots")
 breqbot.load_extension("extensions.connections.portal")
 
 # Internal
