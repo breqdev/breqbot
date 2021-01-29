@@ -41,6 +41,11 @@ async def github():
     return redirect(os.getenv("GITHUB_URL"))
 
 
+@app.route("/status")
+async def status():
+    return redirect("https://breq.dev/apps/breqbot/status/")
+
+
 app.register_blueprint(api, url_prefix="/api")
 app.register_blueprint(portal_server)
 
