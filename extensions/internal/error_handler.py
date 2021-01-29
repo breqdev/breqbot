@@ -26,7 +26,7 @@ class ErrorHandler(base.BaseCog):
             embed.title = "Usage:"
             if ctx.command.signature:
                 embed.description = (
-                    f"`{self.bot.main_prefix}{ctx.command.name}"
+                    f"`{self.bot.main_prefix}{ctx.command.qualified_name}"
                     f" {ctx.command.signature}`")
             else:
                 embed.description = \
