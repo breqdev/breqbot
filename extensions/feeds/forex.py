@@ -9,8 +9,8 @@ from .. import base
 from .. import watch
 
 
-class Stocks(base.BaseCog, watch.Watchable):
-    "Watch stock prices"
+class Forex(base.BaseCog, watch.Watchable):
+    "Watch exhange rates between USD and another currency or cryptocurrency"
 
     category = "Feeds"
 
@@ -21,17 +21,7 @@ class Stocks(base.BaseCog, watch.Watchable):
         self.key = os.getenv("ALPHA_VANTAGE_API_KEY")
 
         self.watch = watch.MessageWatch(self, "*/5 * * * *")
-        self.bot.watches["Stocks"] = self.watch
-
-    async def get_stock_name(self, ticker):
-        async with self.session.get(
-                "https://www.alphavantage.co/query",
-                params={
-                    "function": "SYMBOL_SEARCH",
-                    "keywords": ticker,
-                    "apikey": self.key
-                }) as response:
-            return (await response.json())["bestMatches"][0]["2. name"]
+        self.bot.watches["Forex"] = self.watch
 
     async def check_target(self, ticker):
         try:
@@ -46,18 +36,20 @@ class Stocks(base.BaseCog, watch.Watchable):
         async with self.session.get(
                 "https://www.alphavantage.co/query",
                 params={
-                    "function": "GLOBAL_QUOTE",
-                    "symbol": ticker,
+                    "function": "CURRENCY_EXCHANGE_RATE",
+                    "from_currency": ticker,
+                    "to_currency": "USD",
                     "apikey": self.key
                 }) as response:
-            state = (await response.json())["Global Quote"]
+            state = (await response.json()).get(
+                "Realtime Currency Exchange Rate")
 
         if state:
             return {
                 "ticker": ticker,
-                "name": await self.get_stock_name(ticker),
-                "type": "stock",
-                "price": float(state["05. price"])
+                "name": state["2. From_Currency Name"],
+                "type": "currency",
+                "price": float(state["5. Exchange Rate"])
             }
 
         raise commands.CommandError("Invalid ticker name")
@@ -72,13 +64,13 @@ class Stocks(base.BaseCog, watch.Watchable):
         return base.Response(None, {}, embed)
 
     @commands.group(invoke_without_command=True)
-    async def stock(self, ctx, ticker: str):
-        "Look up stocks info"
+    async def forex(self, ctx, ticker: str):
+        "Look up exchange rate info"
 
         response = await self.get_response(await self.get_state(ticker))
         await response.send_to(ctx)
 
-    @stock.command()
+    @forex.command()
     @commands.has_guild_permissions(manage_messages=True)
     async def watch(self, ctx, ticker: str):
         "Watch a ticker and update when the price changes"
@@ -87,4 +79,4 @@ class Stocks(base.BaseCog, watch.Watchable):
 
 
 def setup(bot):
-    bot.add_cog(Stocks(bot))
+    bot.add_cog(Forex(bot))
