@@ -17,7 +17,10 @@ class ErrorHandler(base.BaseCog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, exception):
-        if (isinstance(exception, commands.CheckFailure)
+        if isinstance(exception, base.SilentError):
+            pass
+
+        elif (isinstance(exception, commands.CheckFailure)
                 or isinstance(exception, commands.DisabledCommand)):
             await ctx.message.add_reaction("⛔")
 

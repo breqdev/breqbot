@@ -45,7 +45,8 @@ class Item():
         item.guild = int(await redis.hget(item.redis_key, "guild") or "0")
         item.owner = int(await redis.hget(item.redis_key, "owner") or "0")
         item.desc = await redis.hget(item.redis_key, "desc")
-        item.wearable = await redis.hget(item.redis_key, "wearable") or "0"
+        item.wearable = bool(
+            await redis.hget(item.redis_key, "wearable") or "0")
         return item
 
     @staticmethod
@@ -88,7 +89,7 @@ class Item():
         await redis.hset(self.redis_key, "guild", self.guild)
         await redis.hset(self.redis_key, "owner", self.owner)
         await redis.hset(self.redis_key, "desc", self.desc)
-        await redis.hset(self.redis_key, "wearable", self.wearable)
+        await redis.hset(self.redis_key, "wearable", int(self.wearable))
 
         await redis.set(
             f"items:from_name:{self.guild}:{self.name.lower()}", self.uuid)
@@ -125,7 +126,7 @@ class Item():
                 "guild": self.guild,
                 "owner": self.owner,
                 "desc": self.desc,
-                "wearable": self.wearable}
+                "wearable": int(self.wearable)}
 
 
 class MissingItem(Item):

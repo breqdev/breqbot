@@ -2,6 +2,7 @@ import os
 import re
 import dataclasses
 import typing
+import inspect
 
 import discord
 from discord.ext import commands
@@ -94,3 +95,78 @@ def is_nsfw():
             return True
         return False
     return commands.check(check)
+
+
+class SilentError(commands.CommandError):
+    pass
+
+
+class Prompt:
+    def __init__(self, ctx, name):
+        self.name = name
+        self.client = ctx.bot
+        self.ctx = ctx
+        self.lines = []
+        self.message = None
+
+    async def append(self, line):
+        self.lines.append(line)
+        await self.update()
+
+    async def edit(self, line):
+        self.lines[-1] = line
+        await self.update()
+
+    async def update(self):
+        if self.message is None:
+            self.message = await self.ctx.send("\n".join(self.lines))
+        else:
+            await self.message.edit(content="\n".join(self.lines))
+
+    async def __aenter__(self):
+        await self.append(f"┏ **{self.name}** ")
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if isinstance(exc, commands.CommandError):
+            await self.append(f"┗ 🚫 {exc}")
+            raise SilentError()
+        elif exc:
+            await self.append("┗ ⚠️")
+        else:
+            await self.append("┗ ✅")
+
+    async def input(self, prompt, converter=str, current=None):
+        if current:
+            await self.append(f"┃ *{prompt}* (type `skip` for *{current}*)")
+        else:
+            await self.append(f"┃ *{prompt}*")
+
+        def check(message):
+            return (message.author == self.ctx.author
+                    and message.channel == self.ctx.channel)
+
+        message = await self.client.wait_for("message", check=check)
+
+        if current and message.content == "skip":
+            await self.edit(f"┃ *{prompt}* - *{current}* ")
+            await message.delete()
+            return current
+
+        try:
+            response = await self.ctx.command.do_conversion(
+                self.ctx, converter, message.content,
+                type("Param", (),
+                     {"kind": inspect.Parameter.VAR_POSITIONAL})())
+            # The hacky fake parameter object lets us use discord.py's built
+            # in converter system to parse user inputs
+
+            # The do_conversion method will raise BadArgument when applicable
+            # and this will be handled and displayed nicely by __aexit__
+        except Exception:
+            raise
+        else:
+            await self.edit(f"┃ *{prompt}* - **{response}** ")
+        finally:
+            await message.delete()
+        return response

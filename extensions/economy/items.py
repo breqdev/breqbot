@@ -66,15 +66,22 @@ class Items(base.BaseCog):
     @item.command()
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    async def create(self, ctx, item: str, desc: str, wearable: int = 0):
+    async def create(self, ctx):
         "Create an item"
-        if not await itemlib.Item.check_name(self.redis, ctx.guild.id, item):
-            raise commands.CommandError("Name in use!")
 
-        item = itemlib.Item(item, ctx.guild.id, ctx.author.id, desc, wearable)
+        async with base.Prompt(ctx, "Item Creator") as prompt:
+            name = await prompt.input("Item name?")
+
+            if not await itemlib.Item.check_name(
+                    self.redis, ctx.guild.id, name):
+                raise commands.CommandError("Name in use!")
+
+            desc = await prompt.input("Item description?")
+            wearable = await prompt.input("Wearable?", bool)
+
+        item = itemlib.Item(
+            name, ctx.guild.id, ctx.author.id, desc, int(wearable))
         await item.to_redis(self.redis)
-
-        await ctx.message.add_reaction("✅")
 
     @item.command()
     @commands.guild_only()
@@ -98,19 +105,19 @@ class Items(base.BaseCog):
 
     @item.command()
     @commands.guild_only()
-    async def set(self, ctx, item: str, field: str, value: str):
-        "Modify an item"
-        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, item)
-        item.check_owner(ctx.author)
-        if field == "desc":
-            item.desc = value
-        elif field == "wearable":
-            item.wearable = value
-        else:
-            raise commands.CommandError("Invalid field!")
-        await item.to_redis(self.redis)
+    async def edit(self, ctx, name: str):
+        "Edit an existing item"
 
-        await ctx.message.add_reaction("✅")
+        item = await itemlib.Item.from_name(self.redis, ctx.guild.id, name)
+        item.check_owner(ctx.author)
+
+        async with base.Prompt(ctx, "Item Editor") as prompt:
+            item.desc = await prompt.input(
+                "Item description?", current=item.desc)
+            item.wearable = await prompt.input(
+                "Wearable?", bool, current=item.wearable)
+
+        await item.to_redis(self.redis)
 
     @item.command()
     @commands.guild_only()
