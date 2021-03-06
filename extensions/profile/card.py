@@ -9,6 +9,9 @@ from discord.ext import commands
 from .. import base
 
 
+CARDS_API_URL = "https://cards.api.breq.dev"
+
+
 class Card(base.BaseCog):
     "Customize your user profile card!"
 
@@ -42,7 +45,7 @@ class Card(base.BaseCog):
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    "https://cards.breq.dev/card",
+                    f"{CARDS_API_URL}/card",
                     params=params) as response:
                 card_id = (await response.json())["card_id"]
 
@@ -61,7 +64,7 @@ class Card(base.BaseCog):
         if not card_id:
             card_id = await self.freeze_card(ctx.guild, user)
 
-        url = f"https://cards.breq.dev/card/{card_id}.png"
+        url = f"{CARDS_API_URL}/card/{card_id}.png"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 file = io.BytesIO(await response.read())
