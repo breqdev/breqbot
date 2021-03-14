@@ -86,15 +86,17 @@ class Response:
             return await dest.send(embed=self.embed, files=file_groups[-1])
 
 
+async def ctx_is_nsfw(ctx):
+    if ctx.channel.is_nsfw():
+        return True
+    if int(await ctx.bot.redis.get(
+            f"channel:{ctx.guild.id}:{ctx.channel.id}:nsfw") or "0"):
+        return True
+    return False
+
+
 def is_nsfw():
-    async def check(ctx):
-        if ctx.channel.is_nsfw():
-            return True
-        if int(await ctx.bot.redis.get(
-                f"channel:{ctx.guild.id}:{ctx.channel.id}:nsfw") or "0"):
-            return True
-        return False
-    return commands.check(check)
+    return commands.check(ctx_is_nsfw)
 
 
 class SilentError(commands.CommandError):

@@ -73,6 +73,10 @@ class HelpCommand(commands.HelpCommand):
         await self.context.send(embed=embed)
 
     async def send_cog_help(self, cog):
+        if hasattr(cog, "custom_cog_help"):
+            await cog.custom_cog_help(self.context)
+            return
+
         embed = discord.Embed()
         embed.title = f"{cog.qualified_name} | {cog.description}"
 
