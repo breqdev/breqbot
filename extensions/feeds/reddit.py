@@ -16,7 +16,7 @@ class BaseReddit(
         super().__init__(bot)
         self.session = aiohttp.ClientSession()
 
-        self.watch = watch.ChannelWatch(self, crontab="00 */3 * * *")
+        self.watch = watch.ChannelWatch(self, crontab="00 00 * * *")
         # self.watch = watch.ChannelWatch(self, crontab="* * * * *")
         self.bot.watches["Reddit"] = self.watch
 
