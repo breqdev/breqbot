@@ -18,7 +18,7 @@ async def create_redis_client():
 
 @app.route("/")
 async def index():
-    return redirect("https://breq.dev/apps/breqbot")
+    return redirect("https://bot.breq.dev/")
 
 
 @app.route("/guild")
@@ -43,7 +43,7 @@ async def github():
 
 @app.route("/status")
 async def status():
-    return redirect("https://breq.dev/apps/breqbot/status/")
+    return redirect("https://bot.breq.dev/")
 
 
 app.register_blueprint(api, url_prefix="/api")
