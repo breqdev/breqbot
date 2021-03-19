@@ -107,3 +107,85 @@
 
     line-height: 150%;
 }
+
+.tables {
+    display: flex;
+    flex-wrap: wrap;
+
+    margin: 0 -10px 20px;
+}
+
+.table {
+    flex: 1 1 100%;
+
+    margin: 10px;
+    padding: 0 20px 20px;
+
+    box-sizing: border-box;
+    border: 5px solid #1BB3FF;
+    border-radius: 20px;
+
+    text-align: center;
+
+    table {
+        width: 100%;
+
+        border-collapse: collapse;
+    }
+
+    td, th {
+        border: 2px solid #ccc;
+        padding: 0.5rem 1rem;
+        color: black;
+    }
+
+    @media (min-width: 992px) {
+        flex-basis: 0;
+    }
+}
+
+.userHeading {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    margin: 20px 0;
+    padding: 20px;
+
+    background: #1BB3FF;
+    border-radius: 20px;
+}
+
+.card {
+    flex-basis: 500px;
+
+    iframe {
+        width: min(500px, 100%);
+        height: 300px;
+        border: none;
+    }
+}
+
+.userInfo {
+    flex: 1 1;
+    align-self: center;
+
+    text-align: center;
+
+    h1 {
+        font-size: 60px;
+        margin: 0.25em;
+    }
+
+    h3 {
+        font-size: 30px;
+    }
+
+    a {
+        color: black;
+    }
+}
+
+.balance {
+    text-align: center;
+}
