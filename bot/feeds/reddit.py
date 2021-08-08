@@ -20,6 +20,15 @@ class BaseReddit(
         # self.watch = watch.ChannelWatch(self, crontab="* * * * *")
         self.bot.watches["Reddit"] = self.watch
 
+    def config_nsfw_check(self, config_name, ctx):
+        if ctx.channel.is_nsfw():
+            return True
+        if config[config_name].get("nsfw"):
+            return False
+        if config[config_name].get("some_nsfw"):
+            return False
+        return True
+
     async def check_target(self, target):
         return target in config
 
@@ -45,13 +54,7 @@ class BaseReddit(
     async def custom_bot_help(self, ctx):
         commands = " ".join(
             f"`{self.bot.main_prefix}{config_name}`" for config_name in config
-            if (
-                not (
-                    config[config_name].get("nsfw")
-                    or config[config_name].get("some_nsfw")
-                ) or ctx.channel.is_nsfw()
-            )
-        )
+            if self.config_nsfw_check(config_name, ctx))
 
         commands += (f" | `{self.bot.main_prefix}[subreddit] watch`"
                      + f" `{self.bot.main_prefix}[subreddit] unwatch`")
@@ -65,12 +68,11 @@ class BaseReddit(
         commands = "• " + " ".join(
             [f"`{self.bot.main_prefix}{config_name}`"
              for config_name in config
-             if (not config[config_name].get("nsfw")
-                 or await base.ctx_is_nsfw(ctx))])
+             if self.config_nsfw_check(config_name, ctx)])
 
         commands += f"""
-• `{self.bot.main_prefix} [subreddit] watch`
-• `{self.bot.main_prefix} [subreddit] unwatch`
+• `{self.bot.main_prefix}[subreddit] watch`
+• `{self.bot.main_prefix}[subreddit] unwatch`
 """
 
         embed.add_field(name="Commands", value=commands, inline=False)
