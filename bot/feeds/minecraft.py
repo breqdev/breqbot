@@ -26,7 +26,7 @@ class Minecraft(base.BaseCog, watch.Watchable):
             status = await response.json()
 
         if code != 200:
-            return "Can't connect to server", (0, 0), []
+            return ip, "Can't connect to server", (0, 0), []
 
         description = []
 
