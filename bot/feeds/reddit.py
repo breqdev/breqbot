@@ -44,7 +44,14 @@ class BaseReddit(
 
     async def custom_bot_help(self, ctx):
         commands = " ".join(
-            f"`{self.bot.main_prefix}{config_name}`" for config_name in config)
+            f"`{self.bot.main_prefix}{config_name}`" for config_name in config
+            if (
+                not (
+                    config[config_name].get("nsfw")
+                    or config[config_name].get("some_nsfw")
+                ) or ctx.channel.is_nsfw()
+            )
+        )
 
         commands += (f" | `{self.bot.main_prefix}[subreddit] watch`"
                      + f" `{self.bot.main_prefix}[subreddit] unwatch`")
