@@ -13,7 +13,7 @@ import UserInfo from "./UserInfo"
 const links = [
     {
         name: "github",
-        href: "https://github.com/breq16/breqbot"
+        href: "https://github.com/breqdev/breqbot"
     }
 ]
 
@@ -24,9 +24,9 @@ const contact = [
         link: "https://keybase.io/breq"
     },
     {
-        text: "breq16",
+        text: "breqdev",
         icon: faGithub,
-        link: "https://github.com/breq16"
+        link: "https://github.com/breqdev"
     }
 ]
 
@@ -39,7 +39,7 @@ export default function App(props) {
                 contact={contact}
                 author="breq"
                 copyright="2021"
-                repo="Breq16/breqbot"
+                repo="breqdev/breqbot"
             >
                 <div style={{minHeight: "100vh"}}>
                     <Switch>
