@@ -33,13 +33,14 @@ pytz==2021.1
 Quart==0.15.1
 Quart-CORS==0.5.0
 requests==2.26.0
+sentry-sdk==1.39.2
 six==1.16.0
 smmap==4.0.0
 soupsieve==2.2.1
 toml==0.10.2
 typing-extensions==3.10.0.0
 tzlocal==2.1
-urllib3==1.26.6
+urllib3==1.26.11
 Werkzeug==2.0.1
 wsproto==1.0.0
 yarl==1.6.3

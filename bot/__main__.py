@@ -5,6 +5,19 @@ import aioredis
 import discord
 from discord.ext import commands
 
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://bf74ee91022caa50e0b15dde54680a8e@o4506638160691200.ingest.sentry.io/4506638324203520",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
+
 prefix = os.getenv("BOT_PREFIX") or ";"
 
 intents = discord.Intents.default()
@@ -13,13 +26,14 @@ intents.members = True
 breqbot = commands.Bot(
     (prefix, "breq ", "b! ", "b!"),
     description="Hi, I'm Breqbot! Beep boop :robot:",
-    intents=intents
+    intents=intents,
 )
 breqbot.main_prefix = prefix
 
 loop = asyncio.get_event_loop()
-breqbot.redis = loop.run_until_complete(aioredis.create_redis_pool(
-    os.getenv("REDIS_URL"), encoding="utf-8"))
+breqbot.redis = loop.run_until_complete(
+    aioredis.create_redis_pool(os.getenv("REDIS_URL"), encoding="utf-8")
+)
 
 breqbot.watches = {}
 
